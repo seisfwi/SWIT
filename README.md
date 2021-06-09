@@ -20,13 +20,13 @@ sudo apt install gfortran
 #Download the latest OpenMPI package, or go to  http://www.open-mpi.org/software/ompi to download the desired version
 wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz 
 #Extract the file
-tar xvfz openmpi-4.0.2.tar.gz
-cd openmpi-openmpi-4.0.2
+tar xvfz openmpi-4.1.1.tar.gz
+cd openmpi-4.1.1
 #Configure the installation files 
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
 #Make and install OpenMPI, this would takes a while
 make
-sudo make install
+make install
 #Add env paths 
 export PATH=/usr/local/openmpi/bin:$PATH
 source ~/.bashrc
@@ -34,11 +34,11 @@ source ~/.bashrc
 mpirun --version
 ```
 
-#### Step 3 : Install Python Environment  
+#### Step 3 : Install Anaconda Environment  
 
 ```bash
 #Anaconda is recommended. For installing Anaconda, refers to https://docs.anaconda.com/anaconda/install/linux/
-#Create the conda environment for SWIT
+#Create the conda environment for SWITwhi
 conda create --name swit python=3
 conda activate swit
 ```
@@ -46,14 +46,17 @@ conda activate swit
 #### Step 4 : Install SWIT  
 
 ```bash
+# download from: https://github.com/Haipeng-ustc/SWIT-1.0
+git clone https://github.com/Haipeng-ustc/SWIT-1.0
+
 # complie the finite-difference forward solver (Fortran version)
-cd ~/swit/fd2dmpi/
+cd ~/SWIT-1.0/fd2dmpi/
 # edit the Makefile.config file, make sure FCC is correct in line 18
 make clean; make
 export PATH=~/swit/bin:$PATH
 
 # Install SWIT package
-cd ~/swit/toolbox/
+cd ~/SWIT-1.0/toolbox/
 python setup.py install
 ```
 

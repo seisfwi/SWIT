@@ -2,8 +2,6 @@
 
 Seismic Waveform Inversion Toolbox 1.0
 
-[TOC]
-
 ### Install SWIT 
 
 #### Step 1: Install gcc and gfortran
@@ -26,7 +24,7 @@ cd openmpi-4.1.1
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
 #Make and install OpenMPI, this would takes a while
 make
-make install
+sudo make install
 #Add env paths 
 export PATH=/usr/local/openmpi/bin:$PATH
 source ~/.bashrc
@@ -38,9 +36,12 @@ mpirun --version
 
 ```bash
 #Anaconda is recommended. For installing Anaconda, refers to https://docs.anaconda.com/anaconda/install/linux/
-#Create the conda environment for SWITwhi
+#1. download package from: https://www.anaconda.com/products/individual/download-success
+#2. bash ~/your_Anaconda_package
+
+#Once the Anaconda is installed, create the conda environment for SWIT
 conda create --name swit python=3
-conda activate swit
+conda activate SWIT
 ```
 
 #### Step 4 : Install SWIT  
@@ -62,20 +63,15 @@ python setup.py install
 
 ### SWIT Examples 
 
-#### Case 1: Overthrust Model Inversion   
+#### Case 1: Overthrust Model Inversion   (GUI)
 
 ```bash
 ~~~
 ```
 
-#### Case 2: Marmousi Model Inversion   
+#### Case 2: Marmousi Model Inversion   (Python script)
 
 ```bash
 ~~~
 ```
 
-#### Case 3: GUI   
-
-```bash
-~~~
-```

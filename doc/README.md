@@ -1,4 +1,8 @@
-# Seismic Waveform Imaging Toolbox (SWIT-1.2)
+# SWIT-1.0
+
+Seismic Waveform Inversion Toolbox 1.0
+
+[TOC]
 
 ### Install SWIT 
 
@@ -51,5 +55,24 @@ export PATH=~/swit/bin:$PATH
 # Install SWIT package
 cd ~/swit/toolbox/
 python setup.py install
+```
 
+### SWIT Examples 
+
+#### Case 1: Overthrust Model Inversion   
+
+```bash
+~~~
+```
+
+#### Case 2: Marmousi Model Inversion   
+
+```bash
+~~~
+```
+
+#### Case 3: GUI   
+
+```bash
+~~~
 ```

@@ -7,10 +7,9 @@ def readme():
 
 setuptools.setup(name='SWIT',
       version='1.0',
-      description='Seismic Waveform Inversion Toolbox',
-      long_description=readme(),
+      description='Seismic Waveform Inversion Toolbox-1.0',
       author='Haipeng Li',
-      author_email='haipengl@mail.usct.edu.cn',
+      author_email='haipengl@mail.ustc.edu.cn',
       license='',
       packages=setuptools.find_packages(),
       classifiers=[
@@ -21,7 +20,7 @@ setuptools.setup(name='SWIT',
                         'scipy',
                         'multiprocess',
                         'matplotlib', 
-                        'PySimpleGUI'
+                        'PySimpleGUI',
                         'psutil',
                         'Pillow'],
       python_requires='>=3.7',

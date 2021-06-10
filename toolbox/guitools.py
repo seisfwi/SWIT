@@ -183,7 +183,6 @@ def inversion_workflow(swit):
 # push button do something
 def prepare_forward_parameter(GUI_Values):
 
-    print('Preparing for forward modeling...')
     try:
         # make necessary adjustment
         if GUI_Values['homepath'][-1] not in ['/']:
@@ -375,35 +374,6 @@ def Smooth2D(smooth_filename, smooth_span, smooth_top_mute):
         print('Save as: %s  '%(smooth_filename)) 
     except:
         print('Error: smooth2D goes wrong!')
-        
-
-def ExecuteCommandSubprocess(command, *args, wait=False):
-    try:
-        if sys.platform == 'linux':
-            arg_string = ''
-            arg_string = ' '.join([str(arg) for arg in args])
-            print('python3 ' + arg_string)
-            sp = subprocess.Popen(['python3 ', arg_string],
-                                  shell=True,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-        else:
-            arg_string = ' '.join([str(arg) for arg in args])
-            sp = subprocess.Popen([command, arg_string],
-                                  shell=True,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
-            # sp = subprocess.Popen([command, list(args)], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        if wait:
-            out, err = sp.communicate()
-            if out:
-                print(out.decode("utf-8"))
-            if err:
-                print(err.decode("utf-8"))
-    except:
-        pass
-
 
 # show the figure
 def convert_to_bytes(file_or_bytes, resize=None):
@@ -431,7 +401,7 @@ def convert_to_bytes(file_or_bytes, resize=None):
         return bio.getvalue()
 
 # system status
-GRAPH_WIDTH, GRAPH_HEIGHT = 140, 60       # each individual graph size in pixels
+GRAPH_WIDTH, GRAPH_HEIGHT = 160, 90       # each individual graph size in pixels
 class DashGraph(object):
     def __init__(self, graph_elem, starting_count, color):
         self.graph_current_item = 0
@@ -470,10 +440,10 @@ def human_size(bytes, units=(' bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB')):
 
 def GraphColumn(name, key):
     layout = [
-        [sg.Text(name, size=(18,1), font=('Any 10'), key=key+'TXT_')],
+        [sg.Text(name, size=(16,1), font=('Any 16'), key=key+'TXT_')],
         [sg.Graph((GRAPH_WIDTH, GRAPH_HEIGHT),
                     (0, 0),
-                    (GRAPH_WIDTH, 100),
+                    (GRAPH_WIDTH, 20),
                     background_color='black',
                     key=key+'GRAPH_')]]
     return sg.Col(layout, pad=(2, 2))

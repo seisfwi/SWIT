@@ -10,7 +10,7 @@ setuptools.setup(name='SWIT',
       description='Seismic Waveform Inversion Toolbox-1.0',
       author='Haipeng Li',
       author_email='haipengl@mail.ustc.edu.cn',
-      license='',
+      license='GNU General Public License v3.0',
       packages=setuptools.find_packages(),
       classifiers=[
         "Programming Language :: Python :: 3.7",

@@ -43,6 +43,7 @@ mpirun --version
 #Once the Anaconda is installed, create the conda environment for SWIT
 conda create --name SWIT python=3
 conda activate SWIT
+#Install dependencies
 pip install numpy obspy scipy matplotlib
 pip install multiprocess PySimpleGUI psutil Pillow
 ```

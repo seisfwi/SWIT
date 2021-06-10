@@ -75,21 +75,21 @@ def plot_stf(simu, isrc=1, stf_type='obs', t_end=1.0):
     # subplot1: time domain
     ax1 = fig.add_subplot(2, 1, 1)
     ax1.xaxis.set_label_text('Time (s)', fontsize=12)
-    ax1.yaxis.set_label_text('Amplitude', fontsize=12)
-    ax1.set_title('Source wavelet (normalized)- source %d - %s' % (ISRC, stf_type), fontsize=16)
+    ax1.yaxis.set_label_text('Normalized Amplitude', fontsize=12)
+    ax1.set_title('Source wavelet - source %d - %s' % (ISRC, stf_type), fontsize=16)
     ax1.axis(WAVELET_EXTENT)
     ax1.plot(simu.model.t[0:nt+1], stf_time[0:nt+1] / abs(stf_time[0:nt+1]).max(), 'g-')
     # subplot2: frequency domain
     ax2 = fig.add_subplot(2, 1, 2)
     ax2.xaxis.set_label_text('Frequency (Hz)', fontsize=12)
-    ax2.yaxis.set_label_text('Norm. Amplitude', fontsize=12)
-    ax2.set_title('Amplitude spectrum', fontsize=16)
+    ax2.yaxis.set_label_text('Amplitude', fontsize=12)
     ax2.axis(SPECTRUM_EXTENT)
     ax2.fill(freqs[idx], stf_spectrum[idx] / abs(stf_spectrum).max(), 'c')
     ax2.plot(freqs[idx], stf_spectrum[idx] / abs(stf_spectrum).max(), 'b')
     fig.tight_layout()
     plt.savefig(simu.system.homepath + 'figures/STF-%s-src%d.png' % (stf_type, ISRC), dpi=300)
     plt.close()
+
 
 
 ### Plot material (2D): velocity, gradient
@@ -244,7 +244,7 @@ def plot_inv_scheme(simu, optim, inv_scheme):
     plot_model2D(simu, dire.reshape(nx, nz).T, -dirc_caxis, dirc_caxis, 'dire-%03d' % it, colormap = 'seismic')
 
     if optim.iter == 1 :
-        plot_trace(simu, 'syn-initial-model-proc', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='k')
+        plot_trace(simu, 'syn-proc-initial-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='k')
     elif optim.iter == optim.maxiter:
         data_misfit = np.loadtxt('./outputs/misfit_data.dat')
         data_misfit = data_misfit / data_misfit[0]

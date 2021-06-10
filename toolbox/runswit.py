@@ -54,7 +54,7 @@ def main():
     size_txt = (18, 1)
 
     # Menu definition
-    menu_def = [['&Information', ['&By Haipeng Li at USTC', '&Contact: haipengl@mail.ustc.edu.cn', '&Copyright © 1821 All Right Reserved', ]] ]
+    menu_def = [['&Information', ['&By Haipeng Li at USTC', '&Contact: haipengl@mail.ustc.edu.cn', '&Copyright © 2021 All Right Reserved', ]] ]
 
     # Tab layouts
     tab_sys_layout = [
@@ -175,7 +175,7 @@ def main():
             [sg.Text('_' * 300 + '\n')],
             [sg.Combo(('Acquisition', 'Source-Wavelet', 'Velocity', 'Waveform', 'Gradient', 'Direction'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(33, 8))],
             [sg.Text(' ' * 300 + '\n')],
-            [sg.Listbox(values=[], enable_events=True, size=(33,36),key='fig_list', font=font0)],
+            [sg.Listbox(values=[], enable_events=True, size=(33,26),key='fig_list', font=font0)],
             ]
 
     block_6 = [[sg.Text('System Status', justification='left', font=font3)],
@@ -207,7 +207,7 @@ def main():
 
 
     # show window
-    window = sg.Window('Seismic Waveform Inversion Toolbox-1.0', layout, resizable=True, finalize=True)
+    window = sg.Window('Seismic Waveform Inversion Toolbox-1.0', layout, resizable=True, finalize=True) #  icon='./SWIT.jpg'
     # keep in the center
     window['C1'].expand(True, True, True)
     window['C2'].expand(True, True, True)
@@ -227,7 +227,7 @@ def main():
     smooth_span_is_ok = 0
     smooth_top_mute_is_ok = 0
     
-    new_size = (1200,550)
+    new_size = (1200,520)
 
     # Event Loop
     while True:

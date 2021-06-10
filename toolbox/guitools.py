@@ -174,17 +174,18 @@ def inversion_workflow(swit):
     saveparjson(simu, optim)
 
     plot_geometry(simu)
-    plot_stf(simu, isrc=1,  stf_type='init', t_end = 2.0)
+    plot_stf(simu, isrc=1,  stf_type='in use', t_end = 2.0)
     plot_model2D(simu, vp_init.T, vpmin, vpmax, 'vp-init', colormap = 'jet')
 
     ### process obs data
-    print('copying obs data to the working folder: %s'%(swit['field_data_path']))
-    os.system('cp %s %s'%(swit['field_data_path']+ '/*.su', swit['homepath'] + 'data/obs/'))
+    if swit['field_data_path'] not in ['']:
+        print('copying obs data to the working folder: %s'%(swit['field_data_path']))
+        os.system('cp %s %s'%(swit['field_data_path']+ '/*.su', swit['homepath'] + 'data/obs/'))
 
 
     process_workflow(simu, optim, simu_type='obs')
+    plot_trace(simu, 'obs',      simu_type='obs', suffix='',      src_space=1, trace_space=5, scale = 0.8, color='r')
     plot_trace(simu, 'obs_proc', simu_type='obs', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='r')
-
 
     ### begin inversion
     inversion(simu, optim, {'vp':vp_init,'rho':rho_init})

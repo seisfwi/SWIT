@@ -54,7 +54,8 @@ git clone https://github.com/Haipeng-ustc/SWIT-1.0
 cd ~/SWIT-1.0/fd2dmpi/
 # edit the Makefile.config file, make sure FCC is correct in line 18
 make clean; make
-export PATH=~/swit/bin:$PATH
+export PATH=~/SWIT-1.0/bin:$PATH
+source ~/.bashrc
 
 # Install SWIT package
 cd ~/SWIT-1.0/toolbox/

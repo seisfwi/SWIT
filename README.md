@@ -41,7 +41,7 @@ mpirun --version
 #2. bash ~/your_Anaconda_package
 
 #Once the Anaconda is installed, create the conda environment for SWIT
-conda create --name SWIT python=3
+conda create --name SWIT python=3.7.5
 conda activate SWIT
 #Install dependencies
 pip install numpy obspy scipy matplotlib

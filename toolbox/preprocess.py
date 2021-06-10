@@ -31,7 +31,7 @@ def process_workflow(simu, optim, simu_type = 'syn', use_first_break_in_su_heade
     srcn = simu.source.n
     datapath = simu.system.homepath + 'data/' + simu_type + '/'
 
-    # scipy would open too many threads, reduce the Pool number
+    # scipy would open too mnewspaper threads, reduce the Pool number
     pool = Pool(nproc)
     for isrc in range(srcn):
         loadpath = datapath + 'src%d_sg.su'      % ((isrc+1))

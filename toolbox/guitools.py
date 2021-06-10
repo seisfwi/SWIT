@@ -50,8 +50,8 @@ def forward_workflow(swit):
     nt   = swit['nt']               # Time step
     pml  = swit['pml']              # PML layers grid number
     fs   = swit['fs']               # Free surface or not
-    vp_init  = loadfile_gui(swit['vp_true_path'], nx, nz)
-    rho_init = np.power(vp_init, 0.25) * 310     # Gardner's equation (1974, Geophysics)
+    vp_true  = loadfile_gui(swit['vp_true_path'], nx, nz)
+    rho_true = np.power(vp_true, 0.25) * 310     # Gardner's equation (1974, Geophysics)
 
     ### sources setup
     f0    = swit['f0']                           # domiant frequency
@@ -76,14 +76,21 @@ def forward_workflow(swit):
 
     ### simulate setup 
     sys  = base.system(homepath, mpiproc, figaspect=swit['figaspect'])
-    mod  = base.model(nx, nz, dx, dt, nt, fs, pml, vp_init, rho_init)
+    mod  = base.model(nx, nz, dx, dt, nt, fs, pml, vp_true, rho_true)
     src  = base.source(f0, srcn, srcxz, wavelet)
     rec  = base.receiver(recn, recxz)
     simu = base.simulate(mod, src, rec, sys)
 
+    ### plots
+    plot_geometry(simu)
+    plot_stf(simu, isrc=1,  stf_type='forward', t_end = 2.0)
+    plot_model2D(simu, vp_true.T, vp_true.min(), vp_true.max(), 'init-vp', colormap = 'jet')
+
+    ### forward modeling
     forward(simu, simu_type='obs', savesnap=0)
     plot_trace(simu, 'obs', simu_type='obs', suffix='', src_space=1, trace_space=5, scale = 0.8, color='r')
 
+    print('\n-----------  Forward modeling end  -----------\n')
 
 
 @myasync
@@ -169,7 +176,7 @@ def inversion_workflow(swit):
 
     plot_geometry(simu)
     plot_stf(simu, isrc=1,  stf_type='init', t_end = 2.0)
-    plot_model2D(simu, vp_init.T, vpmin, vpmax, 'init-vp', colormap = 'jet')
+    plot_model2D(simu, vp_init.T, vpmin, vpmax, 'vp-init', colormap = 'jet')
 
     ### process obs data
     print('Obs data: %s'%(swit['field_data_path']))
@@ -401,7 +408,7 @@ def convert_to_bytes(file_or_bytes, resize=None):
         return bio.getvalue()
 
 # system status
-GRAPH_WIDTH, GRAPH_HEIGHT = 160, 90       # each individual graph size in pixels
+GRAPH_WIDTH, GRAPH_HEIGHT = 180, 100       # each individual graph size in pixels
 class DashGraph(object):
     def __init__(self, graph_elem, starting_count, color):
         self.graph_current_item = 0
@@ -440,7 +447,7 @@ def human_size(bytes, units=(' bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB')):
 
 def GraphColumn(name, key):
     layout = [
-        [sg.Text(name, size=(16,1), font=('Any 16'), key=key+'TXT_')],
+        [sg.Text(name, size=(18,1), font=('newspaper 12'), key=key+'TXT_')],
         [sg.Graph((GRAPH_WIDTH, GRAPH_HEIGHT),
                     (0, 0),
                     (GRAPH_WIDTH, 20),

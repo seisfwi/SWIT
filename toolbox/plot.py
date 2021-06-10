@@ -224,7 +224,7 @@ def plot_misfit(simu, misfit, mistype):
 
 
 def plot_inv_scheme(simu, optim, inv_scheme):
-    ''' plot many outputs
+    ''' plot mnewspaper outputs
     '''
     nx = simu.model.nx
     nz = simu.model.nz

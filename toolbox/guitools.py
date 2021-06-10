@@ -12,8 +12,7 @@
 
 import base64
 import io
-import subprocess
-import sys
+import os
 from threading import Thread
 
 import matplotlib.pyplot as plt
@@ -179,8 +178,12 @@ def inversion_workflow(swit):
     plot_model2D(simu, vp_init.T, vpmin, vpmax, 'vp-init', colormap = 'jet')
 
     ### process obs data
-    print('Obs data: %s'%(swit['field_data_path']))
+    print('copying obs data to the working folder: %s'%(swit['field_data_path']))
+    os.system('cp %s %s'%(swit['field_data_path']+ '/*.su', swit['homepath'] + 'data/obs/'))
+
+
     process_workflow(simu, optim, simu_type='obs')
+    plot_trace(simu, 'obs_proc', simu_type='obs', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='r')
 
 
     ### begin inversion

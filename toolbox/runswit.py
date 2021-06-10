@@ -12,14 +12,14 @@
 
 
 import os
+
 import psutil
 import PySimpleGUI as sg
 
-
-from guitools import DashGraph, GraphColumn, View2D, convert_to_bytes, human_size
-from guitools import Smooth2D, inversion_workflow, forward_workflow
-from guitools import prepare_forward_parameter, prepare_inversion_parameter
-
+from guitools import (DashGraph, GraphColumn, Smooth2D, View2D,
+                      convert_to_bytes, forward_workflow, human_size,
+                      inversion_workflow, prepare_forward_parameter,
+                      prepare_inversion_parameter)
 
 ########################################
 #
@@ -33,18 +33,19 @@ def main():
     # signs and colors
 
     BORDER_COLOR = 'grey99'
-    BPAD_LEFT = ((0,0), (0, 0))
-    BPAD_LEFT_INSIDE = (0, 0)
+    BPAD_LEFT = ((10,10), (10, 10))
+    BPAD_LEFT_INSIDE = (2, 2)
 
     # theme
     sg.theme('Reddit')  # 'SystemDefault', 'LightGrey4'
 
     # set_options
-    sg.set_options(border_width=1, margins=(0, 0), element_padding=(0, 0))
+    sg.set_options(border_width=1, margins=(2, 2), element_padding=(0, 0))
 
-    font1 = ("courier 10 pitch", 14)
-    font2 = ("courier 10 pitch", 16) # 'bold'
-    font3 = ("courier 10 pitch", 18)
+    font0 = ("courier 10 pitch", 12)
+    font1 = ("courier 10 pitch", 12)
+    font2 = ("courier 10 pitch", 14) # 'bold'
+    font3 = ("courier 10 pitch", 16)
 
     size2 = (18, 1)
     size2 = (28, 1)
@@ -140,13 +141,13 @@ def main():
 
     block_2 = [ [sg.Text('Functions', justification='left', font=font3)],
                 [sg.Text('_' * 60 + '\n')],
-                [sg.In(size=(8,1), enable_events=True, key='view2D_file', font=font1),             
+                [sg.In(size=(6,1), enable_events=True, key='view2D_file', font=font1),             
                 sg.FileBrowse(initial_folder='~/', font=font1, file_types=(("dat Files", "*.dat"), ("Bin Files", "*.bin"))),
                 sg.Text('nx', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='view2D_nx', font=font1),
                 sg.Text('nz', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='view2D_nz', font=font1),
                 sg.Button('View',  size=(6, 1), button_color=('white', 'black'), border_width=1, font=font1)],
                 
-                [sg.In(size=(8,1), enable_events=True, key='smooth_file', font=font1),             
+                [sg.In(size=(6,1), enable_events=True, key='smooth_file', font=font1),             
                 sg.FileBrowse(initial_folder='~/', font=font1, file_types=(("dat Files", "*.dat"), ("Bin Files", "*.bin"))),
                 sg.Text('sp', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='smooth_span',     font=font1),
                 sg.Text('mt', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='smooth_top_mute', font=font1),
@@ -166,15 +167,15 @@ def main():
 
     block_4 = [ [sg.Text('Output Histories', justification='left', font=font3)],
                 [sg.Text('_' * 300 + '\n')],
-                [sg.Output(size=(70, 10), key = 'output', font=(font1))],
+                [sg.Output(size=(88, 12), key = 'output', font=font0)],
             ]
 
     # right Columns
     block_5 = [[sg.Text('Viewing Options', justification='left', font=font3)],
             [sg.Text('_' * 300 + '\n')],
-            [sg.Combo(('Acquisition', 'Source-Wavelet', 'Velocity', 'Waveform', 'Gradient', 'Direction'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(32, 8))],
+            [sg.Combo(('Acquisition', 'Source-Wavelet', 'Velocity', 'Waveform', 'Gradient', 'Direction'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(33, 8))],
             [sg.Text(' ' * 300 + '\n')],
-            [sg.Listbox(values=[], enable_events=True, size=(32,36),key='fig_list', font=font1)],
+            [sg.Listbox(values=[], enable_events=True, size=(33,36),key='fig_list', font=font0)],
             ]
 
     block_6 = [[sg.Text('System Status', justification='left', font=font3)],
@@ -189,16 +190,16 @@ def main():
     # overall layout
     layout = [[sg.Menu(menu_def, tearoff=True)],
             [
-                sg.Column([ [sg.Column(block_1, size=(500,700), pad=BPAD_LEFT_INSIDE)],
-                            [sg.Column(block_2, size=(500,300), pad=BPAD_LEFT_INSIDE)]], 
+                sg.Column([ [sg.Column(block_1, size=(450,650), pad=BPAD_LEFT_INSIDE)],
+                            [sg.Column(block_2, size=(450,300), pad=BPAD_LEFT_INSIDE)]], 
                             pad=BPAD_LEFT, background_color=BORDER_COLOR, vertical_alignment='center', justification='center',  k='C1'),
                 sg.VSeperator(),
-                sg.Column([ [sg.Column(block_3, size=(800,700), pad=BPAD_LEFT_INSIDE)],
-                            [sg.Column(block_4, size=(800,300), pad=BPAD_LEFT_INSIDE)]], 
+                sg.Column([ [sg.Column(block_3, size=(900,650), pad=BPAD_LEFT_INSIDE)],
+                            [sg.Column(block_4, size=(900,300), pad=BPAD_LEFT_INSIDE)]], 
                             pad=BPAD_LEFT, background_color=BORDER_COLOR, vertical_alignment='center', justification='center',  k='C2'),
                 sg.VSeperator(),
-                sg.Column([ [sg.Column(block_5, size=(400,700), pad=BPAD_LEFT_INSIDE)],
-                            [sg.Column(block_6, size=(400,300), pad=BPAD_LEFT_INSIDE)]], 
+                sg.Column([ [sg.Column(block_5, size=(350,650), pad=BPAD_LEFT_INSIDE)],
+                            [sg.Column(block_6, size=(350,300), pad=BPAD_LEFT_INSIDE)]], 
                             pad=BPAD_LEFT, background_color=BORDER_COLOR, vertical_alignment='center', justification='center',  k='C3'),
             ]
             ]
@@ -206,8 +207,7 @@ def main():
 
 
     # show window
-
-    window = sg.Window('Seismic Waveform Inversion Toolbox-1.0', layout, resizable=True, finalize=True, size=(1800, 1400))
+    window = sg.Window('Seismic Waveform Inversion Toolbox-1.0', layout, resizable=True, finalize=True)
     # keep in the center
     window['C1'].expand(True, True, True)
     window['C2'].expand(True, True, True)

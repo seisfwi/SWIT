@@ -77,9 +77,9 @@ def main():
     tab_acq_layout = [
                     [sg.Text('              ',    font=("Any", 16))],
                     [sg.Text('Receiver coordinate',     size=(16, 1), font=("Any", 16))], 
-                    [sg.In(size=(26,1), enable_events=True,key='rec_coor', font=("Any", 16)), sg.FileBrowse(initial_folder='~/Desktop/', font=("Any", 16), file_types=(("dat Files", "*.dat")))],
+                    [sg.In(size=(26,1), enable_events=True,key='rec_coor', font=("Any", 16)), sg.FileBrowse(initial_folder='~/Desktop/', font=("Any", 16), file_types=("dat Files", "*.dat"))],
                     [sg.Text('Source coordinate',       size=(16, 1), font=("Any", 16))], 
-                    [sg.In(size=(26,1), enable_events=True, key='src_coor', font=("Any", 16)), sg.FileBrowse(initial_folder='~/Desktop/', font=("Any", 16), file_types=(("dat Files", "*.dat")))],
+                    [sg.In(size=(26,1), enable_events=True, key='src_coor', font=("Any", 16)), sg.FileBrowse(initial_folder='~/Desktop/', font=("Any", 16), file_types=("dat Files", "*.dat"))],
                     [sg.Text('              ',          size=(16, 1), font=("Any", 16))],
                     [sg.Text('Land or Marine',          size=(16, 1), font=("Any", 16)), sg.Combo(('Land', 'Marine'), default_value='Land', key='marine_or_land', font=("Any", 16), size=(15, 1))],
                     [sg.Text('Source wavelet',          size=(16, 1), font=("Any", 16)), sg.Combo(('Ricker (Opt 1)', 'File   (Opt 2)'), default_value='Ricker', key='wavelet', font=("Any", 16), size=(15, 1))],
@@ -129,20 +129,20 @@ def main():
 
     block_2 = [ [sg.Text('Functions', justification='left', font=("Any", 20))],
                 [sg.Text('_' * 60 + '\n')],
-                [sg.In(size=(10,1), enable_events=True, key='view2D_file'),             
+                [sg.In(size=(10,1), enable_events=True, key='view2D_file', font=("Any", 16)),             
                 sg.FileBrowse(initial_folder='~/Desktop/', font=("Any", 16), file_types=(("dat Files", "*.dat"), ("Bin Files", "*.bin"))),
                 sg.Text('nx', size=(2, 1), justification='left', font=("Any", 16)),
-                sg.In(size=(6,1), enable_events=True, key='view2D_nx'),
+                sg.In(size=(6,1), enable_events=True, key='view2D_nx', font=("Any", 16)),
                 sg.Text('nz', size=(2, 1), justification='left', font=("Any", 16)),
-                sg.In(size=(6,1), enable_events=True, key='view2D_nz'),
+                sg.In(size=(6,1), enable_events=True, key='view2D_nz', font=("Any", 16)),
                 sg.Button('View',  size=(6, 1), button_color=('white', 'black'), border_width=1, font='Any 16')],
                 
-                [sg.In(size=(10,1), enable_events=True, key='smooth_file'),             
+                [sg.In(size=(10,1), enable_events=True, key='smooth_file', font=("Any", 16)),             
                 sg.FileBrowse(initial_folder='~/Desktop/', font=("Any", 16), file_types=(("dat Files", "*.dat"), ("Bin Files", "*.bin"))),
                 sg.Text('sp', size=(2, 1), justification='left', font=("Any", 16)),
-                sg.In(size=(6,1), enable_events=True, key='smooth_span'),
+                sg.In(size=(6,1), enable_events=True, key='smooth_span', font=("Any", 16)),
                 sg.Text('mt', size=(2, 1), justification='left', font=("Any", 16)),
-                sg.In(size=(6,1), enable_events=True, key='smooth_top_mute'),
+                sg.In(size=(6,1), enable_events=True, key='smooth_top_mute', font=("Any", 16)),
                 sg.Button('Smooth',  size=(6, 1), button_color=('white', 'black'), border_width=1, font='Any 16')],
                 
                 [sg.Text(' ' * 60 + '\n')],
@@ -203,9 +203,9 @@ def main():
 
     window = sg.Window('Seismic Waveform Inversion Toolbox-1.0', layout, resizable=True, finalize=True) # , location=(0, 0), size=(1600, 800)
     # keep in the center
-    #window['C1'].expand(True, True, True)
-    #window['C2'].expand(True, True, True)
-    #window['C3'].expand(True, True, True)
+    window['C1'].expand(True, True, True)
+    window['C2'].expand(True, True, True)
+    window['C3'].expand(True, True, True)
 
     # setup graphs & initial values
     diskio = psutil.disk_io_counters()

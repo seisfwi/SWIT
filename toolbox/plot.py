@@ -249,7 +249,7 @@ def plot_inv_scheme(simu, optim, inv_scheme):
         data_misfit = np.loadtxt('./outputs/misfit_data.dat')
         data_misfit = data_misfit / data_misfit[0]
         plot_misfit(simu, data_misfit, 'data')
-        plot_trace(simu, 'syn-final-model-proc', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='b')
+        plot_trace(simu, 'syn-proc-final-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='b')
     else:
         pass
 

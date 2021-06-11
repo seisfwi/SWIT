@@ -174,7 +174,7 @@ def inversion_workflow(swit):
     saveparjson(simu, optim)
 
     plot_geometry(simu)
-    plot_stf(simu, isrc=1,  stf_type='in use', t_end = 2.0)
+    plot_stf(simu, isrc=1,  stf_type='in-use', t_end = 2.0)
     plot_model2D(simu, vp_init.T, vpmin, vpmax, 'vp-init', colormap = 'jet')
 
     ### process obs data
@@ -185,7 +185,7 @@ def inversion_workflow(swit):
 
     process_workflow(simu, optim, simu_type='obs')
     plot_trace(simu, 'obs',      simu_type='obs', suffix='',      src_space=1, trace_space=5, scale = 0.8, color='r')
-    plot_trace(simu, 'obs_proc', simu_type='obs', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='r')
+    plot_trace(simu, 'obs-proc', simu_type='obs', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='r')
 
     ### begin inversion
     inversion(simu, optim, {'vp':vp_init,'rho':rho_init})
@@ -350,7 +350,7 @@ def View2D(filename, nx, nz):
             'vmin': data.min(),
             'vmax': data.max(),
             'cmap': plt.cm.jet,
-            'aspect': nz/nx
+            'aspect': 1.0
         }
         im = ax.imshow(data.T, **plotopts)
         fig.colorbar(im, shrink=0.5, extend='both')

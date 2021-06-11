@@ -12,6 +12,8 @@
 
 
 import os
+from tools import loadbinfloat32
+import numpy as np
 
 import psutil
 import PySimpleGUI as sg
@@ -147,6 +149,13 @@ def main():
                 sg.Text('nz', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='view2D_nz', font=font1),
                 sg.Button('View',  size=(6, 1), button_color=('white', 'black'), border_width=1, font=font1)],
                 
+                [sg.In(size=(6,1), enable_events=True, key='bin_file', font=font1),             
+                sg.FileBrowse(initial_folder='~/', font=font1, file_types=(("Bin Files", "*.bin"), ("dat Files", "*.dat"))),
+                sg.Text('nx', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='bin2dat_nx', font=font1),
+                sg.Text('nz', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='bin2dat_nz', font=font1),
+                sg.Button('Bin2dat',  size=(6, 1), button_color=('white', 'black'), border_width=1, font=font1)],
+                
+
                 [sg.In(size=(6,1), enable_events=True, key='smooth_file', font=font1),             
                 sg.FileBrowse(initial_folder='~/', font=font1, file_types=(("dat Files", "*.dat"), ("Bin Files", "*.bin"))),
                 sg.Text('sp', size=(2, 1), justification='left', font=font1),  sg.In(size=(6,1), enable_events=True, key='smooth_span',     font=font1),
@@ -223,6 +232,9 @@ def main():
     view_file_is_ok = 0
     view_nx_is_ok = 0
     view_nz_is_ok = 0
+    bin_file_is_ok = 0
+    bin2dat_nx_is_ok = 0
+    bin2dat_nz_is_ok = 0
     smooth_file_is_ok = 0
     smooth_span_is_ok = 0
     smooth_top_mute_is_ok = 0
@@ -264,6 +276,25 @@ def main():
             View2D(view_filename, view_nx, view_nz)
             window['figure'].update(data=convert_to_bytes('./View2D.png', resize=new_size))
 
+
+        elif event == 'bin_file':
+            bin_file_is_ok = 1
+
+        elif event == 'bin2dat_nx':
+            bin2dat_nx_is_ok = 1
+
+        elif event == 'bin2dat_nz':
+            bin2dat_nz_is_ok = 1
+
+        elif event == 'Bin2dat' and bin_file_is_ok and bin2dat_nx_is_ok and bin2dat_nz_is_ok:
+            try:
+                bin_file = values['bin_file']
+                data = loadbinfloat32(bin_file)
+                np.savetxt(bin_file.split('.') + '.dat', data.reshape((int(values['bin2dat_nx'], int(values['bin2dat_nz'])))))
+            except:
+                print(bin_file)
+                print(int(values['bin2dat_nx'], int(values['bin2dat_nz'])))
+            
         elif event == 'smooth_file':
             smooth_file_is_ok = 1
 

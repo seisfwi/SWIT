@@ -36,7 +36,7 @@ mpirun --version
 #### Step 3 : Install Anaconda Environment  
 
 ```bash
-#Anaconda is recommended. For installing Anaconda, refers to https://docs.anaconda.com/anaconda/install/linux/
+#Anaconda is recommended. For installing Anaconda, refer to https://docs.anaconda.com/anaconda/install/linux/
 #1. download package from: https://www.anaconda.com/products/individual/download-success
 #2. bash ~/your_Anaconda_package
 
@@ -67,7 +67,7 @@ source ~/.bashrc
 
 #Install SWIT package
 cd ~/SWIT-1.0/toolbox/
-python setup.py install
+python runswit.py
 ```
 
 ### SWIT Examples 

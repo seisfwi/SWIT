@@ -65,7 +65,7 @@ make
 export PATH=~/SWIT-1.0/bin:$PATH
 source ~/.bashrc
 
-#Install SWIT package
+#Run SWIT
 cd ~/SWIT-1.0/toolbox/
 python runswit.py
 ```

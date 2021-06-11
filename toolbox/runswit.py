@@ -182,7 +182,7 @@ def main():
     # right Columns
     block_5 = [[sg.Text('Viewing Options', justification='left', font=font3)],
             [sg.Text('_' * 300 + '\n')],
-            [sg.Combo(('Acquisition', 'Source-Wavelet', 'Velocity', 'Waveform', 'Gradient', 'Direction'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(33, 8))],
+            [sg.Combo(('Acquisition', 'Wavelet', 'Waveform', 'Velocity', 'Gradient', 'Direction', 'Illumination'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(33, 8))],
             [sg.Text(' ' * 300 + '\n')],
             [sg.Listbox(values=[], enable_events=True, size=(33,26),key='fig_list', font=font0)],
             ]
@@ -288,13 +288,21 @@ def main():
 
         elif event == 'Bin2dat' and bin_file_is_ok and bin2dat_nx_is_ok and bin2dat_nz_is_ok:
             try:
-                bin_file = values['bin_file']
-                data = loadbinfloat32(bin_file)
-                np.savetxt(bin_file.split('.') + '.dat', data.reshape((int(values['bin2dat_nx'], int(values['bin2dat_nz'])))))
+                file = values['bin_file']
+                nx = int(values['bin2dat_nx'])
+                nz = int(values['bin2dat_nz'])
+                data = loadbinfloat32(file)
+                filename = file[:-4] + '.dat'
+                np.savetxt(filename, data.reshape(nx , nz))
+                print('Save as: %s'%(filename))
             except:
-                print(bin_file)
-                print(int(values['bin2dat_nx'], int(values['bin2dat_nz'])))
-            
+                file = values['bin_file']
+                data = loadbinfloat32(file)
+                size = data.shape[0]
+                print('nx or nz is inconsistent with the bin file: %s' % (values['bin_file']))
+                print('the length of the bin file is: %d of float32'%size)
+
+
         elif event == 'smooth_file':
             smooth_file_is_ok = 1
 
@@ -326,15 +334,11 @@ def main():
             fig_type = values['fig_type']
             print('Viewing %s'%(fig_type))
 
-            if fig_type in ['Acquisition','Source-Wavelet']:
+            if fig_type in ['Acquisition','Wavelet']:
                 suffix = ''
             elif fig_type in ['Waveform']:
                 suffix = 'waveform/'
-            elif fig_type in ['Velocity']:
-                suffix = 'model/'
-            elif fig_type in ['Gradient']:
-                suffix = 'model/'
-            elif fig_type in ['Direction']:
+            elif fig_type in ['Velocity', 'Gradient', 'Direction', 'Illumination']:
                 suffix = 'model/'
             else:
                 suffix = ''
@@ -347,17 +351,18 @@ def main():
             fnames = [f for f in file_list if os.path.isfile(os.path.join(folder+suffix, f)) and f.lower().endswith((".png", ".jpg", "jpeg", ".tiff", ".bmp"))]
             fnames = sorted(fnames)
             # select figures for different view
-            if fig_type in ['Velocity']:
+            if   fig_type in ['Velocity']:
                 fnames = [f for f in fnames if f[0:2] == 'vp']
             elif fig_type in ['Gradient']:
                 fnames = [f for f in fnames if f[0:4] == 'grad']
             elif fig_type in ['Direction']:
                 fnames = [f for f in fnames if f[0:4] == 'dire']
+            elif fig_type in ['Illumination']:
+                fnames = [f for f in fnames if f[5:10] == 'illum']
             else:
                 pass
 
             window['fig_list'].update(fnames)
-
 
         elif event == 'fig_list':    # A file was chosen from the listbox
             try:
@@ -365,7 +370,7 @@ def main():
                 window['figure'].update(data=convert_to_bytes(filename, resize=new_size))
             except Exception as E:
                 print(f'** Error {E} **')
-                pass        # something weird happened making the full filename
+                pass                 # something weird happened making the full filename
         
         # update
         # Disk Graphs 

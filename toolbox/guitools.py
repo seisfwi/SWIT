@@ -179,9 +179,9 @@ def inversion_workflow(swit):
 
     ### process obs data
     if swit['field_data_path'] not in ['']:
-        print('copying obs data to the working folder: %s'%(swit['field_data_path']))
+        print('copying the obs data to the working folder...')
+        print('from: %s'%(swit['field_data_path']))
         os.system('cp %s %s'%(swit['field_data_path']+ '/*.su', swit['homepath'] + 'data/obs/'))
-
 
     process_workflow(simu, optim, simu_type='obs')
     plot_trace(simu, 'obs',      simu_type='obs', suffix='',      src_space=1, trace_space=5, scale = 0.8, color='r')

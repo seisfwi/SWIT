@@ -288,10 +288,16 @@ def prepare_inversion_parameter(GUI_Values):
         swit['fre_filter']  = GUI_Values['fre_filter']
         if swit['fre_filter']  in ['None']:
             swit['fre_low']  = 0.0
-            swit['fre_high'] = 100.0
-        else:
+            swit['fre_high'] = 200.0
+        elif swit['fre_filter']  in ['Bandpass']:
             swit['fre_low']  = float(GUI_Values['fre_low'])
             swit['fre_high'] = float(GUI_Values['fre_high'])
+        elif swit['fre_filter']  in ['Lowpass']:
+            swit['fre_low']  = float(GUI_Values['fre_low'])
+            swit['fre_high'] = 200.0
+        elif swit['fre_filter']  in ['Highpass']:
+            swit['fre_low']  = 0.0
+            swit['fre_high'] = float(GUI_Values['fre_low'])
 
         # pick first break and mute
         if GUI_Values['mute_late_arrival'] in ['Yes']:

@@ -40,7 +40,7 @@ def forward(simu, simu_type='obs', savesnap=0):
     # create working directory
     for isrc in range(srcn):
         ifolder = homepath + 'data/%s/src%d_snapshot'%(simu_type, isrc+1)
-        if not os.path.exists(ifolder):
+        if not os.path.exists(ifolder) and savesnap == 1:
             os.system('mkdir %s' % ifolder)    
 
     # prepare the forward source
@@ -73,12 +73,6 @@ def adjoint(simu, optim):
 
     # always clean previous data
     cleandata(homepath + 'data/adj/')
-
-    # create working directory
-    for isrc in range(srcn):
-        ifolder = homepath + 'data/adj/src%d_snapshot'%(isrc+1)
-        if not os.path.exists(ifolder):
-            os.system('mkdir %s' % ifolder)
 
     # prapare the adjoint source
     src = adjoint_source(simu, misfit_type)

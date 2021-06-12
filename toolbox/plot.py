@@ -244,7 +244,7 @@ def plot_inv_scheme(simu, optim, inv_scheme):
     plot_model2D(simu, dire.reshape(nx, nz).T, -dirc_caxis, dirc_caxis, 'dire-%03d' % it, colormap = 'seismic')
 
     if optim.iter == 1 :
-        plot_trace(simu, 'syn-proc-initial-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='k')
+        plot_trace(simu, 'syn-proc-initial-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='r')
     elif optim.iter == optim.maxiter:
         data_misfit = np.loadtxt('./outputs/misfit_data.dat')
         data_misfit = data_misfit / data_misfit[0]

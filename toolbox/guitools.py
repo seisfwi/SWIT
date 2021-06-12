@@ -83,11 +83,11 @@ def forward_workflow(swit):
     ### plots
     plot_geometry(simu)
     plot_stf(simu, isrc=1,  stf_type='forward', t_end = 2.0)
-    plot_model2D(simu, vp_true.T, vp_true.min(), vp_true.max(), 'init-vp', colormap = 'jet')
+    plot_model2D(simu, vp_true.T, vp_true.min(), vp_true.max(), 'vp-forward', colormap = 'jet')
 
     ### forward modeling
     forward(simu, simu_type='obs', savesnap=0)
-    plot_trace(simu, 'obs', simu_type='obs', suffix='', src_space=1, trace_space=5, scale = 0.8, color='r')
+    plot_trace(simu, 'obs', simu_type='obs', suffix='', src_space=1, trace_space=5, scale = 0.8, color='k')
 
     print('\n-----------  Forward modeling end  -----------\n')
 
@@ -184,8 +184,8 @@ def inversion_workflow(swit):
         os.system('cp %s %s'%(swit['field_data_path']+ '/*.su', swit['homepath'] + 'data/obs/'))
 
     process_workflow(simu, optim, simu_type='obs')
-    plot_trace(simu, 'obs',      simu_type='obs', suffix='',      src_space=1, trace_space=5, scale = 0.8, color='r')
-    plot_trace(simu, 'obs-proc', simu_type='obs', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='r')
+    plot_trace(simu, 'obs',      simu_type='obs', suffix='',      src_space=1, trace_space=5, scale = 0.8, color='k')
+    plot_trace(simu, 'obs-proc', simu_type='obs', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='k')
 
     ### begin inversion
     inversion(simu, optim, {'vp':vp_init,'rho':rho_init})

@@ -44,10 +44,10 @@ def main():
     # set_options
     sg.set_options(border_width=1, margins=(2, 2), element_padding=(0, 0))
 
-    font0 = ("courier 10 pitch", 12)
-    font1 = ("courier 10 pitch", 12)
-    font2 = ("courier 10 pitch", 14) # 'bold'
-    font3 = ("courier 10 pitch", 16)
+    font0 = ("courier 10 pitch", 14)
+    font1 = ("courier 10 pitch", 14)
+    font2 = ("courier 10 pitch", 16) # 'bold'
+    font3 = ("courier 10 pitch", 18)
 
     size2 = (18, 1)
     size2 = (28, 1)
@@ -176,15 +176,15 @@ def main():
 
     block_4 = [ [sg.Text('Output Histories', justification='left', font=font3)],
                 [sg.Text('_' * 300 + '\n')],
-                [sg.Output(size=(88, 12), key = 'output', font=font0)],
+                [sg.Output(size=(85, 13), key = 'output', font=font0)],
             ]
 
     # right Columns
     block_5 = [[sg.Text('Viewing Options', justification='left', font=font3)],
             [sg.Text('_' * 300 + '\n')],
-            [sg.Combo(('Acquisition', 'Wavelet', 'Waveform', 'Velocity', 'Gradient', 'Direction', 'Illumination'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(33, 8))],
+            [sg.Combo(('Acquisition', 'Wavelet', 'Waveform', 'Velocity', 'Gradient', 'Direction', 'Illumination'), default_value='Acquisition', enable_events=True, key='fig_type', font=font1, size=(36, 8))],
             [sg.Text(' ' * 300 + '\n')],
-            [sg.Listbox(values=[], enable_events=True, size=(33,26),key='fig_list', font=font0)],
+            [sg.Listbox(values=[], enable_events=True, size=(36,26),key='fig_list', font=font0)],
             ]
 
     block_6 = [[sg.Text('System Status', justification='left', font=font3)],
@@ -199,20 +199,19 @@ def main():
     # overall layout
     layout = [[sg.Menu(menu_def, tearoff=True)],
             [
-                sg.Column([ [sg.Column(block_1, size=(450,650), pad=BPAD_LEFT_INSIDE)],
-                            [sg.Column(block_2, size=(450,300), pad=BPAD_LEFT_INSIDE)]], 
+                sg.Column([ [sg.Column(block_1, size=(350,600), pad=BPAD_LEFT_INSIDE)],
+                            [sg.Column(block_2, size=(350,300), pad=BPAD_LEFT_INSIDE)]], 
                             pad=BPAD_LEFT, background_color=BORDER_COLOR, vertical_alignment='center', justification='center',  k='C1'),
                 sg.VSeperator(),
-                sg.Column([ [sg.Column(block_3, size=(900,650), pad=BPAD_LEFT_INSIDE)],
-                            [sg.Column(block_4, size=(900,300), pad=BPAD_LEFT_INSIDE)]], 
+                sg.Column([ [sg.Column(block_3, size=(800,600), pad=BPAD_LEFT_INSIDE)],
+                            [sg.Column(block_4, size=(800,300), pad=BPAD_LEFT_INSIDE)]], 
                             pad=BPAD_LEFT, background_color=BORDER_COLOR, vertical_alignment='center', justification='center',  k='C2'),
                 sg.VSeperator(),
-                sg.Column([ [sg.Column(block_5, size=(350,650), pad=BPAD_LEFT_INSIDE)],
+                sg.Column([ [sg.Column(block_5, size=(350,600), pad=BPAD_LEFT_INSIDE)],
                             [sg.Column(block_6, size=(350,300), pad=BPAD_LEFT_INSIDE)]], 
                             pad=BPAD_LEFT, background_color=BORDER_COLOR, vertical_alignment='center', justification='center',  k='C3'),
             ]
             ]
-
 
 
     # show window
@@ -239,7 +238,7 @@ def main():
     smooth_span_is_ok = 0
     smooth_top_mute_is_ok = 0
     
-    new_size = (1200,520)
+    new_size = (1000,470)
 
     # Event Loop
     while True:

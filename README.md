@@ -76,12 +76,12 @@ python runswit_Linux.py    # or python runswit_MacOS.py
 #### Case 1: Overthrust Model Inversion (land)
 
 ```bash
-~~~
+
 ```
 
 #### Case 2: Marmousi Model Inversion (Marine)
 
 ```bash
-~~~
+
 ```
 

@@ -37,7 +37,7 @@ def misfit(simu, misfit_type):
 
 
 def misfit_serial(homepath, isrc, misfit_type):
-    ''' Calculate the misfit function for the single shot
+    ''' Calculate the misfit function for a single shot
     '''
 
     obs = loadsu(homepath + 'data/obs/src%d_sg_proc.su'%(isrc+1))
@@ -85,7 +85,7 @@ def adjoint_source(simu, misfit_type):
 
 
 def adjoint_source_serial(homepath, isrc, misfit_type):
-    ''' Caculate the adjoint source for the single source
+    ''' Caculate the adjoint source for a single source
     '''
 
     obs = loadsu(homepath + 'data/obs/src%d_sg_proc.su'%(isrc+1))

@@ -71,6 +71,26 @@ python runswit_Linux.py    # or python runswit_MacOS.py
 
 ```
 
+#### Notice :   
+
+```bash
+# If you use the Intel Compiler
+# You need to make the following change in toolbox/solver.py
+# Change Line 54:     
+#	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+# to:
+#   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+
+# Change Line 85:     
+#	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+# to:
+#   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+
+
+
+
+```
+
 ### SWIT Examples 
 
 #### Case 1: Overthrust Model Inversion (land)

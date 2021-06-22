@@ -63,19 +63,16 @@ def adjoint(simu, optim):
     '''
 
     # get prepared
-    nx = simu.model.nx
-    nz = simu.model.nz
-    srcn = simu.source.n
     mpiproc = simu.system.mpiproc
     homepath = simu.system.homepath
     parfile = homepath + 'parfile/adjoint_parfile/parfile'
     misfit_type = optim.misfit_type
 
-    # always clean previous data
-    cleandata(homepath + 'data/adj/')
-
     # prapare the adjoint source
     src = adjoint_source(simu, misfit_type)
+
+    # add a negtive sign
+    src = -src
 
     # write parameters and model files
     write_parfile(simu, 'adj', src, savesnap=0)
@@ -88,17 +85,13 @@ def adjoint(simu, optim):
         raise ValueError('Adjoint solver crash')
 
     # load and merge gradients and illuminations
-    grad = np.zeros(nx*nz, dtype=np.float32)
-    forw = np.zeros(nx*nz, dtype=np.float32)
-    back = np.zeros(nx*nz, dtype=np.float32)
-    for isrc in range(srcn):
-        grad = grad + loadbinfloat32(homepath+'data/adj/src%d_kernel_vp.bin'  % (isrc+1))
-        forw = forw + loadbinfloat32(homepath+'data/adj/src%d_illum_forw.bin' % (isrc+1))
-        back = back + loadbinfloat32(homepath+'data/adj/src%d_illum_back.bin' % (isrc+1))
-    
+
+    grad = loadbinfloat32(homepath+'data/syn/src0_kernel_vp.bin')
+    forw = loadbinfloat32(homepath+'data/syn/src0_illum_forw.bin')
+    back = loadbinfloat32(homepath+'data/syn/src0_illum_back.bin')
+
     # gradient precondtioning
     return grad_precond(simu, optim, grad, forw, back)
-
 
 
 def write_parfile(simu, simu_type, src, savesnap = 0):
@@ -140,8 +133,12 @@ def write_parfile(simu, simu_type, src, savesnap = 0):
         fp.write('jobtype=forward_modeling\n')
     elif simu_type in ['adj']:
         fp.write('jobtype=adjoint_modeling\n')
+    
     fp.write('COORD_FILE=%s\n'       % (path + 'parfile/model/coord.txt'))
-    fp.write('DATA_OUT=%s\n'         % (path + 'data/'+ simu_type + '/src'))
+    if simu_type in ['obs']:
+        fp.write('DATA_OUT=%s\n'         % (path + 'data/obs/src'))
+    elif simu_type in ['syn', 'adj']:
+        fp.write('DATA_OUT=%s\n'         % (path + 'data/syn/src'))
     fp.write('VEL_IN=%s\n'           % (path + 'parfile/model/vel.bin'))
     fp.write('DENSITYFILE=%s\n'      % (path + 'parfile/model/rho.bin'))
     fp.write('FILEFORMAT=su\n'                      )

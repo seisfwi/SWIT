@@ -84,7 +84,7 @@ if (rank == 0) then
   call readParFile(parfile, 'XMAX',             par%xmax,  real(par%nx-1)*par%dx)
 endif
 
-call MPI_BCAST(par%data_out,100,      MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+call MPI_BCAST(par%data_out,100,     MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%velfile,100,      MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%densityfile,100,  MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%fileformat,100,   MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
@@ -96,8 +96,8 @@ call MPI_BCAST(par%nz,1,             MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%nt,1,             MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%free_surface,1,   MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%npml,1,           MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-call MPI_BCAST(par%store_snap,1,           MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-call MPI_BCAST(par%store_step,1,           MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+call MPI_BCAST(par%store_snap,1,     MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+call MPI_BCAST(par%store_step,1,     MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 
 call MPI_BCAST(par%dx,1,             MPI_REAL,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%dt,1,             MPI_REAL,0,MPI_COMM_WORLD,ierr)

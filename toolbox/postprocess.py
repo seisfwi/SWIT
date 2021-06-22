@@ -70,9 +70,7 @@ def grad_precond(simu, optim, grad, forw, back):
     # scale the gradient properly
     grad *= vpmax / abs(grad).max()
 
-
     return array2vector(grad)
-
 
 
 def grad_taper(nx, nz, tapersize=20, thred=0.05, marine_or_land='Marine'):
@@ -82,6 +80,7 @@ def grad_taper(nx, nz, tapersize=20, thred=0.05, marine_or_land='Marine'):
         taper = np.ones((nx, nz))
         for ix in range(nx):
             taper[ix, :tapersize] = 0.0
+            
     # for the land gradient damping, use the small threds
     else:
         H = scipy.signal.hamming(tapersize*2)  # gaussian window

@@ -75,7 +75,6 @@ class simulate(object):
         homepath = self.system.homepath
         # clean the previous data if exists
         folder_list = [homepath+'data/syn',
-                       homepath+'data/adj',
                        homepath+'data/tempdata',
                        homepath+'parfile',
                        homepath+'outputs',
@@ -90,7 +89,6 @@ class simulate(object):
                        homepath+'data',                      # Data folder
                        homepath+'data/obs/',                 # Observed data
                        homepath+'data/syn/',                 # Synthetic data
-                       homepath+'data/adj/',                 # Adjoint data
                        homepath+'data/tempdata/',            # Tempdata data
                        homepath+'parfile',                   # Parfile
                        homepath+'parfile/forward_parfile/',  # Forward parfile
@@ -162,7 +160,7 @@ class model(object):
         self.vpmin = vp.min()                                  # mininum vp
         # output
         self.savesnap = 0
-        self.savestep = 10
+        self.savestep = 1
 
 
 class source(object):

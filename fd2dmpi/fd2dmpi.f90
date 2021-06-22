@@ -19,6 +19,5 @@ character*256 :: parfile
         call adjoint_modeling(parfile)
     endif
  
-
 end program fd2dmpi
 

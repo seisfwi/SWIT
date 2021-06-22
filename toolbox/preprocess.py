@@ -51,6 +51,7 @@ def process_workflow_serial(optim, loadpath, savepath, isrc, nt, dt, use_first_b
     trace = add_su_header(trace, nt, dt, isrc, 'pressure')
 
     ## process workflow
+    apply_normalize(optim, trace)
     apply_mute(optim, trace, use_first_break_in_su_header)
     apply_filter(optim, trace)
     apply_normalize(optim, trace)
@@ -191,9 +192,12 @@ def brutal_picker(trace):
     ''' pick the first arrival 
     '''
     # set parameter
-    threds = 0.000001
+    # threds = 0.000001
+    # trace = su2array(trace)
+    # threds *= np.median(abs(trace))
+
+    threds = 0.01
     trace = su2array(trace)
-    threds *= np.median(abs(trace))
 
     return (abs(trace) > threds).argmax(axis=-1)
 

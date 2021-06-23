@@ -1,3 +1,15 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  The subroutines below are adapted from the Computational Toolkit provided in: 
+!   
+!      Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists.
+!
+!  We kindly thank Prof. Schuster for allowing us to use these useful and efficient Fortran 
+!  subroutines. Please Cite the book above if you use these subroutines.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 ! module for defining data structures
 !
 module datatype

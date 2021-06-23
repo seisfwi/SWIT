@@ -1,3 +1,15 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!  The subroutines below are adapted from the Computational Toolkit provided in: 
+!   
+!      Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists.
+!
+!  We kindly thank Prof. Schuster for allowing us to use these useful and efficient Fortran 
+!  subroutines. Please Cite the book above if you use these subroutines.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 ! module defining global variables
 !
 module global
@@ -15,12 +27,10 @@ character(len=200) :: jobtype, input, output
 integer, parameter :: i4 = 4
 
 ! FD coefficients
-!时间二阶、空间四阶同位网格差分系数
 real, parameter :: c1_2nd_order = -2.5
 real, parameter :: c2_2nd_order = 4.0/3.0
 real, parameter :: c3_2nd_order = -1.0/12.0
 
-!时间二阶、空间四阶交错网格差分系数
 real, parameter :: c1_staggered = 9.0/8.0
 real, parameter :: c2_staggered = -1.0/24.0
 

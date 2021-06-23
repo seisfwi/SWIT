@@ -28,16 +28,19 @@ from solver import forward, source_wavelet
 from tools import loadfile_gui, saveparjson, smooth2d
 
 
-def myasync(f):
+def switasync(f):
+    ''' async
+    '''
     def wrapper(*args, **kwargs):
         thr = Thread(target=f, args=args, kwargs=kwargs)
         thr.start()
     return wrapper
  
  
-@myasync
+@switasync
 def forward_workflow(swit):
-    
+    ''' waveform modeling
+    '''
     homepath = swit['homepath']              # home path
     mpiproc  = swit['mpiproc']               # mpi process
 
@@ -92,9 +95,10 @@ def forward_workflow(swit):
     print('\n-----------  Forward modeling end  -----------\n')
 
 
-@myasync
+@switasync
 def inversion_workflow(swit):
-
+    ''' waveform inversion 
+    ''' 
     homepath = swit['homepath']              # home path
     mpiproc  = swit['mpiproc']               # mpi process
 
@@ -119,7 +123,6 @@ def inversion_workflow(swit):
             wavelet[isrc,:] = source_wavelet(nt, dt, f0, 'ricker')
         else:
             wavelet[isrc,:] = np.loadtxt(swit['wavelet_file'])
-
 
     ### receivers setup
     temp = np.loadtxt(swit['rec_coor'])
@@ -193,7 +196,8 @@ def inversion_workflow(swit):
 
 # push button do something
 def prepare_forward_parameter(GUI_Values):
-
+    ''' prepare parameters for forward 
+    ''' 
     try:
         # make necessary adjustment
         if GUI_Values['homepath'][-1] not in ['/']:
@@ -236,7 +240,8 @@ def prepare_forward_parameter(GUI_Values):
 
 # push button do something
 def prepare_inversion_parameter(GUI_Values):
-
+    ''' prepare parameters for inversion 
+    ''' 
     try:
         # make necessary adjustment
         if GUI_Values['homepath'][-1] not in ['/']:
@@ -321,6 +326,7 @@ def prepare_inversion_parameter(GUI_Values):
         else:
             swit['mute_offset_long'] = False
             swit['mute_offset_long_dis'] = 1.e8
+
         swit['normalize'] = GUI_Values['normalize']
 
         return swit
@@ -331,7 +337,8 @@ def prepare_inversion_parameter(GUI_Values):
 
 
 def View2D(filename, nx, nz):
-    
+    ''' View 2D
+    '''
     try:
         nx = int(nx)
         nz = int(nz)
@@ -372,7 +379,8 @@ def View2D(filename, nx, nz):
 
 
 def Smooth2D(smooth_filename, smooth_span, smooth_top_mute):
-
+    ''' smooth 2D
+    '''
     try:
         smooth_span = int(smooth_span)
         smooth_top_mute = int(smooth_top_mute)
@@ -420,6 +428,8 @@ def convert_to_bytes(file_or_bytes, resize=None):
 # system status
 GRAPH_WIDTH, GRAPH_HEIGHT = 180, 100       # each individual graph size in pixels
 class DashGraph(object):
+    ''' Dash graph
+    '''
     def __init__(self, graph_elem, starting_count, color):
         self.graph_current_item = 0
         self.graph_elem = graph_elem            # type:sg.Graph
@@ -451,11 +461,15 @@ class DashGraph(object):
 
 
 def human_size(bytes, units=(' bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB')):
-    """ Returns a human readable string reprentation of bytes"""
+    '''
+        Returns a human readable string reprentation of bytes
+    '''
     return str(bytes) + units[0] if bytes < 1024 else human_size(bytes >> 10, units[1:])
 
 
 def GraphColumn(name, key):
+    ''' Graph column
+    '''
     layout = [
         [sg.Text(name, size=(18,1), font=('newspaper 12'), key=key+'TXT_')],
         [sg.Graph((GRAPH_WIDTH, GRAPH_HEIGHT),

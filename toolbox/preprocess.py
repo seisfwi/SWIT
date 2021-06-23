@@ -51,7 +51,6 @@ def process_workflow_serial(optim, loadpath, savepath, isrc, nt, dt, use_first_b
     trace = add_su_header(trace, nt, dt, isrc, 'pressure')
 
     ## process workflow
-    apply_normalize(optim, trace)
     apply_mute(optim, trace, use_first_break_in_su_header)
     apply_filter(optim, trace)
     apply_normalize(optim, trace)

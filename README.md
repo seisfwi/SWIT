@@ -1,6 +1,4 @@
-# SWIT-1.0
-
-Seismic Waveform Inversion Toolbox 1.0
+# **S**eismic **W**aveform **I**nversion **T**oolbox   (SWIT-1.0)
 
 ### Install SWIT 
 

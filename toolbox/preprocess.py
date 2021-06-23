@@ -195,11 +195,14 @@ def brutal_picker(trace):
     # threds = 0.000001
     # trace = su2array(trace)
     # threds *= np.median(abs(trace))
+    
+    trace  = su2array(trace)
+    threds = 0.001 * np.max(abs(trace), axis=-1)
 
-    threds = 0.01
-    trace = su2array(trace)
+    pick = [(abs(trace[i,:]) > threds[i]).argmax(axis=-1) for i in range(trace.shape[0])]
 
-    return (abs(trace) > threds).argmax(axis=-1)
+    return np.array(pick)
+
 
 
 def mute_offset(trace, mute_dist, mutetype):

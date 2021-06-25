@@ -70,7 +70,7 @@ for isrc in range(srcn):
 
 ### inversion parameter
 misfit_type = 'Waveform'                           # 'Traveltime', 'Waveform', 'Globalcorrelation'
-scheme      = 'LBFGS'                               # 'NLCG', 'LBFGS'
+scheme      = 'NLCG'                               # 'NLCG', 'LBFGS'
 maxiter     = 40                                   # maximum iteration number,  i.e., 20
 step_length = 0.01                                 # maximum update percentage, i.e., 0.05
 vpmax       = 5000                                 # maximum allowed velocity

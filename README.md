@@ -49,24 +49,24 @@ pip install multiprocess PySimpleGUI psutil Pillow
 #### Step 4 : Install SWIT  
 
 ```bash
-# Download from: https://github.com/Haipeng-ustc/SWIT-1.0
-git clone https://github.com/Haipeng-ustc/SWIT-1.0
-
 # Complie the fd2dmpi forward solver (Fortran version)
 # Edit the Makefile.config file, make sure FCC (line 18) can be found 
 cd ~/SWIT-1.0/fd2dmpi/
 rm *.mod
 make clean   
 make
-
 # Add fd2dmpi to the env path
 export PATH=~/SWIT-1.0/bin:$PATH
+# Add fd2dmpi to the env path
+export PYTHONPATH=~/SWIT-1.0/toolbox
+
 source ~/.bashrc
 
 # Run SWIT
 cd ~/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
+# or you can run the python scripts in the example folder
 ```
 
 #### Notice :   
@@ -89,17 +89,12 @@ python runswit_Linux.py    # or python runswit_MacOS.py
 
 ```
 
-### SWIT Examples 
+### Examples 
 
-#### Case 1: Overthrust Model Inversion (land)
-
-```bash
-To be done in future
-```
-
-#### Case 2: Marmousi Model Inversion (Marine)
-
-```bash
-To be done in future
-```
+| Case name | Environment |   Model    |     Size     | Optimization |
+| :-------: | :---------: | :--------: | :----------: | :----------: |
+|     1     |    Land     |  Marmousi  | 481x121, 25m |     NLCG     |
+|     2     |    Land     | Overthrust | 401x101, 25m |     NLCG     |
+|     3     |   Marine    |  Marmousi  | 481x141, 25m |     NLCG     |
+|     4     |   Marine    | Overthrust | 401x121, 25m |     NLCG     |
 

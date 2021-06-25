@@ -62,11 +62,14 @@ export PYTHONPATH=~/SWIT-1.0/toolbox
 
 source ~/.bashrc
 
-# Run SWIT
+# Run SWIT via GUI
 cd ~/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
-# or you can run the python scripts in the example folder
+# or Run SWIT via python script in the example folder
+cd ~/example/some_case/
+./run_workflow
+
 ```
 
 #### Notice :   
@@ -74,12 +77,12 @@ python runswit_Linux.py    # or python runswit_MacOS.py
 ```bash
 # If you use the Intel Compiler
 # You need to make the following change in toolbox/solver.py
-# Change Line 54:     
+# Change:     
 #	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 # to:
 #   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 
-# Change Line 85:     
+# Change:     
 #	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 # to:
 #   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)

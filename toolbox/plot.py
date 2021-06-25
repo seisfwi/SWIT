@@ -193,9 +193,13 @@ def plot_wavelet(simu, wavelet, filename, scale=1.0, color='r', plot_dx=1000, t_
     ''' plot wavelet
     '''
     dt = simu.model.dt
+    nt = simu.model.nt
     srcx = simu.source.xz[:,0]
-    wavelet = convert_wavelet_su(dt, simu.source.wavelet, srcx)
 
+    if t_end > dt * (nt-1):
+        t_end = dt * (nt-1)
+
+    wavelet = convert_wavelet_su(dt, simu.source.wavelet, srcx)
 
     figpath = simu.system.homepath + 'figures/'
 

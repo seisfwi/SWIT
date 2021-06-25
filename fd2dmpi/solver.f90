@@ -195,6 +195,10 @@ subroutine adjoint_modeling(parfile)
   dfw  = 0.0
   dbk  = 0.0
 
+  p_bk = 0.0
+  u_bk = 0.0
+  w_bk = 0.0
+
   do is = is1, is2, 1
     
     ! Read forward source 
@@ -214,11 +218,6 @@ subroutine adjoint_modeling(parfile)
     call read_binfile(str, u_end, par%nz, par%nx)
     call filename(str, par%data_out, is, '_snapshot/w_end.bin')
     call read_binfile(str, w_end, par%nz, par%nx)
-
-    ! calculate gradient
-    p_bk = 0.0
-    u_bk = 0.0
-    w_bk = 0.0
 
     do it=par%nt,2,-1
 

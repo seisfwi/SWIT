@@ -22,6 +22,7 @@ def grad_precond(simu, optim, grad, forw, back):
     '''
     nx = simu.model.nx
     nz = simu.model.nz
+    vp = simu.model.vp
     vpmax = optim.vpmax
     marine_or_land = optim.marine_or_land
     grad_mute = optim.grad_mute
@@ -40,8 +41,8 @@ def grad_precond(simu, optim, grad, forw, back):
         grad *= grad_taper(nx, nz, tapersize = grad_mute, thred = grad_thred, marine_or_land=marine_or_land)
 
     # apply the inverse Hessian
-    if min(nx, nz) > 40:      # set 40 grids in default
-        span = 40
+    if min(nx, nz) > 20:      # set 40 grids in default
+        span = 20
     else:                     # in case the grid number is less than 40
         span = int(min(nx, nz)/2)
     forw = smooth2d(forw, span)
@@ -64,16 +65,19 @@ def grad_precond(simu, optim, grad, forw, back):
         else:
             grad = smooth2d(grad, span=grad_smooth)
 
-    # scale the gradient using the velocity
-    grad = 2 * grad / np.power(simu.model.vp, 3)
+    # gradient with respect to the velocity
+    grad = - 2 * grad   #  / np.power(simu.model.vp, 3)
 
     # scale the gradient properly
     grad *= vpmax / abs(grad).max()
+  
 
     return array2vector(grad)
 
 
 def grad_taper(nx, nz, tapersize=20, thred=0.05, marine_or_land='Marine'):
+    ''' Gradient taper
+    '''
 
     # for masking the water layer, use the zero threds
     if marine_or_land in ['Marine', 'Offshore']: 

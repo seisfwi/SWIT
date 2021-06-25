@@ -248,9 +248,9 @@ def backtrack(simu, optim, inv_scheme):
     inc = 2.1          # double the step
     ftol = 1e-4        # control the accuracy of the line search routine
     wolfe = 0.9        # coefficient for the Wolfe condition
-    search_max = 4     # line search max iteration
-    vmax_thresh = 600  # when direction is too large
-    vmin_thresh = 30   # when direction is too small
+    search_max = 6     # line search max iteration
+    vmax_thresh = 800  # when direction is too large
+    vmin_thresh = 20   # when direction is too small
 
     # get parameters
     misfit_type = optim.misfit_type
@@ -312,7 +312,7 @@ def backtrack(simu, optim, inv_scheme):
         if ls_iter >= search_max:
             ls_status = -1
             inv_scheme = updata_inv_scheme(inv_scheme, ls_status, ls_iter, step, f_try, v_try)
-            print("line search error: exceed the max iteration of linesearch.")
+            print("line search fails: exceed the iteration of linesearch.")
             return inv_scheme
 
         # update the step length
@@ -388,7 +388,7 @@ def desicion_make(simu, optim, inv_scheme):
             inv_scheme['cg_it'] = 0
             inv_scheme['g_old'] = inv_scheme['g_old'] * 0. 
             inv_scheme['d_old'] = inv_scheme['d_old'] * 0. 
-            print('line seach failed: restarting the line search ...')
+            print('line search fails: restarting the line search ...')
 
         # when the line search succeeds or CG iteration = 1
         else:
@@ -397,7 +397,7 @@ def desicion_make(simu, optim, inv_scheme):
             inv_scheme['f_old'] = inv_scheme['f_now']
             inv_scheme['f_now'] = inv_scheme['f_try']
             inv_scheme['v_now'] = inv_scheme['v_try']
-            print('accept line seach result')
+            print('accept line search result')
 
     elif optim.scheme in ['LBFGS']:
         # when the line search fails
@@ -411,7 +411,7 @@ def desicion_make(simu, optim, inv_scheme):
             inv_scheme['f_now'] = inv_scheme_old['f_now']
             inv_scheme['g_now'] = inv_scheme_old['g_now']
             inv_scheme['d_now'] = inv_scheme_old['d_now']
-            print('line seach failed: restarting the line search ...')
+            print('line search fails: restarting the line search ...')
 
         # when the line search succeeds or CG iteration = 1
         else:
@@ -420,7 +420,7 @@ def desicion_make(simu, optim, inv_scheme):
             inv_scheme['v_now'] = inv_scheme['v_try']
             inv_scheme['f_old'] = inv_scheme['f_now']
             inv_scheme['f_now'] = inv_scheme['f_try']
-            print('accept line seach result')
+            print('accept line search result')
 
     # update the velocity model
     simu.model.vp = vector2array(inv_scheme['v_now'], nx, nz)

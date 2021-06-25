@@ -70,10 +70,7 @@ def adjoint(simu, optim):
 
     # prapare the adjoint source
     src = adjoint_source(simu, misfit_type)
-
-    # add a negtive sign
-    src = -src
-
+    
     # write parameters and model files
     write_parfile(simu, 'adj', src, savesnap=0)
 

@@ -351,11 +351,11 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
   
     ! Geophone is shifted downward 1 node if it is on the free surface.
     ! if (par%data(1:8) == 'pressure') then
-      if (igz .gt. fs(igx)) then
-        p(igz,igx) = p(igz,igx) + beta*s(it,ig)
-      else
-        p(fs(igx)+1,igx) = p(fs(igx)+1,igx) + beta*s(it,ig)
-      endif
+    if (igz .gt. fs(igx)) then
+      p(igz,igx) = p(igz,igx) + beta*s(it,ig)
+    else
+      p(fs(igx)+1,igx) = p(fs(igx)+1,igx) + beta*s(it,ig)
+    endif
     ! else
     !   if (igz .gt. fs(igx)) then
     !     w(igz,igx) = w(igz,igx) + beta*s(it,ig)

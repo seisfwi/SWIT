@@ -40,15 +40,15 @@ def grad_precond(simu, optim, grad, forw, back):
     if grad_mute > 0:
         grad *= grad_taper(nx, nz, tapersize = grad_mute, thred = grad_thred, marine_or_land=marine_or_land)
 
-    # apply the inverse Hessian
-    if min(nx, nz) > 20:      # set 40 grids in default
-        span = 20
+    #apply the inverse Hessian
+    if min(nx, nz) > 40:      # set 40 grids in default
+        span = 40
     else:                     # in case the grid number is less than 40
         span = int(min(nx, nz)/2)
     forw = smooth2d(forw, span)
     back = smooth2d(back, span)
     
-    epsilon = 0.001
+    epsilon = 0.0001
     forw = forw / np.max(forw)
     back = back / np.max(back)
     precond = forw + back

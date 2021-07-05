@@ -59,6 +59,7 @@ def inversion(simu, optim, inv_model):
         # Non-linear Conjugate Gradient algorithm
         if optim.scheme in ['NLCG']:
             inv_scheme = NLCG(inv_scheme)
+            
         # Limited-memory Broyden–Fletcher–Goldfarb–Shanno (quasi-Newton algorithm) 
         elif optim.scheme in ['LBFGS']:
             inv_scheme = LBFGS(inv_scheme)

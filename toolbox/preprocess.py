@@ -60,7 +60,8 @@ def process_workflow_serial(optim, loadpath, savepath, isrc, nt, dt, use_first_b
 
 
 def apply_filter(optim, trace):
-    
+    ''' apply filter
+    '''
     # get parameters
     recn, nt, dt = get_su_parameter(trace)
     fre_filter = optim.fre_filter
@@ -190,10 +191,6 @@ def apply_normalize(optim, trace):
 def brutal_picker(trace):
     ''' pick the first arrival 
     '''
-    # set parameter
-    # threds = 0.000001
-    # trace = su2array(trace)
-    # threds *= np.median(abs(trace))
     
     trace  = su2array(trace)
     threds = 0.001 * np.max(abs(trace), axis=-1)
@@ -205,13 +202,7 @@ def brutal_picker(trace):
 
 
 def mute_offset(trace, mute_dist, mutetype):
-    ''' Mutes traces having
-
-         mutetype = short:   || s - r || < mute_dist  or 
-         mutetype = long :   || s - r || > mute_dist
-         
-        where || s - r || is the offset between source and receiver and
-        DIST is a user-supplied cutoff
+    ''' mutes traces according to offset
     '''
 
     # offset
@@ -228,7 +219,7 @@ def mute_offset(trace, mute_dist, mutetype):
 
 
 def mute_arrival(trace, itmin, itmax, mutetype, nt, length):
-    ''' Applies tapered mask to record section, muting early or late arrivals
+    ''' applies tapered mask to record section, muting early or late arrivals
     '''
 
     # apply tapered mask
@@ -242,7 +233,7 @@ def mute_arrival(trace, itmin, itmax, mutetype, nt, length):
 
 # functions acting on individual traces
 def mask(itmin, itmax, nt, length):
-    ''' Constructs tapered mask that can be applied to trace to
+    ''' constructs tapered mask that can be applied to trace to
         mute early or late arrivals.
     '''
     mask = np.ones(nt)

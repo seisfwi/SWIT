@@ -238,7 +238,7 @@ def prepare_forward_parameter(GUI_Values):
 
 
 
-# push button do something
+# push button and do something
 def prepare_inversion_parameter(GUI_Values):
     ''' prepare parameters for inversion 
     ''' 

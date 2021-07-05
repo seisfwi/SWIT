@@ -32,7 +32,7 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 class Struct:
-    ''' json Decoder. 
+    ''' Json Decoder. 
     '''
 
     def __init__(self, **entries):
@@ -332,8 +332,9 @@ def save_inv_scheme(simu, optim, inv_scheme):
         savetxt(outputpath+'/waveform_misfit.dat', inv_scheme['waveform_misfit'], 'float')
 
 
-
 def loadfile_gui(filename, nx, nz):
+    ''' load file for GUI
+    '''
 
     data = np.zeros((nx, nz))
     

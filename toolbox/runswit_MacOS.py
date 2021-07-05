@@ -112,7 +112,7 @@ def main():
                     [sg.Text('Vpmin',             size=size_txt, font=font1), sg.Input(size=size3, key='vpmin',       font=font1)],
                     [sg.Text('Gradient mute',     size=size_txt, font=font1), sg.Input(size=size3, key='grad_mute',   font=font1)],
                     [sg.Text('Gradient smooth',   size=size_txt, font=font1), sg.Input(size=size3, key='grad_smooth', font=font1)],
-                    [sg.Text('Normalization',     size=size_txt, font=font1), sg.Combo(('L1-Trace', 'L2-Trace', 'L1-Event', 'L2-Event', 'None'), default_value='L1-Trace', key='normalize', font=font1, size=size3)],
+                    [sg.Text('Normalization',     size=size_txt, font=font1), sg.Combo(('L1-Trace', 'L2-Trace', 'L1-Event', 'L2-Event', 'None'), default_value='None', key='normalize', font=font1, size=size3)],
                     [sg.Text('Frequency filter',  size=size_txt, font=font1), sg.Combo(('None', 'Bandpass', 'Lowpass', 'Highpass'), default_value='None', key='fre_filter', font=font1, size=size3)],
                     [sg.Text('Frequency low',     size=size_txt, font=font1), sg.Input(size=size3, key='fre_low',  font=font1)],
                     [sg.Text('Frequency high',    size=size_txt, font=font1), sg.Input(size=size3, key='fre_high', font=font1)],

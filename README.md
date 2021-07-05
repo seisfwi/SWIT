@@ -1,8 +1,14 @@
 # **S**eismic **W**aveform **I**nversion **T**oolbox   (SWIT-1.0)
 
-### Install SWIT 
+By Haipeng Li @ USTC
 
-#### Step 1: Install gcc and gfortran
+Contact: haipengl@mail.ustc.edu.cn
+
+
+
+### SWIT Installation 
+
+#### Step 1: Install  gfortran
 
 ```bash
 # Install gcc and gfortran
@@ -27,13 +33,13 @@ export PATH=/usr/local/openmpi/bin:$PATH
 source ~/.bashrc
 
 # Check OpenMPI is successfully installed
-mpirun --version
+which mpirun
 ```
 
-#### Step 3 : Install Anaconda Environment  
+#### Step 3 : Install Anaconda Environment
 
 ```bash
-# Anaconda is recommended. For installing Anaconda, refer to https://docs.anaconda.com/anaconda/install/linux/
+# Anaconda is recommended. For installing Anaconda, please refer to https://docs.anaconda.com/anaconda/install/linux/
 # 1. download package from: https://www.anaconda.com/products/individual/download-success
 # 2. bash ~/your_Anaconda_package
 
@@ -42,20 +48,19 @@ conda create --name SWIT python=3.7.5
 conda activate SWIT
 
 # Install dependencies using USTC mirrors (whether use Anaconda or not)
-pip install numpy obspy scipy matplotlib -i https://pypi.mirrors.ustc.edu.cn/simple/
-pip install multiprocess PySimpleGUI psutil Pillow -i https://pypi.mirrors.ustc.edu.cn/simple/
+pip install numpy obspy scipy matplotlib multiprocess PySimpleGUI psutil Pillow -i https://pypi.mirrors.ustc.edu.cn/simple/
 ```
 
-#### Step 4 : Install SWIT  
+#### Step 4 : Install & Run SWIT  
 
 ```bash
-# Complie the fd2dmpi forward solver (Fortran version), edit the Makefile.config file, make sure FCC (line 18) is right 
+# Complie the fd2dmpi forward solver, edit the Makefile.config file, make sure FCC (line 18) is right 
 cd ~/SWIT-1.0/fd2dmpi/
 rm *.mod
 make clean   
 make
 
-# Add fd2dmpi, toolbox to the env path
+# Add fd2dmpi to the env path
 export PATH=~/SWIT-1.0/bin:$PATH
 source ~/.bashrc
 
@@ -67,18 +72,9 @@ python runswit_Linux.py    # or python runswit_MacOS.py
 cd ~/example/some_case/
 ./run_workflow
 
-```
-
-#### Note :   
-
-```bash
+# Notice:
 # If you use the Intel Compiler
-# You need to make the following change in toolbox/solver.py
-# Change:     
-#	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
-# to:
-#   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
-
+# You need to make the following change in forward and adjoint functions in toolbox/solver.py: 
 # Change:     
 #	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 # to:
@@ -94,13 +90,12 @@ cd ~/example/some_case/
 |     3     |   Marine    |  Marmousi  | 481x141, 25m |     NLCG     |
 |     4     |   Marine    | Overthrust | 401x121, 25m |     NLCG     |
 
-#### Citation :   
+### Citations :   
 
 ```
 If you find SWIT is useful, please cite the following work:
 
-1. Li, H., Li, J., Liu, B., Huang, X. (2021). Application of full-waveform tomography on deep seis-
-mic profiling dataset for tectonic fault characterization. International Meeting for Applied Geoscience & Energy.
+1. Li, H., Li, J., Liu, B., Huang, X. (2021). Application of full-waveform tomography on deep seismic profiling dataset for tectonic fault characterization. International Meeting for Applied Geoscience & Energy.
 
 2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
 ```

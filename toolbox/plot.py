@@ -91,8 +91,7 @@ def plot_stf(simu, isrc=1, stf_type='obs', t_end=1.0):
     plt.close()
 
 
-
-### Plot material (2D): velocity, gradient
+### Plot model (2D): velocity, gradient
 def plot_model2D(simu, data, vmin, vmax, filename, colormap = 'jet'):
     ''' Plot model material (2D), e.g. vp, vs, and rho.
     '''
@@ -137,7 +136,7 @@ def plot_model2D(simu, data, vmin, vmax, filename, colormap = 'jet'):
     plt.savefig(figpath + filename + '.png', dpi=300)
     plt.close()
 
-
+### Plot trace (waveform)
 def plot_trace(simu, filename, simu_type='syn', suffix='', src_space=5, trace_space=5, scale=1.0, color='r', plot_dx=2000):
     ''' Plot trace for SU stream data.
     '''
@@ -167,11 +166,12 @@ def plot_trace(simu, filename, simu_type='syn', suffix='', src_space=5, trace_sp
     pool.join()
 
 
-
+### Plot trace (waveform), serial version
 def plot_trace_serial(datapath, figname, trace_space, scale, color, plot_dx, nt, dt, isrc, comp):
-    
-    trace = loadsu(datapath)
+    ''' Plot trace for SU stream data, serial version.
+    '''
 
+    trace = loadsu(datapath)
     trace = add_su_header(trace, nt, dt, isrc, comp)
 
     offset_min = trace[0].stats.distance
@@ -188,7 +188,7 @@ def plot_trace_serial(datapath, figname, trace_space, scale, color, plot_dx, nt,
     plt.close()
 
 
-
+### Plot wavelet
 def plot_wavelet(simu, wavelet, filename, scale=1.0, color='r', plot_dx=1000, t_end = 1.0):
     ''' plot wavelet
     '''
@@ -213,7 +213,7 @@ def plot_wavelet(simu, wavelet, filename, scale=1.0, color='r', plot_dx=1000, t_
     plt.close()
 
 
-
+### Plot misfit
 def plot_misfit(simu, misfit, mistype):
     ''' plot misfit
     '''
@@ -227,6 +227,7 @@ def plot_misfit(simu, misfit, mistype):
     plt.close()
 
 
+### Plot result after one iteration
 def plot_inv_scheme(simu, optim, inv_scheme):
     ''' plot mnewspaper outputs
     '''

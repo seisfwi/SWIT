@@ -17,7 +17,6 @@ sudo apt install gfortran
 wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz 
 tar xvfz openmpi-4.1.1.tar.gz
 cd openmpi-4.1.1
-
 # Configure the installation files and install OpenMPI (this would take quite a while)
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
 make
@@ -42,31 +41,29 @@ mpirun --version
 conda create --name SWIT python=3.7.5
 conda activate SWIT
 
-# Install dependencies (whether use Anaconda or not)
-pip install numpy obspy scipy matplotlib
-pip install multiprocess PySimpleGUI psutil Pillow
+# Install dependencies using USTC mirrors (whether use Anaconda or not)
+pip install numpy obspy scipy matplotlib -i https://pypi.mirrors.ustc.edu.cn/simple/
+pip install multiprocess PySimpleGUI psutil Pillow -i https://pypi.mirrors.ustc.edu.cn/simple/
 ```
 
 #### Step 4 : Install SWIT  
 
 ```bash
-# Complie the fd2dmpi forward solver (Fortran version)
-# Edit the Makefile.config file, make sure FCC (line 18) is right 
+# Complie the fd2dmpi forward solver (Fortran version), edit the Makefile.config file, make sure FCC (line 18) is right 
 cd ~/SWIT-1.0/fd2dmpi/
 rm *.mod
 make clean   
 make
+
 # Add fd2dmpi, toolbox to the env path
 export PATH=~/SWIT-1.0/bin:$PATH
-export PYTHONPATH=~/SWIT-1.0/toolbox
-
 source ~/.bashrc
 
 # Run SWIT via GUI
 cd ~/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
-# or Run SWIT via the Python script in the example folder
+# or Run SWIT via the Python script under the example folder
 cd ~/example/some_case/
 ./run_workflow
 

@@ -83,12 +83,12 @@ cd ~/example/some_case/
 
 ### FWI examples (keep updating)
 
-| No.  | Acquisition |   Model    |     Size     | Optimization |
-| :--: | :---------: | :--------: | :----------: | :----------: |
-|  1   |    Land     |  Marmousi  | 481x121, 25m |     NLCG     |
-|  2   |    Land     | Overthrust | 401x101, 25m |     NLCG     |
-|  3   |   Marine    |  Marmousi  | 481x141, 25m |     NLCG     |
-|  4   |   Marine    | Overthrust | 401x121, 25m |     NLCG     |
+| No.  | Acquisition |   Model    |     Size      | Optimization |
+| :--: | :---------: | :--------: | :-----------: | :----------: |
+|  1   |    Land     |  Marmousi  | 481x121, 25 m |     NLCG     |
+|  2   |    Land     | Overthrust | 401x101, 25 m |     NLCG     |
+|  3   |   Marine    |  Marmousi  | 481x141, 25 m |     NLCG     |
+|  4   |   Marine    | Overthrust | 401x121, 25 m |     NLCG     |
 
 ### Citations :   
 

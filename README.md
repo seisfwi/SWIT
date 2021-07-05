@@ -81,7 +81,7 @@ cd ~/example/some_case/
 #   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 ```
 
-### Examples 
+### FWI examples (keep updating)
 
 | No.  | Acquisition |   Model    |     Size     | Optimization |
 | :--: | :---------: | :--------: | :----------: | :----------: |

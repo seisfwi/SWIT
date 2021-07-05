@@ -72,7 +72,7 @@ cd ~/example/some_case/
 
 ```
 
-#### Notice :   
+#### Note :   
 
 ```bash
 # If you use the Intel Compiler
@@ -100,4 +100,14 @@ cd ~/example/some_case/
 |     2     |    Land     | Overthrust | 401x101, 25m |     NLCG     |
 |     3     |   Marine    |  Marmousi  | 481x141, 25m |     NLCG     |
 |     4     |   Marine    | Overthrust | 401x121, 25m |     NLCG     |
+
+#### Citation :   
+
+```
+If you find SWIT is useful, please cite the following work:
+
+1. Li, H., Li, J., Liu, B., Huang, X. (2021). Application of full-waveform tomography on deep seis-
+mic profiling dataset for tectonic fault characterization. International Meeting for Applied Geoscience & Energy.
+2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
+```
 

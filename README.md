@@ -83,12 +83,12 @@ cd ~/example/some_case/
 
 ### Examples 
 
-| Case name | Environment |   Model    |     Size     | Optimization |
-| :-------: | :---------: | :--------: | :----------: | :----------: |
-|     1     |    Land     |  Marmousi  | 481x121, 25m |     NLCG     |
-|     2     |    Land     | Overthrust | 401x101, 25m |     NLCG     |
-|     3     |   Marine    |  Marmousi  | 481x141, 25m |     NLCG     |
-|     4     |   Marine    | Overthrust | 401x121, 25m |     NLCG     |
+| No.  | Acquisition |   Model    |     Size     | Optimization |
+| :--: | :---------: | :--------: | :----------: | :----------: |
+|  1   |    Land     |  Marmousi  | 481x121, 25m |     NLCG     |
+|  2   |    Land     | Overthrust | 401x101, 25m |     NLCG     |
+|  3   |   Marine    |  Marmousi  | 481x141, 25m |     NLCG     |
+|  4   |   Marine    | Overthrust | 401x121, 25m |     NLCG     |
 
 ### Citations :   
 

@@ -18,7 +18,7 @@ wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz
 tar xvfz openmpi-4.1.1.tar.gz
 cd openmpi-4.1.1
 
-# Configure the installation files and install OpenMPI (this would takes a while)
+# Configure the installation files and install OpenMPI (this would take quite a while)
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
 make
 sudo make install
@@ -41,7 +41,8 @@ mpirun --version
 # Once the Anaconda is installed, create the conda environment for SWIT
 conda create --name SWIT python=3.7.5
 conda activate SWIT
-# Install dependencies
+
+# Install dependencies (whether use Anaconda or not)
 pip install numpy obspy scipy matplotlib
 pip install multiprocess PySimpleGUI psutil Pillow
 ```
@@ -50,14 +51,13 @@ pip install multiprocess PySimpleGUI psutil Pillow
 
 ```bash
 # Complie the fd2dmpi forward solver (Fortran version)
-# Edit the Makefile.config file, make sure FCC (line 18) can be found 
+# Edit the Makefile.config file, make sure FCC (line 18) is right 
 cd ~/SWIT-1.0/fd2dmpi/
 rm *.mod
 make clean   
 make
-# Add fd2dmpi to the env path
+# Add fd2dmpi, toolbox to the env path
 export PATH=~/SWIT-1.0/bin:$PATH
-# Add fd2dmpi to the env path
 export PYTHONPATH=~/SWIT-1.0/toolbox
 
 source ~/.bashrc
@@ -66,7 +66,7 @@ source ~/.bashrc
 cd ~/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
-# or Run SWIT via python script in the example folder
+# or Run SWIT via the Python script in the example folder
 cd ~/example/some_case/
 ./run_workflow
 
@@ -86,10 +86,6 @@ cd ~/example/some_case/
 #	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 # to:
 #   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
-
-
-
-
 ```
 
 ### Examples 
@@ -108,6 +104,7 @@ If you find SWIT is useful, please cite the following work:
 
 1. Li, H., Li, J., Liu, B., Huang, X. (2021). Application of full-waveform tomography on deep seis-
 mic profiling dataset for tectonic fault characterization. International Meeting for Applied Geoscience & Energy.
+
 2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
 ```
 

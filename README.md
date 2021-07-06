@@ -4,6 +4,10 @@ By Haipeng Li @ USTC
 
 Contact: haipengl@mail.ustc.edu.cn
 
+![](./doc/SWIT-GUI.png)
+
+![](./doc/package_structures.png)
+
 
 
 ### SWIT Installation 

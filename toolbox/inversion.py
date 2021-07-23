@@ -175,8 +175,8 @@ def LBFGS(inv_scheme):
         y = g_now - g_old
 
         # implenment safeguard smooth in case of very small update
-        s = array2vector(smooth2d(vector2array(s, nx, nz), span=5))
-        y = array2vector(smooth2d(vector2array(y, nx, nz), span=5))
+        s = array2vector(smooth2d(vector2array(s, nx, nz), span=3))
+        y = array2vector(smooth2d(vector2array(y, nx, nz), span=3))
 
         if memory_used == 0:
             S = np.memmap(path+'S', mode='w+', dtype='float32', shape=(m, n))

@@ -88,7 +88,8 @@ cd ~/example/some_case/
 #### Systems  
 
 ```bash
-SWIT has been tested on Ubuntu 16.04, 18.04, 20.04, Centos 7.
+SWIT-1.0 has been tested on Ubuntu 16.04, 18.04, 20.04, Centos 7.
+It seems that SWIT-1.0 cannot run on MacOS properly due to the problem with the Python multiprocess module. This problem will be fixed in the future.
 ```
 
 ### FWI examples (keep updating)

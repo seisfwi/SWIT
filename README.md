@@ -40,7 +40,7 @@ source ~/.bashrc
 which mpirun
 ```
 
-#### Step 3 : Install Anaconda Environment
+#### Step 3 : Install Anaconda Environment (Otherwise, just install Python dependencies as you like)
 
 ```bash
 # Anaconda is recommended. For installing Anaconda, please refer to https://docs.anaconda.com/anaconda/install/linux/
@@ -83,6 +83,12 @@ cd ~/example/some_case/
 #	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 # to:
 #   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+```
+
+#### Systems  
+
+```bash
+SWIT has been tested on Ubuntu 16.04, 18.04, 20.04, Centos 7.
 ```
 
 ### FWI examples (keep updating)

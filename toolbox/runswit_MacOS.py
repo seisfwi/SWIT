@@ -96,7 +96,7 @@ def main():
                     [sg.In(size=size2, enable_events=True, key='src_coor', font=font1), sg.FileBrowse(initial_folder='~/', font=font1, file_types=(("dat Files", "*.dat"), ("Txt Files", "*.Txt")))],
                     [sg.Text('              ', size=size_txt, font=font1)],
                     [sg.Text('Land or Marine', size=size_txt, font=font1), sg.Combo(('Land', 'Marine'),                   default_value='Land',   key='marine_or_land', font=font1, size=size3)],
-                    [sg.Text('Source wavelet', size=size_txt, font=font1), sg.Combo(('Ricker (Opt 1)', 'File   (Opt 2)'), default_value='Ricker', key='wavelet',        font=font1, size=size3)],
+                    [sg.Text('Source wavelet', size=size_txt, font=font1), sg.Combo(('Ricker', 'File'), default_value='Ricker', key='wavelet',        font=font1, size=size3)],
                     [sg.Text('Opt 1: F0 (Hz)', size=size_txt, font=font1), sg.Input(size=size3, key='f0', font=font1)],
                     [sg.Text('Opt 2: File   ', size=size_txt, font=font1)], 
                     [sg.In(size=size2, enable_events=True,key='wavelet_file', font=font1), sg.FileBrowse(initial_folder='~/', font=font1, file_types=(("dat Files", "*.dat")))],

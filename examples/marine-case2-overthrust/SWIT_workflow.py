@@ -10,10 +10,6 @@
 #
 ########################################################################################
 
-# add SWIT to the path
-import sys
-sys.path.append('/data/haipeng/SWIT-1.0/toolbox/')
-
 # import modules
 import numpy as np
 import base

@@ -66,6 +66,11 @@ make
 
 # Add fd2dmpi to the env path
 export PATH=~/SWIT-1.0/bin:$PATH
+
+# Add toolbox to the env path
+export PYTHONPATH=~/SWIT-1.0/toolbox
+
+# Source bashrc
 source ~/.bashrc
 
 # Run SWIT via GUI

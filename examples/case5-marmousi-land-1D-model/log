@@ -1,0 +1,30 @@
+Warning: modeling dispersion, dx = 25.00 m > dx_required =  22.66 m
+Warning: modeling dispersion, f0 = 5.00 Hz > f0_required = 4.53 Hz
+*****************************************************
+
+        Seismic Waveform Inversion Toolbox         
+
+*****************************************************
+
+Forward modeling : nx, nz = 481, 121
+Forward modeling : dx = 25.0 m
+Forward modeling : dt = 2.00 ms, 4001 steps
+Forward modeling : 20 shots run in mpi, 20 CPU available
+Inversion scheme : NLCG
+Inversion misfit : Traveltime
+Inversion maxiter: 40
+Inversion step   : 0.010
+Inversion vpmin  : 1000.0 m/s
+Inversion vpmax  : 5500.0 m/s
+Gradient  mute   : 10 grids on top
+Gradient  smooth : 0 grids Gaussian smooth
+Data processing  : no filtering
+Data processing  : time window, 0.40 s after the first break
+Data processing  : mute short offset, none
+Data processing  : mute long offset, none
+Data processing  : normalization, ['Max-Trace']
+
+see more in json-parameter files under parfile folder
+
+*****************************************************
+

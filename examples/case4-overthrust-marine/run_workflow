@@ -1,4 +1,3 @@
 #!/bin/bash
 
-# stage 1
 python -W ignore SWIT_workflow.py

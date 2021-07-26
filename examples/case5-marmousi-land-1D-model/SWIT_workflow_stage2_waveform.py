@@ -22,7 +22,7 @@ from tools import saveparjson, smooth2d, loadbinfloat32
 
 
 ### system setup
-homepath  = '/data1/SWIT/case5-marmousi-1D-model/stage2-waveform/'   # working path
+homepath  = '/data1/SWIT/case5-marmousi-land-1D-model/stage2-waveform/'   # working path
 mpiproc   = 41                                     # mpi process for fd2dmpi
 figaspect = 1.0                                    # Figure aspect
 
@@ -42,7 +42,7 @@ model_folder = '/home/haipeng/Nutstore Files/Nutstore/MyCodes/SWIT-1.0/examples/
 vp_true = np.loadtxt(model_folder + 'model/Marmousi_481_121_25m_True.dat')
 
 # initial model
-vp_init = loadbinfloat32('/data1/SWIT/case5-marmousi-1D-model/stage2-traveltime/outputs/velocity/vp-40.bin').reshape((nx, nz))
+vp_init = loadbinfloat32('/data1/SWIT/case5-marmousi-land-1D-model/stage1-traveltime/outputs/velocity/vp-40.bin').reshape((nx, nz))
 vp_init[:,20:] = smooth2d(vp_init[:,20:], span = 5)
 
 # density models, (Gardner, 1974)

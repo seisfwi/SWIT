@@ -48,8 +48,9 @@ for istage in range(5):
     # initial model
     if istage == 0:
         vp_init = np.copy(vp_true)
-        vp_init[:,:] = np.linspace(1500,5500,nz)
-        np.savetxt(model_folder + 'model/Overthrust_401_101_25m_1D.dat', vp_init)
+        vp_init = smooth2d(vp_true, span=30)
+        #vp_init[:,:] = np.linspace(1500,5500,nz)
+        #np.savetxt(model_folder + 'model/Overthrust_401_101_25m_1D.dat', vp_init)
     else:
         vp_init = loadbinfloat32('/data1/SWIT/case6-overthrust-land-multiscale/stage-%d/outputs/velocity/vp-20.bin'%(istage)).reshape(nx, nz)    
         vp_init = smooth2d(vp_init, span = 5)
@@ -86,7 +87,7 @@ for istage in range(5):
     marine_or_land = 'Land'                          # 'Land' or 'Marine'
 
     # gradient postprocess
-    grad_mute = 8                                     # mute source energy for 'Land', or water mask for 'Marine'
+    grad_mute = 10                                     # mute source energy for 'Land', or water mask for 'Marine'
     grad_smooth = smooth[istage]                       # gradient smooth radius 
 
     # data filter

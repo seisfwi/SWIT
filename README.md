@@ -99,13 +99,16 @@ It seems that SWIT-1.0 cannot run on MacOS properly due to the problem with the 
 
 ### FWI examples (keep updating)
 
-| No.  | Acquisition |             Model              |     Size      | Optimization |
-| :--: | :---------: | :----------------------------: | :-----------: | :----------: |
-|  1   |    Land     |            Marmousi            | 481x121, 25 m |     NLCG     |
-|  2   |    Land     |           Overthrust           | 401x101, 25 m |     NLCG     |
-|  3   |   Marine    |            Marmousi            | 481x141, 25 m |     NLCG     |
-|  4   |   Marine    |           Overthrust           | 401x121, 25 m |     NLCG     |
-|  5   |    Land     | Marmousi from 1D initial model | 401x101, 25 m |     NLCG     |
+| No.  | Acquisition |              Model               |     Size      | Optimization |
+| :--: | :---------: | :------------------------------: | :-----------: | :----------: |
+|  1   |    Land     |             Marmousi             | 481x121, 25 m |     NLCG     |
+|  2   |    Land     |            Overthrust            | 401x101, 25 m |     NLCG     |
+|  3   |   Marine    |             Marmousi             | 481x141, 25 m |     NLCG     |
+|  4   |   Marine    |            Overthrust            | 401x121, 25 m |     NLCG     |
+|  5   |    Land     |  Marmousi from 1D initial model  | 401x121, 25 m |     NLCG     |
+|  6   |    Land     | Overthrust Multi-scale Inversion | 401x101, 25 m |     NLCG     |
+
+
 
 ### Citations :   
 

@@ -6,17 +6,17 @@ Contact: haipengl@mail.ustc.edu.cn
 
 ### First look at SWIT
 
-<img src="./doc/SWIT-GUI.png" style="zoom:33%;" />
+<img src="./doc/SWIT-GUI.png" style="zoom:25%;" />
 
 ### Contents of SWIT
 
 
 
-<img src="./doc/SWIT-Contents.png" style="zoom:33%;" />
+<img src="./doc/SWIT-Contents.png" style="zoom:25%;" />
 
 ### Workflow of SWIT 
 
-<img src="./doc/SWIT-Workflow.png" style="zoom:33%;" />
+<img src="./doc/SWIT-Workflow.png" style="zoom:25%;" />
 
 ## SWIT Installation 
 

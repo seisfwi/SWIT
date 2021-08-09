@@ -4,13 +4,21 @@ By Haipeng Li @ USTC
 
 Contact: haipengl@mail.ustc.edu.cn
 
-![](./doc/SWIT-GUI.png)
+### First look at SWIT
 
-![](./doc/package_structures.png)
+<img src="./doc/SWIT-GUI.png" style="zoom:33%;" />
+
+### Contents of SWIT
 
 
 
-### SWIT Installation 
+<img src="./doc/SWIT-Contents.png" style="zoom:33%;" />
+
+### Workflow of SWIT 
+
+<img src="./doc/SWIT-Workflow.png" style="zoom:33%;" />
+
+## SWIT Installation 
 
 #### Step 1: Install  gfortran
 
@@ -29,7 +37,7 @@ tar xvfz openmpi-4.1.1.tar.gz
 cd openmpi-4.1.1
 # Configure the installation files and install OpenMPI (this would take quite a while)
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
-make
+make    # make -j8  # use 8 cores to speed up the make process
 sudo make install
 
 # Add env path 
@@ -94,10 +102,11 @@ cd ~/example/some_case/
 
 ```bash
 SWIT-1.0 has been tested on Ubuntu 16.04, 18.04, 20.04, Centos 7.
-It seems that SWIT-1.0 cannot run on MacOS properly due to the problem with the Python multiprocess module. This problem will be fixed in the future.
+It seems that SWIT-1.0 cannot run on MacOS properly due to the problem with the Python multiprocess module. 
+This issue will be fixed in the near future.
 ```
 
-### FWI examples (keep updating)
+## FWI examples (keep updating)
 
 | No.  | Acquisition |   Model    |         Misfit         |       Features        | Optimization |     Size      |
 | :--: | :---------: | :--------: | :--------------------: | :-------------------: | :----------: | :-----------: |
@@ -108,9 +117,7 @@ It seems that SWIT-1.0 cannot run on MacOS properly due to the problem with the 
 |  5   |    Land     |  Marmousi  | Traveltime &  Waveform |   1D initial model    |     NLCG     | 401x121, 25 m |
 |  6   |    Land     | Overthrust |        Waveform        | Multi-scale Inversion |     NLCG     | 401x101, 25 m |
 
-
-
-### Citations :   
+## Citations :   
 
 ```
 If you find SWIT is useful, please cite the following work:

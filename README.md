@@ -126,4 +126,6 @@ If you find SWIT is useful, please cite the following work:
 
 2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
 ```
-
+## Few more words:
+Simplicity is the Greatest Virtue Ever
+The WIT of Seismic waveforms has never been endowed. Rather, it lies within.

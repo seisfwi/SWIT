@@ -129,4 +129,4 @@ If you find SWIT is useful, please cite the following work:
 ## Few more words:
 1. Simplicity is the Greatest Virtue Ever.
 
-2. The WIT of Seismic waveforms has been inherently endowed and always lies within.
+2. The WIT of Seismic waveforms has been inherently endowed instead by us. The wit lies within.

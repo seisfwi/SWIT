@@ -55,7 +55,9 @@ def plot_stf(simu, isrc=1, stf_type='obs', t_end=1.0):
     else:
         ISRC = isrc  
         isrc = isrc - 1
-        
+    
+    t_end = np.min((t_end, simu.model.dt*(simu.model.nt-1)))
+
     # set data for plot
     stf_time = simu.source.wavelet[isrc, :]
     stf_spectrum = np.abs(np.fft.fft(stf_time))

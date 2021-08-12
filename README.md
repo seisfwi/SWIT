@@ -81,20 +81,19 @@ export PATH=/your/own/path/to/SWIT-1.0/bin:$PATH
 export PYTHONPATH=/your/own/path/to/SWIT-1.0/toolbox
 source ~/.bashrc
 
-# Run SWIT via GUI
+# Option 1. Run SWIT via GUI
 cd /your/own/path/to/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
-# or Run SWIT via the Python script under certain example folder
+# Option 2. Run SWIT via the Python script
 cd /your/own/path/to/SWIT-1.0/example/some_case/
 ./run_workflow     # You need to modify all the paths in the Python script before running
 
 # Notice:
-# If you use the Intel Compiler
-# You need to make the following change in forward and adjoint functions in toolbox/solver.py: 
-# Change:     
+# If you use the Intel Compiler, you need to make the following change in forward and adjoint functions in toolbox/solver.py: 
+# Before:     
 #	   solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
-# to:
+# After:
 #    solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 ```
 

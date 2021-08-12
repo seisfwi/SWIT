@@ -35,6 +35,7 @@ sudo apt install gfortran
 wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz 
 tar xvfz openmpi-4.1.1.tar.gz
 cd openmpi-4.1.1
+
 # Configure the installation files and install OpenMPI (this would take quite a while)
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
 make    # make -j8  # use 8 cores to speed up the make process
@@ -85,9 +86,8 @@ cd /your/own/path/to/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
 # or Run SWIT via the Python script under certain example folder
-# You need to modify all the paths in the Python script
 cd /your/own/path/to/SWIT-1.0/example/some_case/
-./run_workflow
+./run_workflow     # You need to modify all the paths in the Python script before running
 
 # Notice:
 # If you use the Intel Compiler

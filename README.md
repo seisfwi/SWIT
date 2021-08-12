@@ -40,7 +40,8 @@ cd openmpi-4.1.1
 make    # make -j8  # use 8 cores to speed up the make process
 sudo make install
 
-# Add env path 
+# Add env path
+vim ~/.bashrc
 export PATH=/usr/local/openmpi/bin:$PATH
 source ~/.bashrc
 

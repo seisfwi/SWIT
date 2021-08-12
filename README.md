@@ -40,7 +40,7 @@ cd openmpi-4.1.1
 make    # make -j8  # use 8 cores to speed up the make process
 sudo make install
 
-# Add env path
+# Add env path at your ~/.bashrc
 vim ~/.bashrc
 export PATH=/usr/local/openmpi/bin:$PATH
 source ~/.bashrc
@@ -54,9 +54,9 @@ which mpirun
 ```bash
 # Anaconda is recommended. For installing Anaconda, please refer to https://docs.anaconda.com/anaconda/install/linux/
 # 1. download package from: https://www.anaconda.com/products/individual/download-success
-# 2. bash ~/your_Anaconda_package
+# 2. bash your_downloaded_Anaconda_package
 
-# Once the Anaconda is installed, create the conda environment for SWIT
+# Create the conda environment for SWIT if you use Anaconda
 conda create --name SWIT python=3.7.5
 conda activate SWIT
 
@@ -67,33 +67,35 @@ pip install numpy obspy scipy matplotlib multiprocess PySimpleGUI psutil Pillow 
 #### Step 4 : Install & Run SWIT  
 
 ```bash
-# Complie the fd2dmpi forward solver, edit the Makefile.config file, make sure FCC (line 18) is right 
-cd ~/SWIT-1.0/fd2dmpi/
+# Complie the fd2dmpi forward solver with the default fortran compiler (mpif90).
+# If you want to use other fortran compiler, you can edit the Makefile.config file (line 18) under ~/SWIT-1.0/fd2dmpi/.
+cd /your/own/path/to/SWIT-1.0/fd2dmpi/
 rm *.mod
-make clean   
+make clean
 make
 
 # Add fd2dmpi and Python toolbox to the env path at your ~/.bashrc 
 vim ~/.bashrc 
-export PATH=~/SWIT-1.0/bin:$PATH
-export PYTHONPATH=~/SWIT-1.0/toolbox
+export PATH=/your/own/path/to/SWIT-1.0/bin:$PATH
+export PYTHONPATH=/your/own/path/to/SWIT-1.0/toolbox
 source ~/.bashrc
 
 # Run SWIT via GUI
-cd ~/SWIT-1.0/toolbox/
+cd /your/own/path/to/SWIT-1.0/toolbox/
 python runswit_Linux.py    # or python runswit_MacOS.py 
 
-# or Run SWIT via the Python script under the example folder
-cd ~/example/some_case/
+# or Run SWIT via the Python script under certain example folder
+# You need to modify all the paths in the Python script
+cd /your/own/path/to/SWIT-1.0/example/some_case/
 ./run_workflow
 
 # Notice:
 # If you use the Intel Compiler
 # You need to make the following change in forward and adjoint functions in toolbox/solver.py: 
 # Change:     
-#	solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+#	   solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 # to:
-#   solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+#    solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
 ```
 
 #### Systems  
@@ -127,4 +129,4 @@ If you find SWIT is useful, please cite the following work:
 ## Few more words:
 1. Simplicity is the Greatest Virtue Ever.
 
-2. The WIT of Seismic waveforms has been inherently endowed instead by us. The wit lies within.
+2. The Seismic WIT always lies within.

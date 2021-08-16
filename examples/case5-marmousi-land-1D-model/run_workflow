@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # stage 1: Traveltime inversion
-#python -W ignore SWIT_workflow_stage1_traveltime.py
+python -W ignore SWIT_workflow_stage1_traveltime.py
 
 # stage 2: Waveform inversion
 python -W ignore SWIT_workflow_stage2_waveform.py

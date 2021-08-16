@@ -18,6 +18,12 @@ Contact: haipengl@mail.ustc.edu.cn
 
 <img src="./doc/SWIT-Workflow.png" style="zoom:25%;" />
 
+### Waveform Selection in FWI
+
+<img src="./doc/SWIT-Waveform-selection.png" style="zoom:25%;" />
+
+
+
 ## SWIT Installation 
 
 #### Step 1: Install  gfortran

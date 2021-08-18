@@ -1,0 +1,20 @@
+As of version 1.02 SegyMAT is intended to work with Octave version >2.1.64
+
+If you have an older octave version installed you may need to :
+
+1) change line (app 399) in ReadSegy
+from : if (outtrace==1),
+to   : if (outtrace==-1),
+
+2) comment line (app 214) in ReadSegyFast :
+from : Data=ibm2num(uint32(Data));
+to   : % Data=ibm2num(uint32(Data));
+
+These two changes have been successfully applied to octave version 2.1.57.
+
+_____________________________________
+
+* A note on speed
+SegyMAT in Octave runs MUCH slower (about a factor 5) than in Matlab when reading in SEG-Y header values. If you just need to read the trace data try using :
+data=ReadSegy(filename), which makes use of ReadSegyFast. 
+In any case (Matlab or octave) this is much faster, and specifically, Matlab and Octave performs equally well.

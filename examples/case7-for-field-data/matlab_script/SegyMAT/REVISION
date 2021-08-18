@@ -1,0 +1,181 @@
+1.5.1  : October 28, 2011
+       Fixed 'too large preallocating' in ReadSegy casing a delay 
+       reading large files using the 'traces' option.
+
+1.5  : October 27, 2011
+       ReadSegy.m : Added option 'traces' that allow fast reading of specific 
+	traces. 
+	When the 'minmax' option is used, the corresponding traces
+	are first located thorugh header files, and then data
+	are read using the 'traces' options.
+	For larger files this casues the readomh tme to decrease
+	significantly when using the 'minmax' option. 
+
+1.4  : April 05, 2011
+       ReadSegy.m : Corrected SH.time to reflect proper traveltime
+                     Disabled Waitbar
+       ReadSegyHeader.m : Fixed 'SkipData' conflict with Robust Control Toolbox
+       wiggle.m : Allowed specification of line color, 
+                  allow overlaying wiggle plots
+	          allow NaN value in 'VA' style plotting
+       ReadSu : Fixed typo in line 221
+       MergeSegy.m : Added mfile to merge Segy Files
+
+1.3  : January 20, 2010
+       Added 'ReadSegyTraceHeaderValue' and 'WriteSegyTraceHeaderValue'
+       that can be used to read and write the TraceHeaderValues one by
+       one. Much faster that reading the whole dataset.
+
+1.2  : January 07, 2009
+       Updated GUI to work for Matlab R2008a
+       enabled loading of partial segyfile (using time and header ranges)
+       from GUI (ctrl X)
+       enabled editing of the textual file header (both ASCII and EBCDIC)
+
+1.11 : August 2008
+       Kristian Stormark (<kristian.stormark@gmail.com>) contributed a change 
+       to GetSegyTraceHeader that reduce the number of discoperations 
+       causing a significant speed up 
+
+1.08 : March 2007
+       Urs Boeniger contributed a patch that allows arbitrary 
+       SegyTraceHeaders to be specified for WriteSegy.m
+
+1.06 : FIxed a bug taht casue a fixed length of 5011 samples in ReadSu
+
+1.02 : Cleaning up code to work with Octave 2.1.57
+
+1.01 : 'jump' related fixes
+
+1.00 : Cleaning up some Matlab 7.0 specific bugs. 
+
+0.99 : Just cleaning up to prepare for a release 1.0
+
+0.93 
+     ReadSegy : RAM is preallocated, causing a significant speed up 
+     when reading large files (>30%)
+
+0.92 April 13, 2004
+     DUE TO A BUG IN MATLAB 6.5 : Technical Solution Number: 31977,
+     writing of segy files did not work in some windows version of
+     matlab 6.5. A workaround have been implemeneted. 
+     fseek(segyid,'bof',0) did not always work ?
+     
+     disp statements have been replaced with SegymatVerbose, making
+     it easier to control verbose output to the screen. The verbose level
+     can be set in SegymatVerbose.m
+
+     CheckSegyTraceHeader has been implemeneted as an m-file of its own.
+     It was a part of PutSegyTrace but slowed down writing of segy files
+     considerably. Now it is only run if you edit the m-files that write 
+     data to disc. This change gives great speed improvement.
+
+
+0.91 Nov 21, 2003: 
+     Strange bug when using ReadSegy on one platform : 
+"At compilation SkipData was an undefined variable or function.>> >> >> >> >> Function SkipData is now in context.  To use a function that is>> >> >> >> >> not in context at compilation use FEVAL or EVAL.
+"
+     Could not reprodice the error using the same SGY file on either Linux or Windows.
+
+0.90 : 
+     GUI is reimplemented.
+     Coded is prepared to be compiled.
+	
+     Support For Extended Textual File Headers.
+
+
+0.45 : 
+     WriteSegy : 'dt' was always reported as not set, even if it were.
+                 It did not affect the written SEGY file though.
+
+0.44 : 
+     ibm2num : simpler error message when transformation fails.
+
+0.43 : June 19, 2003
+     ReadSegy : Crashed when SegyHeader sais Rev0 and DFS=5, since
+     DFS=5 is not defined for Rev0. Now, if DFS=5 is chosen Revision
+     is automatically set to 1.
+
+0.42 : 
+     GUIEditSegyHeader : Updated to handle the complete SegyHeader (30/03/2003)
+     GUIEditTextualFileHeader : Updated to give warning when wrong format is chosen.
+     ReadSegy : Rev0, data sample format 2 and 3 are now set to 2 and 4 byte signed integers.
+
+0.41 : 
+     ReadSegy : Fixed bug that caused ReadSegy to crash when no data was returned.
+
+0.40 : Jan-22-2003
+     ReadSegy : -fixed 'endian' big introduced in version 0.39
+	        -Implemented more robust reading of traces with varying trace lengths
+		Now the code will not stop running, simply return an error message.
+		- re-implemented the 'SkipData' option that somehow had been removed from the code
+
+     ReadSegyHeader : fixed 'endian' big introduced in version 0.39
+
+0.39 : Jan-20-2003
+	
+     ReadSegy : option to read little endian formatted data
+
+     ReadSegyHeader : Reads only the Segy Binary Header	
+
+     ReadSuFast/ReadSegyFast
+     If headers are not required, fast version of the reading algorithms
+     is now available. These are up to 20 times faster.
+     
+     EBCDIC support
+     
+     GUIEditTextualFileHeader
+     GUI to display/edit the Textual Segy Header in EBCDIC/ASCII format.
+   
+     
+     
+
+0.38 : September 6-2002
+     WriteSegy : takes options 'revision' and 'dsf'
+	         to set SEG-Y revision number and 
+		 Data Sample Format
+     WriteSegyStructure :
+		 takes options 'revision' and 'dsf'
+	         to set SEG-Y revision number and 
+		 Data Sample Format
+     ReadSegy : Takes option 'dsf' to force DataSamplingFormat
+	        SegyHeader.FixedLengthTraceFlag is no longer forced to be 1 !
+
+     Thus now all Read and Write routines takes the options
+     'revsision' and 'dsf'
+
+     SegyHeader: Two fields were added that contains unassigned header values
+	 SegyHeader.Unassigned1 : byte 3261-3500
+	 SegyHeader.Unassigned2 : byte 3507-3600 
+
+     SegyTraceheaders : Added two fields for unassigned values :
+	 SegyTraceHeader.UnassignedInt1 : int32, Byte 232+4	
+	 SegyTraceHeader.UnassignedInt1 : Int32, Byte 236+4	
+
+0.37 : August 23-2002
+     Format of dt and ns changed to unsigned integers.
+
+0.36 : August 15-2002
+     ReadSegy was corrupted in 0.35. Bug Fix release.	 
+
+
+0.35 : June 16-2002
+     Correct DayOfYear in PutSegyTrace.m, 
+     - thanks to Michael Toews (mwtoews@ucalgary.ca)
+     Minor bugfixes. Released as a release on Sourceforge.
+
+0.33 : June 03-2002
+      Added Rading and writing SU and SEGY to GUI.
+	
+0.32 : May 15-2002
+      Colormaps and gain control is added.
+
+0.31 : May 04-2002
+      GUI Segy Reader useable.
+
+0.3 : May 01-2002 
+      Added fascility to read in parts of a SEG-Y file
+
+0.2 : Added 'SkipData', so that only header values are read
+
+0.1 : Initial release

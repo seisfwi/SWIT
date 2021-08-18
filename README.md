@@ -121,6 +121,7 @@ This issue will be fixed in the near future.
 |  4   |   Marine    | Overthrust |        Waveform        |           -           |     NLCG     | 401x121, 25 m |
 |  5   |    Land     |  Marmousi  | Traveltime &  Waveform |   1D initial model    |     NLCG     | 401x121, 25 m |
 |  6   |    Land     | Overthrust |        Waveform        | Multi-scale Inversion |     NLCG     | 401x101, 25 m |
+|  7   |    Some     |  scripts   |       to convert       |       your data       |     for      |   SWIT-1.0    |
 
 ## Citations :   
 

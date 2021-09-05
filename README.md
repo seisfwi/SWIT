@@ -126,13 +126,13 @@ This issue will be fixed in the near future.
 ## Citations :   
 
 ```
-If you find SWIT is useful, please cite the following work:
+If you find SWIT is useful, please cite the following reference:
 
-1. Li, H., Li, J., Liu, B., Huang, X. (2021). Application of full-waveform tomography on deep seismic profiling dataset for tectonic fault characterization. International Meeting for Applied Geoscience & Energy.
+1. Li, H., Li, J., Liu, B., & Huang, X. (2021). Application of full-waveform tomography on deep seismic profiling data set for tectonic fault characterization. In First International Meeting for Applied Geoscience & Energy Expanded Abstracts (pp. 657–661). https://doi.org/10.1190/segam2021-3583190.1
 
 2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
 ```
 ## Few more words:
-1. Simplicity is the Greatest Virtue Ever.
+1. Simplicity is the greatest virtue ever.
 
-2. The Seismic WIT always lies within.
+2. The seismic WIT always lies within.

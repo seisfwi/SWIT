@@ -66,7 +66,9 @@ class simulate(object):
         # Check the system and set the number of CPUs
         self.system.mpiproc = min([self.system.mpiproc, self.source.n, cpu_count() // 2])
         
-        
+        # Use one thread in calling scipy to do the filtering
+        os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=1
+
 
     def __builddir(self):
         ''' Build and clean the working folders
@@ -322,7 +324,8 @@ class optimize(object):
         else:
             #print('Data processing  : normalization, %s' % (', '.join(self.normalize)))
             print('Data processing  : normalization, %s' % (self.normalize))
-
+        print('Data processing  : OMP Threads = %s' %os.environ["OMP_NUM_THREADS"])
+        
         print('\nsee more in json-parameter files under parfile folder\n')
         
         print('*****************************************************\n')

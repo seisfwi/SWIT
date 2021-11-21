@@ -29,7 +29,6 @@ Contact: haipengl@mail.ustc.edu.cn
 #### Step 1: Install  gfortran
 
 ```bash
-# Install gcc and gfortran
 sudo apt-get install build-essential
 sudo apt install gfortran
 ```
@@ -37,78 +36,65 @@ sudo apt install gfortran
 #### Step 2 : Install OpenMPI
 
 ```bash
-# Download the latest OpenMPI package, or go to  http://www.open-mpi.org/software/ompi to download the desired version
+# Download the latest OpenMPI package, 
+# or go to: http://www.open-mpi.org/software/ompi to download the desired version
 wget https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-4.1.1.tar.gz 
 tar xvfz openmpi-4.1.1.tar.gz
 cd openmpi-4.1.1
 
-# Configure the installation files and install OpenMPI (this would take quite a while)
+# Configure & install OpenMPI (this would take quite a while)
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
-make    # make -j8  # use 8 cores to speed up the make process
-sudo make install
+make; sudo make install
 
 # Add env path at your ~/.bashrc
 vim ~/.bashrc
 export PATH=/usr/local/openmpi/bin:$PATH
 source ~/.bashrc
 
-# Check OpenMPI is successfully installed
+# Check
 which mpirun
 ```
 
-#### Step 3 : Install Anaconda Environment (Otherwise, just install Python dependencies as you like)
+#### Step 3 : Install Python Dependencies
 
 ```bash
-# Anaconda is recommended. For installing Anaconda, please refer to https://docs.anaconda.com/anaconda/install/linux/
-# 1. download package from: https://www.anaconda.com/products/individual/download-success
-# 2. bash your_downloaded_Anaconda_package
-
-# Create the conda environment for SWIT if you use Anaconda
-conda create --name SWIT python=3.7.5
-conda activate SWIT
+# Anaconda is recommended. For installing Anaconda: https://docs.anaconda.com/anaconda/install/linux/
+# create a new envirment for SWIT
+# conda create --name SWIT python=3.7.5
+# conda activate SWIT
 
 # Install dependencies using USTC mirrors (whether use Anaconda or not)
 pip install numpy obspy scipy matplotlib multiprocess PySimpleGUI psutil Pillow -i https://pypi.mirrors.ustc.edu.cn/simple/
 ```
 
-#### Step 4 : Install & Run SWIT  
+#### Step 4 : Install SWIT  
 
 ```bash
-# Complie the fd2dmpi forward solver with the default fortran compiler (mpif90).
-# If you want to use other fortran compiler, you can edit the Makefile.config file (line 18) under ~/SWIT-1.0/fd2dmpi/.
+# Complie the fd2dmpi forward solver with the default fortran compiler and mpif90.
+# Edit ~/SWIT-1.0/fd2dmpi/Makefile.config (line 18) to change.
 cd /your/own/path/to/SWIT-1.0/fd2dmpi/
-rm *.mod
-make clean
-make
+rm *.mod; make clean; make
 
 # Add fd2dmpi and Python toolbox to the env path at your ~/.bashrc 
 vim ~/.bashrc 
 export PATH=/your/own/path/to/SWIT-1.0/bin:$PATH
 export PYTHONPATH=/your/own/path/to/SWIT-1.0/toolbox
 source ~/.bashrc
+```
 
+#### Step 5: Run SWIT  
+
+```bash
 # Option 1. Run SWIT via GUI
 cd /your/own/path/to/SWIT-1.0/toolbox/
-python runswit_Linux.py    # or python runswit_MacOS.py 
+python runswit_Linux.py    
+# python runswit_MacOS.py 
 
 # Option 2. Run SWIT via the Python script
 cd /your/own/path/to/SWIT-1.0/example/some_case/
-./run_workflow     # You need to modify all the paths in the Python script before running
+./run_workflow     
 
-# Notice:
-# If you use the Intel Compiler, you need to make the following change in forward and adjoint functions in toolbox/solver.py: 
-# Before:     
-#	   solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
-# After:
-#    solver_cmd = 'mpiexec -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
-```
-
-#### Systems  
-
-```bash
-SWIT-1.0 has been tested on Ubuntu 16.04, 18.04, 20.04, Centos 7.
-It seems that SWIT-1.0 cannot run on MacOS properly due to the problem with the Python multiprocess module. 
-This issue will be fixed in the near future.
+# You need to modify all the paths in the Python script before running
 ```
 
 ## FWI examples (keep updating)

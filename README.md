@@ -47,8 +47,7 @@ cd openmpi-4.1.1
 make; sudo make install
 
 # Add env path at your ~/.bashrc
-vim ~/.bashrc
-export PATH=/usr/local/openmpi/bin:$PATH
+echo export PATH=/usr/local/openmpi/bin:$PATH >> ~/.bashrc
 source ~/.bashrc
 
 # Check
@@ -76,9 +75,8 @@ cd /your/own/path/to/SWIT-1.0/fd2dmpi/
 rm *.mod; make clean; make
 
 # Add fd2dmpi and Python toolbox to the env path at your ~/.bashrc 
-vim ~/.bashrc 
-export PATH=/your/own/path/to/SWIT-1.0/bin:$PATH
-export PYTHONPATH=/your/own/path/to/SWIT-1.0/toolbox
+echo export PATH=/your/own/path/to/SWIT-1.0/bin:$PATH >> ~/.bashrc
+echo export PYTHONPATH=/your/own/path/to/SWIT-1.0/toolbox >> ~/.bashrc
 source ~/.bashrc
 ```
 

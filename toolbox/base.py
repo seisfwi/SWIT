@@ -87,7 +87,7 @@ class simulate(object):
                 os.system('rm  -r %s' % ifolder)
 
         # creat the working folders
-        folder_list = ['-p ' + homepath,                      # Home folder
+        folder_list = ['-p ' + homepath,                     # Home folder
                        homepath+'data',                      # Data folder
                        homepath+'data/obs/',                 # Observed data
                        homepath+'data/syn/',                 # Synthetic data

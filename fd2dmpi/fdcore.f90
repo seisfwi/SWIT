@@ -309,7 +309,7 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
   ! Update horizontal particle velocity: u
   do ix=2,nx_pml-2
     do iz=2,nz_pml-1
-      alpha = par%dt/(den(iz,ix)*par%dx)
+      alpha = den(iz,ix)*c(iz,ix)*c(iz,ix)*par%dt/(par%dx)
       kappa = 0.5*(damp(iz,ix)+damp(iz,ix+1))*par%dt
       u(iz,ix) = (1.0-kappa)*u(iz,ix) - alpha*(c1_staggered*(p(iz,ix+1)-p(iz,ix)) &
                                                 +c2_staggered*(p(iz,ix+2)-p(iz,ix-1)))
@@ -318,7 +318,7 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
   ! Update verticle particle velocity: w
   do ix=2,nx_pml-1
     do iz=2,nz_pml-2
-      alpha = par%dt/(den(iz,ix)*par%dx)
+      alpha = den(iz,ix)*c(iz,ix)*c(iz,ix)*par%dt/(par%dx)
       kappa = 0.5*(damp(iz,ix)+damp(iz+1,ix))*par%dt
       w(iz,ix) = (1.0-kappa)*w(iz,ix) - alpha*(c1_staggered*(p(iz+1,ix)-p(iz,ix)) &
                                                 +c2_staggered*(p(iz+2,ix)-p(iz-1,ix)))
@@ -335,7 +335,8 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
   ! Update the pressure field
   do ix=3,nx_pml-2
     do iz=3,nz_pml-2
-      alpha = den(iz,ix)*c(iz,ix)*c(iz,ix)*par%dt/(par%dx)
+      !alpha = den(iz,ix)*c(iz,ix)*c(iz,ix)*par%dt/(par%dx)
+      alpha = par%dt/(den(iz,ix)*par%dx)
       kappa = damp(iz,ix)*par%dt
       p(iz,ix) = (1.0-kappa)*p(iz,ix) - alpha* &
                   (c1_staggered*(u(iz,ix)-u(iz,ix-1) + w(iz,ix)-w(iz-1,ix)) + &

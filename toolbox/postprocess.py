@@ -65,9 +65,6 @@ def grad_precond(simu, optim, grad, forw, back):
         else:
             grad = smooth2d(grad, span=grad_smooth)
 
-    # gradient with respect to the velocity
-    grad = - 2 * grad   #  / np.power(simu.model.vp, 3)
-
     # scale the gradient properly
     grad *= vpmax / abs(grad).max()
   

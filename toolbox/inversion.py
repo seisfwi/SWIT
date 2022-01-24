@@ -13,7 +13,7 @@
 import copy
 import numpy as np
 
-from plot import plot_inv_scheme, plot_wavelet
+from plot import plot_inv_scheme, plot_wavelet, plot_trace
 from misfit import misfit
 from preprocess import process_workflow
 from solver import adjoint, forward
@@ -46,7 +46,10 @@ def inversion(simu, optim, inv_model):
 
         # synthetic data from the current model
         forward(simu, simu_type='syn', savesnap=1)
-        
+
+        plot_trace(simu, 'syn', simu_type='syn', suffix='', src_space=1, trace_space=5, scale = 0.8, color='b')
+        plot_trace(simu, 'syn-proc', simu_type='syn', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='b')
+
         # process the synthetic data
         process_workflow(simu, optim, simu_type='syn')
 
@@ -54,8 +57,8 @@ def inversion(simu, optim, inv_model):
         inv_scheme['f_now'] = misfit(simu, optim.misfit_type)   
 
         # evaluate the gradient (with preconditioning and scaling)
-        inv_scheme['g_now'] = adjoint(simu, optim)
-                
+        inv_scheme['g_now'] = adjoint(simu, optim) 
+        
         # Non-linear Conjugate Gradient algorithm
         if optim.scheme in ['NLCG']:
             inv_scheme = NLCG(inv_scheme)

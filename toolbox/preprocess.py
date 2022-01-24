@@ -38,6 +38,8 @@ def process_workflow(simu, optim, simu_type = 'syn', use_first_break_in_su_heade
         savepath = datapath + 'src%d_sg_proc.su' % ((isrc+1))
         pool.apply_async(process_workflow_serial, (optim, loadpath, savepath, isrc, nt, dt, use_first_break_in_su_header,) )
         time.sleep(0.01)
+
+        
     pool.close()  # close pool
     pool.join()   # block at this line until all processes are done
 

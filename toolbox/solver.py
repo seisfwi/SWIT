@@ -86,7 +86,7 @@ def adjoint(simu, optim):
     grad = loadbinfloat32(homepath+'data/syn/src0_kernel_vp.bin')
     forw = loadbinfloat32(homepath+'data/syn/src0_illum_forw.bin')
     back = loadbinfloat32(homepath+'data/syn/src0_illum_back.bin')
-
+    
     # gradient precondtioning
     return grad_precond(simu, optim, grad, forw, back)
 

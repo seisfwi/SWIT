@@ -241,6 +241,9 @@ subroutine adjoint_modeling(parfile)
 
   if (rank == 0) then
     
+    ! perform the proper scale to the gradient 
+    g = -2.0 * g / c(iz1:iz2,ix1:ix2)
+
     call filename(output, par%data_out, 0, '_kernel_vp.bin')
     call write_binfile(output,  g, par%nz, par%nx) 
 

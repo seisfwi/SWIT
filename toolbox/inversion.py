@@ -253,7 +253,7 @@ def backtrack(simu, optim, inv_scheme):
     ftol = 1e-4        # control the accuracy of the line search routine
     wolfe = 0.9        # coefficient for the Wolfe condition
     search_max = 6     # line search max iteration
-    vmax_thresh = 800  # when direction is too large
+    vmax_thresh = 200  # when direction is too large
     vmin_thresh = 20   # when direction is too small
 
     # get parameters

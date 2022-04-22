@@ -13,7 +13,7 @@
 import copy
 import numpy as np
 
-from plot import plot_inv_scheme, plot_wavelet, plot_trace
+from plot import plot_inv_scheme, plot_wavelet, plot_trace, plot_rtm
 from misfit import misfit
 from preprocess import process_workflow
 from solver import adjoint, forward
@@ -30,7 +30,7 @@ vp_old  ------>  vp_now  ------>  vp_try  ------> make final decision
 def inversion(simu, optim, inv_model):
     ''' inversion workflow
     '''
-    
+
     # set the initial model
     simu.model.vp = inv_model['vp'] 
     simu.model.rho = inv_model['rho'] 
@@ -78,6 +78,38 @@ def inversion(simu, optim, inv_model):
         plot_inv_scheme(simu, optim, inv_scheme)
 
     print('\n-----------  iteration end  -----------\n')
+
+
+
+def rtm(simu, optim, inv_model):
+    ''' inversion workflow
+    '''
+
+    # set the initial model
+    simu.model.vp = inv_model['vp'] 
+    simu.model.rho = inv_model['rho'] 
+
+    # initialize the inversion
+    inv_scheme = optimize_init(simu, optim)
+    inv_scheme['v_now'] = array2vector(simu.model.vp)
+    inv_scheme['v_old'] = array2vector(simu.model.vp)
+
+    # synthetic data from the current model
+    forward(simu, simu_type='syn', savesnap=1)
+
+    plot_trace(simu, 'syn', simu_type='syn', suffix='', src_space=1, trace_space=5, scale = 0.8, color='b')
+    plot_trace(simu, 'syn-proc', simu_type='syn', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='b')
+
+    # process the synthetic data
+    process_workflow(simu, optim, simu_type='syn')
+
+    # compute the RTM image
+    inv_scheme['g_now'] = adjoint(simu, optim) 
+    
+    plot_rtm(simu, optim, inv_scheme)
+
+    print('\n-----------  RTM end  -----------\n')
+
 
 
 
@@ -178,8 +210,8 @@ def LBFGS(inv_scheme):
         y = g_now - g_old
 
         # implenment safeguard smooth in case of very small update
-        s = array2vector(smooth2d(vector2array(s, nx, nz), span=3))
-        y = array2vector(smooth2d(vector2array(y, nx, nz), span=3))
+        # s = array2vector(smooth2d(vector2array(s, nx, nz), span=3))
+        # y = array2vector(smooth2d(vector2array(y, nx, nz), span=3))
 
         if memory_used == 0:
             S = np.memmap(path+'S', mode='w+', dtype='float32', shape=(m, n))
@@ -523,19 +555,18 @@ def source_inversion(simu, inv_offset=10000):
         temp = temp / np.max(abs(temp))
         stf_inv[isrc, :] = temp
 
-    # process the source wavelet
-    stf_now = convert_wavelet_su(dt, stf_now, srcx)
-    stf_inv = convert_wavelet_su(dt, stf_inv, srcx)
+    # import matplotlib.pyplot as plt
+    # plt.imshow(stf_inv[:,0:500].T, aspect=0.1)
+    # plt.savefig('stf_inv.png')
 
     # save source wavelet plots
     plot_wavelet(simu, stf_now, 'stf_now', scale=1.0, color='k', plot_dx=5000, t_end = 1.0)
     plot_wavelet(simu, stf_inv, 'stf_inv', scale=1.0, color='r', plot_dx=5000, t_end = 1.0)
    
     # save source wavelet data
-    np.savetxt(homepath+'outputs/stf_now.dat', su2array(stf_now))
-    np.savetxt(homepath+'outputs/stf_inv.dat', su2array(stf_inv))
+    np.savetxt(homepath+'outputs/stf_now.dat', stf_now)
+    np.savetxt(homepath+'outputs/stf_inv.dat', stf_inv)
 
     print('Source inversion finished\n')
-
 
 

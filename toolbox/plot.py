@@ -69,7 +69,7 @@ def plot_stf(simu, isrc=1, stf_type='obs', t_end=1.0):
     nt = nt.astype(int)
 
     # t0, t1 in ms; relative amps
-    WAVELET_EXTENT = (0, simu.model.t[nt+1], -1.2, 1.2)
+    WAVELET_EXTENT = (0, t_end, -1.2, 1.2)
     SPECTRUM_EXTENT = (0, 50, 0, 1.2)  # f0, f1, p0, p1
 
     # Figure
@@ -124,7 +124,7 @@ def plot_model2D(simu, data, vmin, vmax, filename, colormap = 'jet'):
         plotopts = {
             'vmin': vmin,
             'vmax': vmax,
-            'cmap': plt.cm.jet,  # my colormap
+            'cmap': colormap,  # my colormap
             'extent': (xx[0], xx[-1], zz[-1], 0)
         }
 
@@ -201,10 +201,10 @@ def plot_wavelet(simu, wavelet, filename, scale=1.0, color='r', plot_dx=1000, t_
     if t_end > dt * (nt-1):
         t_end = dt * (nt-1)
 
-    wavelet = convert_wavelet_su(dt, simu.source.wavelet, srcx)
+    # convert wavelet to the SU format
+    wavelet = convert_wavelet_su(dt, wavelet, srcx)
 
     figpath = simu.system.homepath + 'figures/'
-
     fig = plt.figure(figsize=(10, 6))
     wavelet.plot(type='section', scale=scale, time_down=True, plot_dx=plot_dx,
             recordstart = 0., recordlength = t_end,
@@ -259,6 +259,24 @@ def plot_inv_scheme(simu, optim, inv_scheme):
         plot_trace(simu, 'syn-proc-final-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='b')
     else:
         pass
+
+
+### Plot result for RTM
+def plot_rtm(simu, optim, inv_scheme):
+    ''' plot mnewspaper outputs
+    '''
+    nx = simu.model.nx
+    nz = simu.model.nz
+    grad = inv_scheme['g_now']
+
+    if optim.marine_or_land.lower() in ['marine', 'offshore']:
+        grad_caxis = np.max(abs(grad)) * 0.1
+
+    else:
+        grad_caxis = np.max(abs(grad)) * 0.4
+
+    plot_model2D(simu, grad.reshape(nx, nz).T, -grad_caxis, grad_caxis, 'RTM-image', colormap = 'gray')
+
 
 
 def my_seismic_cmap():

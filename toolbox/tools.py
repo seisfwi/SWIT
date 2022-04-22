@@ -150,7 +150,6 @@ def convert_wavelet_su(dt, wavelet, srcx):
         iwvlt.stats.distance = srcx[ishot]
         ishot+=1
 
-
     return wavelet_su
 
 

@@ -62,6 +62,11 @@ def misfit_serial(homepath, isrc, misfit_type):
     elif misfit_type.lower() in ['globalcorrelation']:
         rsd = misfit_global_correlation(obs, syn)
 
+    # Reverse Time Migration
+    elif misfit_type.lower() in ['rtm']:
+        rsd = np.zeros(1)
+    
+
     return rsd
 
 
@@ -109,6 +114,10 @@ def adjoint_source_serial(homepath, isrc, misfit_type):
     # Normalized global-correlation coefficient (Choi & Alkhalifah, 2012)
     elif misfit_type.lower() in ['globalcorrelation']:
         adj = adjoint_source_global_correlation(obs, syn)
+    
+    # Reverse Time Migration
+    elif misfit_type.lower() in ['rtm']:
+        adj = adjoint_source_rtm(obs, syn)
 
     return adj
 
@@ -226,6 +235,20 @@ def adjoint_source_global_correlation(obs, syn):
             adj_trace *= 0.
 
         adj[irec, :] = adj_trace
+
+    return adj
+
+
+
+def adjoint_source_rtm(obs, syn):
+    ''' Reverse Time Migration
+    '''
+    # parameters
+    recn, nt, _ = get_su_parameter(obs)
+    adj = np.zeros((recn, nt))
+
+    for irec in range(recn):
+        adj[irec,:] = obs[irec].data
 
     return adj
 

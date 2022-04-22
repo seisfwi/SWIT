@@ -43,6 +43,13 @@ class simulate(object):
         dx_req = vpmin / f0 / 10.
         f0_req = vpmin / dx / 10.
 
+        # check model size
+        if np.shape(self.model.vp) != (self.model.nx, self.model.nz):
+            raise ValueError('Wrong dimensions of Vp, not consistant with nx = %d, nz = %d'%(self.model.nx, self.model.nz))
+       
+        if np.shape(self.model.rho) != (self.model.nx, self.model.nz):
+            raise ValueError('Wrong dimensions of Rho, not consistant with nx = %d, nz = %d'%(self.model.nx, self.model.nz))
+
         # check path format
         if self.system.homepath[-1] != '/':
             self.system.homepath += '/'
@@ -147,7 +154,7 @@ class model(object):
         self.dx = dx
         self.dt = dt
         self.nt = nt
-        self.fs = fs
+        self.fs = fs                                           
         self.pml = pml
         self.nx_pml = self.nx + self.pml * 2
         self.nz_pml = self.nz + self.pml * (2 - self.fs)
@@ -164,6 +171,9 @@ class model(object):
         self.savesnap = 0
         self.savestep = 1
 
+        # Notice:
+        # the forward modeling code always uses free surface, no matter self.fs = True or False
+        #    
 
 class source(object):
     ''' source parameters for forward wavefield simulation (2D or 3D)
@@ -205,7 +215,7 @@ class optimize(object):
                  fre_filter, fre_low, fre_high, 
                  mute_late_arrival, mute_late_window, normalize,
                  mute_offset_short, mute_offset_long, 
-                 mute_offset_short_dis, mute_offset_long_dis):
+                 mute_offset_short_dis, mute_offset_long_dis, grad_mask=None):
         ''' Define all parameters
         '''
 
@@ -221,6 +231,7 @@ class optimize(object):
         # gradient preconditioning
         self.grad_mute = grad_mute
         self.grad_smooth = grad_smooth
+        self.grad_mask = grad_mask
         # data filter
         self.fre_filter = fre_filter
         self.fre_low = fre_low
@@ -235,7 +246,7 @@ class optimize(object):
         self.mute_offset_long  = mute_offset_long
         self.mute_offset_short_dis = mute_offset_short_dis           # (units: m)
         self.mute_offset_long_dis  = mute_offset_long_dis            # (units: m)
-
+        
         # set the taper for muting the gradient around the source 
         if self.marine_or_land.lower() in ['marine', 'offshore']:
             self.grad_thred = 0.0
@@ -251,12 +262,15 @@ class optimize(object):
     def __check(self):
         ''' check parameters.
         '''
-
+        
         if self.scheme not in ['NLCG', 'LBFGS']:
             raise ValueError('not supported inversion scheme: %s' % self.scheme)
 
-        if self.misfit_type not in ['Waveform', 'Envelope', 'Traveltime', 'Globalcorrelation']:
+        if self.misfit_type not in ['Waveform', 'Envelope', 'Traveltime', 'Globalcorrelation', 'RTM']:
             raise ValueError('not supported misfit function: %s' % self.misfit_type)
+
+        if self.misfit_type in ['RTM']:
+            self.maxiter = 1
 
         if ('Max-Trace' not in self.normalize and 
             'L1-Event' not in self.normalize and 

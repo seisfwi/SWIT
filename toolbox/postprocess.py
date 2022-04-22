@@ -28,6 +28,7 @@ def grad_precond(simu, optim, grad, forw, back):
     grad_mute = optim.grad_mute
     grad_thred = optim.grad_thred
     grad_smooth = optim.grad_smooth
+    grad_mask = optim.grad_mask
     grad = vector2array(grad, nx, nz)
     forw = vector2array(forw, nx, nz)
     back = vector2array(back, nx, nz)
@@ -39,6 +40,15 @@ def grad_precond(simu, optim, grad, forw, back):
     # apply taper mask, land daming or water-layer masking
     if grad_mute > 0:
         grad *= grad_taper(nx, nz, tapersize = grad_mute, thred = grad_thred, marine_or_land=marine_or_land)
+    
+    if np.any(grad_mask == None):
+        pass
+    else:
+        if np.shape(grad_mask) != np.shape(grad):
+            raise('Wrong size of grad mask: the size of the mask should be identical to the size of vp model')
+        else:
+            grad *= grad_mask
+
 
     #apply the inverse Hessian
     if min(nx, nz) > 40:      # set 40 grids in default
@@ -54,7 +64,7 @@ def grad_precond(simu, optim, grad, forw, back):
     precond = forw + back
     precond = precond / np.max(precond)
     precond[precond < epsilon] = epsilon
-    grad = grad / precond
+    grad = grad / np.power(precond, 2)
 
     # smooth the gradient
     if grad_smooth > 0:

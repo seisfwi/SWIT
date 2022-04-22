@@ -444,6 +444,7 @@ class DashGraph(object):
         self.prev_value = current_value
         self.max_sent = max(self.max_sent, delta)
         percent_sent = 100 * delta / self.max_sent
+        
         line_id = self.graph_elem.draw_line((self.graph_current_item, 0), (self.graph_current_item, percent_sent), color=self.color)
         self.graph_lines.append(line_id)
         if self.graph_current_item >= GRAPH_WIDTH:

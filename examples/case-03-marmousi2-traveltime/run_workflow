@@ -1,0 +1,5 @@
+#!/bin/bash
+
+python -W ignore SWIT_workflow_stage1.py
+
+python -W ignore SWIT_workflow_stage2.py

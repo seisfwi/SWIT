@@ -57,7 +57,7 @@ source ~/.bashrc
 which fd2dmpi
 
 # Check the Python toolbox in a Python Shell 
-import base, inversion, proprocess, postprocess, solver, tools 
+import base, inversion, preprocess, postprocess, solver, tools 
 ```
 
 ### Step 3 : Run the FWI code
@@ -123,9 +123,8 @@ Waveform comparison in Marmousi2 model (the first example)
 
 If you find SWIT useful, please cite the following reference:
 
-```
 1. Li, H., Li, J., Liu, B., & Huang, X. (2021). Application of full-waveform tomography on deep seismic profiling data set for tectonic fault characterization. In First International Meeting for Applied Geoscience & Energy Expanded Abstracts (pp. 657–661). https://doi.org/10.1190/segam2021-3583190.1
 2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
-```
+
 ## Final words
 The seismic wit always lies within.

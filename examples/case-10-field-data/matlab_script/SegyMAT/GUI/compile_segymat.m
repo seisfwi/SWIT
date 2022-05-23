@@ -1,0 +1,1 @@
+mcc -B sgl segymat

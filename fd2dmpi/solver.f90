@@ -91,6 +91,7 @@ subroutine forward_modeling(parfile)
   call get_assigned(1, coord%ns, is1, is2)
 
   do is = is1, is2, 1
+    
     call filename(str,'./parfile/forward_source/src',is,'.bin')
     call read_binfile(str, s, par%nt)
 
@@ -190,17 +191,24 @@ subroutine adjoint_modeling(parfile)
 
   call get_assigned(1, coord%ns, is1, is2)
 
-  ! Initialize
-  dg   = 0.0
-  dfw  = 0.0
-  dbk  = 0.0
-
-  p_bk = 0.0
-  u_bk = 0.0
-  w_bk = 0.0
-
   do is = is1, is2, 1
     
+    ! Initialize
+    s     = 0.0
+    s_adj = 0.0
+    boundary = 0.0
+    p_end = 0.0
+    u_end = 0.0
+    w_end = 0.0
+
+    dg   = 0.0
+    dfw  = 0.0
+    dbk  = 0.0
+
+    p_bk = 0.0
+    u_bk = 0.0
+    w_bk = 0.0
+
     ! Read forward source 
     call filename(str,'./parfile/forward_source/src',is,'.bin')
     call read_binfile(str, s, par%nt)
@@ -230,7 +238,24 @@ subroutine adjoint_modeling(parfile)
       dfw = dfw + p_end * p_end
       dbk = dbk + p_bk(iz1:iz2,ix1:ix2) *  p_bk(iz1:iz2,ix1:ix2)
 
+      ! ! output wavefield
+      ! if (mod(it, 10) ==0) then
+      !   call filename(str, par%data_out, is, '_snapshot/')
+      !   call filename(str, str, it, '_forward.bin')
+      !   call write_binfile(str, p_end,  par%nz, par%nx)
+
+      !   call filename(str, par%data_out, is, '_snapshot/')
+      !   call filename(str, str, it, '_backward.bin')
+      !   call write_binfile(str, p_bk(iz1:iz2,ix1:ix2),  par%nz, par%nx)
+
+      ! endif
+
     enddo
+
+    ! ! output gradient
+    ! call filename(str, par%data_out, is,'_kernel_vp.bin')
+    ! call write_binfile(str, dg,  par%nz, par%nx)
+
   enddo
 
   !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!   

@@ -17,7 +17,7 @@ import numpy as np
 import obspy
 from scipy.signal import butter, filtfilt
 
-from tools import add_su_header, get_su_parameter, loadsu, savesu, su2array
+from tools import add_su_header, get_su_parameter, loadsu, savesu, su2array, array2su, smooth1d
 
 
 def process_workflow(simu, optim, simu_type = 'syn', use_first_break_in_su_header = False):
@@ -99,7 +99,7 @@ def apply_mute(optim, trace, use_first_break_in_su_header):
     ''' apply time window and offset window mute.
     '''
     # set parameters
-    length = 200
+    length = 100
     recn, nt, dt = get_su_parameter(trace)
 
     mute_late_arrival = optim.mute_late_arrival
@@ -118,18 +118,28 @@ def apply_mute(optim, trace, use_first_break_in_su_header):
         if mute_offset_long:
             mute_offset(tr, mute_offset_long_dis, 'long')
 
-    # pick the first arrival and mute the late arrival
+    # pick the first arrival and mute the late or early arrival
     if mute_late_arrival:
+
+        # decide mute late or early arrivals W.R.T first break
+        if mute_late_window > 0.0:
+            mutetype = 'late'
+        else:
+            mutetype = 'early'
+        
+        # mute window in second
+        mute_window = abs(mute_late_window)
+        
         # use the firsy arrival in the header
         if use_first_break_in_su_header:
             itrace = 0
             pick = np.zeros(len(trace))
             for tr in trace:
-                pick[itrace] = int((tr.stats.su.trace_header.mute_time_start_time_in_ms/1000 + mute_late_window)/dt)
+                pick[itrace] = int((tr.stats.su.trace_header.mute_time_start_time_in_ms/1000 + mute_window)/dt)
                 itrace +=1
         # pick the first arrival in a brutal manner 
         else:
-            pick = brutal_picker(trace) + np.ceil(mute_late_window/dt)
+            pick = brutal_picker(trace) + np.ceil(mute_window/dt)
 
         itrace = 0
         for tr in trace:
@@ -137,7 +147,7 @@ def apply_mute(optim, trace, use_first_break_in_su_header):
             itmin = int(pick[itrace] - length/2)
             itmax = int(itmin + length)
             # apply mute
-            mute_arrival(tr, itmin, itmax, 'late', nt, length)
+            mute_arrival(tr, itmin, itmax, mutetype, nt, length)
             itrace +=1
 
 
@@ -295,3 +305,35 @@ def butter_highpass_filter(data, lowcut, dt, order=4):
 
     return data_hp
 
+
+def source_wavelet_process(stf, stf_dt=0.001, use_dt = 0.001, use_nt=4001, shift = 0.0, lowpass = 0, highpass = 50, taper_beg=0.005):
+    ''' source wavelet process
+    '''
+    # convert to su
+    stf = array2su(1, stf_dt, stf)
+    t0 = stf[0].stats.starttime 
+    stf.resample(1.0/use_dt)
+    stf.detrend('demean')
+    stf.detrend('linear')
+    # filter
+    if lowpass == 0:
+        stf.filter('lowpass', freq=highpass)#, corners=4, zerophase=True)
+    elif 0 < lowpass < highpass:
+        stf.filter('bandpass', freqmin=lowpass, freqmax=highpass)#, corners=4, zerophase=True)
+    else:
+        pass
+    stf.trim(starttime=t0, endtime=t0 + use_dt*(use_nt-1), 
+             pad=True, nearest_sample=True, fill_value=0.)
+    #stf[0].data[:] = smooth1d(stf[0].data[:], window_len = 5)
+    # apply shift
+    if shift > 0:
+        shift = int(shift//use_dt)
+        stf[0].data[0:-1-shift] =  stf[0].data[shift:-1]
+    
+    stf.taper(taper_beg, type='hann', side='left')
+
+    stf = stf[0].data[:]
+    if stf.size != use_nt:
+        ValueError('wrong size of the source wavelet')
+
+    return stf

@@ -318,7 +318,10 @@ class optimize(object):
 
         # pick and mute
         if self.mute_late_arrival:
-            print('Data processing  : time window, %.2f s after the first break' % self.mute_late_window)
+            if self.mute_late_window > 0:
+                print('Data processing  : time window, %.2f s after the first break' % self.mute_late_window)
+            else:
+                print('Data processing  : time window, %.2f s mute first arrivals for RTM' % abs(self.mute_late_window))
         else:
             print('Data processing  : no time window')
 

@@ -47,8 +47,8 @@ def inversion(simu, optim, inv_model):
         # synthetic data from the current model
         forward(simu, simu_type='syn', savesnap=1)
 
-        plot_trace(simu, 'syn', simu_type='syn', suffix='', src_space=1, trace_space=5, scale = 0.8, color='b')
-        plot_trace(simu, 'syn-proc', simu_type='syn', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='b')
+        # plot_trace(simu, 'syn', simu_type='syn', suffix='', src_space=1, trace_space=5, scale = 0.8, color='b')
+        # plot_trace(simu, 'syn-proc', simu_type='syn', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='b')
 
         # process the synthetic data
         process_workflow(simu, optim, simu_type='syn')
@@ -97,15 +97,10 @@ def rtm(simu, optim, inv_model):
     # synthetic data from the current model
     forward(simu, simu_type='syn', savesnap=1)
 
-    plot_trace(simu, 'syn', simu_type='syn', suffix='', src_space=1, trace_space=5, scale = 0.8, color='b')
-    plot_trace(simu, 'syn-proc', simu_type='syn', suffix='_proc', src_space=1, trace_space=5, scale = 0.8, color='b')
-
-    # process the synthetic data
-    process_workflow(simu, optim, simu_type='syn')
-
     # compute the RTM image
     inv_scheme['g_now'] = adjoint(simu, optim) 
     
+    # plot and save
     plot_rtm(simu, optim, inv_scheme)
 
     print('\n-----------  RTM end  -----------\n')
@@ -285,7 +280,7 @@ def backtrack(simu, optim, inv_scheme):
     ftol = 1e-4        # control the accuracy of the line search routine
     wolfe = 0.9        # coefficient for the Wolfe condition
     search_max = 6     # line search max iteration
-    vmax_thresh = 200  # when direction is too large
+    vmax_thresh = 300  # when direction is too large
     vmin_thresh = 20   # when direction is too small
 
     # get parameters

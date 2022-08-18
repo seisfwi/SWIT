@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
 
-from tools import loadsu, add_su_header, convert_wavelet_su
+from tools import loadsu, add_su_header, convert_wavelet_su, savebinfloat32
 
 ### Plot acquisition geometry
 def plot_geometry(simu):
@@ -251,12 +251,12 @@ def plot_inv_scheme(simu, optim, inv_scheme):
     plot_model2D(simu, dire.reshape(nx, nz).T, -dirc_caxis, dirc_caxis, 'dire-%03d' % it, colormap = 'seismic')
 
     if optim.iter == 1 :
-        plot_trace(simu, 'syn-proc-initial-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='r')
+        plot_trace(simu, 'syn-proc-initial', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='r')
     elif optim.iter == optim.maxiter:
         data_misfit = np.loadtxt('./outputs/misfit_data.dat')
         data_misfit = data_misfit / data_misfit[0]
         plot_misfit(simu, data_misfit, 'data')
-        plot_trace(simu, 'syn-proc-final-model', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='b')
+        plot_trace(simu, 'syn-proc-final', simu_type = 'syn', suffix='_proc', src_space=1, trace_space=5, scale=0.8, color='b')
     else:
         pass
 
@@ -276,6 +276,9 @@ def plot_rtm(simu, optim, inv_scheme):
         grad_caxis = np.max(abs(grad)) * 0.4
 
     plot_model2D(simu, grad.reshape(nx, nz).T, -grad_caxis, grad_caxis, 'RTM-image', colormap = 'gray')
+
+    # save RTM image
+    savebinfloat32(simu.system.homepath + 'outputs/gradient/RTM-image.bin', inv_scheme['g_now'])
 
 
 

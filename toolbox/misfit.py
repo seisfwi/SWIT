@@ -94,10 +94,13 @@ def adjoint_source_serial(homepath, isrc, misfit_type):
     '''
 
     obs = loadsu(homepath + 'data/obs/src%d_sg_proc.su'%(isrc+1))
-    syn = loadsu(homepath + 'data/syn/src%d_sg_proc.su'%(isrc+1))
 
-    if get_su_parameter(obs) != get_su_parameter(syn):
-        raise ValueError('obs and syn are not consistent.')
+    # we do not use syn data in RTM
+    if misfit_type.lower() not in ['rtm']:
+        syn = loadsu(homepath + 'data/syn/src%d_sg_proc.su'%(isrc+1))
+
+        if get_su_parameter(obs) != get_su_parameter(syn):
+            raise ValueError('obs and syn are not consistent.')
 
     # Waveform difference L2-norm (Tarantola, 1984)
     if misfit_type.lower() in ['waveform']:
@@ -117,7 +120,7 @@ def adjoint_source_serial(homepath, isrc, misfit_type):
     
     # Reverse Time Migration
     elif misfit_type.lower() in ['rtm']:
-        adj = adjoint_source_rtm(obs, syn)
+        adj = adjoint_source_rtm(obs)
 
     return adj
 
@@ -240,7 +243,7 @@ def adjoint_source_global_correlation(obs, syn):
 
 
 
-def adjoint_source_rtm(obs, syn):
+def adjoint_source_rtm(obs):
     ''' Reverse Time Migration
     '''
     # parameters
@@ -249,6 +252,10 @@ def adjoint_source_rtm(obs, syn):
 
     for irec in range(recn):
         adj[irec,:] = obs[irec].data
+
+        # # differentiate the seismic trace twice
+        # adj[irec,:] = np.diff(adj[irec,:], prepend = adj[irec,0])
+        # adj[irec,:] = np.diff(adj[irec,:], prepend = adj[irec,0])
 
     return adj
 

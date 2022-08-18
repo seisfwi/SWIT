@@ -14,7 +14,7 @@ import numpy as np
 import scipy.signal
 
 from plot import plot_model2D
-from tools import array2vector, smooth2d, vector2array
+from tools import array2vector, smooth2d, vector2array, smooth1d
 
 
 def grad_precond(simu, optim, grad, forw, back):
@@ -22,7 +22,6 @@ def grad_precond(simu, optim, grad, forw, back):
     '''
     nx = simu.model.nx
     nz = simu.model.nz
-    vp = simu.model.vp
     vpmax = optim.vpmax
     marine_or_land = optim.marine_or_land
     grad_mute = optim.grad_mute
@@ -41,15 +40,6 @@ def grad_precond(simu, optim, grad, forw, back):
     if grad_mute > 0:
         grad *= grad_taper(nx, nz, tapersize = grad_mute, thred = grad_thred, marine_or_land=marine_or_land)
     
-    if np.any(grad_mask == None):
-        pass
-    else:
-        if np.shape(grad_mask) != np.shape(grad):
-            raise('Wrong size of grad mask: the size of the mask should be identical to the size of vp model')
-        else:
-            grad *= grad_mask
-
-
     #apply the inverse Hessian
     if min(nx, nz) > 40:      # set 40 grids in default
         span = 40
@@ -64,16 +54,29 @@ def grad_precond(simu, optim, grad, forw, back):
     precond = forw + back
     precond = precond / np.max(precond)
     precond[precond < epsilon] = epsilon
-    grad = grad / np.power(precond, 2)
+    grad = grad / np.power(precond, 1)
 
     # smooth the gradient
     if grad_smooth > 0:
         # exclude water-layer
         if marine_or_land in ['Marine', 'Offshore']: 
             grad[:,grad_mute:] = smooth2d(grad[:,grad_mute:], span=grad_smooth)
+        
         # land gradient smooth
         else:
             grad = smooth2d(grad, span=grad_smooth)
+
+
+    if np.any(grad_mask == None):
+        pass
+    else:
+        if np.shape(grad_mask) != np.shape(grad):
+            raise('Wrong size of grad mask: the size of the mask should be identical to the size of vp model')
+        else:
+            # apply mask
+            grad = grad * grad_mask
+            if optim.iter == 1:
+                plot_model2D(simu, grad_mask.T, 0., 1.0, 'grad_mask', 'jet')
 
     # scale the gradient properly
     grad *= vpmax / abs(grad).max()

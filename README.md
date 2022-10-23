@@ -10,6 +10,8 @@
 
 By Haipeng Li @ University of Science and Technology of China,  haipengl@mail.ustc.edu.cn
 
+Since Sep., 2022, I have moved to Stanford University, haipeng@standford.edu
+
 
 
 ## Installation 
@@ -27,10 +29,17 @@ tar xvfz openmpi-4.1.1.tar.gz
 cd openmpi-4.1.1
 
 # Configure & install OpenMPI (this would take quite a while)
+# If no sudo permision granted, install OpenMPI in your personal folder, i.e.
+# /home/user-name/softare/openmpi/
 ./configure --prefix=/usr/local/openmpi CC=gcc FC=gfortran
-make; sudo make install
+make
+# if you install on: /usr/local/openmpi 
+sudo make install
+# if you install on your personal folder, no sudo required
+make install
 
 # Add path to ~/.bashrc
+# If you use a personal path, change to your path
 echo export PATH=/usr/local/openmpi/bin:$PATH >> ~/.bashrc
 source ~/.bashrc
 
@@ -46,7 +55,9 @@ pip install numpy obspy scipy matplotlib multiprocess PySimpleGUI psutil Pillow 
 
 # Complie the fd2dmpi forward solver with gfortran & mpif90.
 cd /your/own/path/to/SWIT-1.0/fd2dmpi/
-rm *.mod; make clean; make
+rm *.mod
+make clean
+make
 
 # Add paths of fd2dmpi & Python toolbox to ~/.bashrc 
 echo export PATH=/your/own/path/to/SWIT-1.0/bin:$PATH >> ~/.bashrc
@@ -116,6 +127,8 @@ Waveform selection in SWIT-1.0 by changing parameters for preprocessing.
 Waveform comparison in Marmousi2 model (the first example)
 
 <img src="./doc/waveform.png" style="zoom:40%;" />
+
+We have also performed the FWI on the field data. Contact the author for more details, if interested.
 
 
 

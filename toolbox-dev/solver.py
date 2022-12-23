@@ -16,6 +16,7 @@ import subprocess
 from scipy import integrate
 
 from tools import cleandata
+from multiprocessing import cpu_count
 
 
 class Solver(object):
@@ -25,10 +26,53 @@ class Solver(object):
     def __init__(self, config, model, source, receiver):
         ''' Initialize solver
         '''
+        # basic class variables for solver        
         self.config = config
         self.model = model
         self.source = source
         self.receiver = receiver
+
+        # check the solver
+        self.__check__()
+
+        # print solver information
+        self.__info__()
+
+
+
+    def __check__(self):
+        ''' Check the solver
+        '''
+    
+        # check the source location
+        if (self.source.coord[:,0].min() < self.model.x.min() or 
+            self.source.coord[:,0].max() > self.model.x.max() or
+            self.source.coord[:,1].min() < self.model.z.min() or 
+            self.source.coord[:,1].max() > self.model.z.max()):
+            raise ValueError('Source location out of model range.')
+        
+        # check the receiver location
+        if (self.receiver.xz[:,0].min() < self.model.x.min() or
+            self.receiver.xz[:,0].max() > self.model.x.max() or
+            self.receiver.xz[:,1].min() < self.model.z.min() or
+            self.receiver.xz[:,1].max() > self.model.z.max()):
+            raise ValueError('Receiver location out of model range.')
+
+        # check the mpiproc and set the number of CPUs
+        self.config.mpiproc = min([self.config.mpiproc, self.source.n, cpu_count() // 2])
+                
+
+    def __info__(self):
+        ''' Print solver information
+        '''
+        print('*****************************************************')
+        print('\n        Seismic Waveform Inversion Toolbox         \n')
+        print('*****************************************************\n')
+        print('Forward modeling : nx, nz = {}, {}'.format(self.model.nx, self.model.nz) )
+        print('Forward modeling : dx = {.1f} m'.format(self.model.dx))
+        print('Forward modeling : dt = {.2f} ms, {} steps'.format(self.model.dt * 1000, self.model.nt))
+        print('Forward modeling : %d shots run in mpi, %d CPU available'.format(self.system.mpiproc, cpu_count() // 2))
+
 
 
     def forward(self, simu_type = 'obs', savesnap = 0):
@@ -40,11 +84,11 @@ class Solver(object):
 
         # change path and clean previous data (always, even empty)
         if simu_type in ['syn']: 
-            cleandata(self.config.homepath + 'data/syn/')
+            cleandata(self.config.path + 'data/syn/')
 
         # create working directory
         for isrc in range(self.source.srcn):
-            ifolder = self.config.homepath + 'data/%s/src%d_snapshot'%(simu_type, isrc+1)
+            ifolder = self.config.path + 'data/%s/src%d_snapshot'%(simu_type, isrc+1)
             if not os.path.exists(ifolder) and savesnap == 1:
                 os.system('mkdir %s' % ifolder)
 

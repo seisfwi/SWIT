@@ -11,3 +11,5 @@
 ###############################################################################
 
 
+# Use one thread in calling scipy to do the filtering
+os.environ["OMP_NUM_THREADS"] = "1" # export OMP_NUM_THREADS=1

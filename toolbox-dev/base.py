@@ -186,8 +186,8 @@ class Receiver(object):
             check the receiver parameters
         '''
         # check coordinates of receivers
-        if self.coord.shape[-1] != 2:
-            raise ValueError('The coordinates of receivers must be 2D array')
+        if not isinstance(self.coord, list):
+            raise ValueError('coord must be a list of the length of the source number, with a 2D array for each element')
 
         # components of receivers must be a list
         if not isinstance(self.comp, list):

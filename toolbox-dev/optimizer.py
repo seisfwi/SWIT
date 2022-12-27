@@ -2,7 +2,9 @@ import numpy as np
 from tools import scalL2, normL2
 from tools import print_info, print_info_TRN, print_info_PTRN
 
-class Optimize(object):
+
+
+class Optimizer(object):
     '''
         Optimization based on subroutines from SEISCOPE OPTIMIZATION TOOLBOX
     '''

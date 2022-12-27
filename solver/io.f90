@@ -87,6 +87,7 @@ if (rank == 0) then
   call readParFile(parfile, 'NPML',             par%npml,               40)
   call readParFile(parfile, 'STORE_SNAP',       par%store_snap,          0)
   call readParFile(parfile, 'STORE_STEP',       par%store_step,          5)
+  call readParFile(parfile, 'STORE_BOUNDAARY',  par%store_boundary,      0)
   ! Floating-point parameters
   call readParFile(parfile, 'DX',               par%dx,               -1.0)
   call readParFile(parfile, 'DT_WORK',          par%dt,               -1.0)
@@ -112,6 +113,7 @@ call MPI_BCAST(par%free_surface,1,   MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%npml,1,           MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%store_snap,1,     MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%store_step,1,     MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+call MPI_BCAST(par%store_boundary,1, MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 
 call MPI_BCAST(par%dx,1,             MPI_REAL,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%dt,1,             MPI_REAL,0,MPI_COMM_WORLD,ierr)

@@ -38,9 +38,20 @@ class Solver(object):
         self.__info__()
 
 
-    def forward(self, simu_tag = 'obs', save_snap = 0):
+    def run(self, simu_type = 'forward', simu_tag = 'obs', save_snap = 0, save_boundary = 0):
         ''' Forward solver
         '''
+
+        # check the specification of the simulation type
+        if simu_type not in ['forward', 'adjoint', 'gradient']:
+            msg = "simu_type must be 'forward', 'adjoint' or 'gradient' \n"
+            err = 'Unknown simulation type: {}'.format(simu_type)
+            raise ValueError(msg + err)
+        
+        # check mpi and wavefield solver fd2dmpi
+        for cmd in ['which mpirun', 'which fd2dmpi']:
+            if os.system(cmd) != 0:
+                raise ValueError('Cannot find {}, please check your mpi installation.'.format(cmd))
 
         # create working directory
         for isrc in range(self.source.num):
@@ -48,34 +59,38 @@ class Solver(object):
             if not os.path.exists(ifolder) and save_snap == 1:
                 os.system('mkdir -p %s' % ifolder)
 
-        # # prepare the forward source
-        # src = integrate.cumtrapz(self.source.wavelet, axis=-1, initial=0)
+        # prepare the config file for the solver
+        self.prepare_configfile(simu_type, simu_tag, save_snap, save_boundary)
 
-        # prepare the config file for forward solver
-        self.prepare_configfile('forward', simu_tag, save_snap)
-
-        # check mpi and wavefield solver
-        if os.system('which mpirun') != 0:
-            raise ValueError('Cannot find mpirun, please check your mpi installation.')
-        if os.system('which fd2dmpi') != 0:
-            raise ValueError('Cannot find fd2dmpi, please check your wavefield solver installation.')
-
-        # run the forward solver with mpi
+        # run the solver with mpi
         cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.config.mpi_num, self.config.path + 'config/solver.config')
         status = subprocess.getstatusoutput(cmd)
 
-        # check the status of forward solver
+        # check the status of the solver
         if status[0]:
             print(status[1])
-            raise ValueError('Forward solver crash')
+            raise ValueError('Solver crash')
 
 
-    def prepare_configfile(self, simu_type, simu_tag, save_snap):
+    def set_model(self, vp = None, rho = None):
+        ''' Set model parameters
+        '''
+        if vp is not None:
+            self.model.vp = vp
+        if rho is not None:
+            self.model.rho = rho
+
+
+    def prepare_configfile(self, simu_type, simu_tag, save_snap, save_boundary):
         ''' Prepare configuration files for forward solver, including:
                 1. source wavelet files: src1.bin, src2.bin, ...
                 2. velocity and density files: vp.bin, rho.bin
                 3. geometry config file: geometry.config
                 4. solver config file: solver.config
+
+                Note: the adjoint source wavelet should be saved previously by 
+                other functions in the folder: config/wavelet before running
+                adjoint/gradient solver
         '''
 
         # create configfile directory
@@ -86,7 +101,10 @@ class Solver(object):
         # save source wavelet files: src1.bin, src2.bin, ...
         for isrc in range(self.source.num):
             srcpath = os.path.join(self.config.path, 'config/wavelet/src{}.bin'.format(isrc+1))
-            save_float(srcpath, self.source.wavelet[isrc, :])
+
+            # integrate the source wavelet to cancel out the derivative effect of the 1-st order FD scheme
+            src = integrate.cumtrapz(self.source.wavelet[isrc, :], axis=-1, initial=0)
+            save_float(srcpath, src)
                 
         # save P-wave velocity and density files: vp.bin, rho.bin
         save_float(os.path.join(self.config.path, 'config/vp.bin'), self.model.vp)
@@ -112,19 +130,7 @@ class Solver(object):
         fp.write('#                                         \n')
         fp.write('######################################### \n')
         fp.write('                                          \n')
-
-        # specify the simulation type
-        if simu_type in ['forward']:
-            fp.write('jobtype=forward\n')
-        elif simu_type in ['adjoint']:
-            fp.write('jobtype=adjoint\n')
-        elif simu_type in ['gradient']:
-            fp.write('jobtype=gradient\n')
-        else:
-            msg = "simu_type must be 'forward', 'adjoint' or 'gradient' \n"
-            err = 'Unknown simulation type: {}'.format(simu_type)
-            raise ValueError(msg + err)
-
+        fp.write('jobtype=%s\n'       % simu_type)
         fp.write('COORD_FILE=%s\n'    % (self.config.path + 'config/geometry.config'))
         fp.write('SOURCE_FILE=%s\n'   % (self.config.path + 'config/wavelet/src'))
         fp.write('DATA_OUT=%s\n'      % (self.config.path + 'data/{}/src'.format(simu_tag)))
@@ -139,52 +145,9 @@ class Solver(object):
         fp.write('DT_WORK=%f\n'       % self.model.dt)
         fp.write('FREESURFACE=1\n')             # Free surface is always on
         fp.write('STORE_SNAP=%d\n'    % save_snap)
-        fp.write('STORE_STEP=%d\n'    % (10)) # save snapshot every 10 time steps
+        fp.write('STORE_STEP=%d\n'    % (10))  # save snapshot every 10 time steps
+        fp.write('STORE_BOUNDAARY=%d\n'    % save_boundary) # save boundary wavefield for reconstruction
         fp.close()
-
-
-
-    # def adjoint(self, savesnap = 0):
-    #     ''' Adjoint solver
-    #     '''
-    
-    #     simu_type = 'adj'
-        
-    #     # change path and clean previous data (always, even empty)
-    #     cleandata(self.config.homepath + 'data/adj/')
-
-    #     # create working directory
-    #     for isrc in range(self.source.srcn):
-    #         ifolder = self.config.homepath + 'data/%s/src%d_snapshot'%(simu_type, isrc+1)
-    #         if not os.path.exists(ifolder) and savesnap == 1:
-    #             os.system('mkdir %s' % ifolder)
-
-    #     # prepare the forward source
-    #     src = integrate.cumtrapz(self.source.wavelet, axis=-1, initial=0)
-
-    #     # write parameters and model files
-    #     self.write_parfile(simu_type, src, savesnap=savesnap)
-
-    #     # check mpi and wavefield solver
-    #     if os.system('which mpirun') != 0:
-    #         raise ValueError('Cannot find mpirun, please check your mpi installation.')
-    #     if os.system('which fd2dmpi') != 0:
-    #         raise ValueError('Cannot find fd2dmpi, please check your wavefield solver installation.')
-
-    #     # submit job
-    #     os.chdir(self.config.homepath)
-    #     solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (self.config.mpiproc, 
-    #                 self.config.homepath + 'parfile/forward_parfile/parfile')
-    #     status = subprocess.getstatusoutput(solver_cmd)
-    #     if status[0]:
-    #         print(status[1])
-    #         raise ValueError('Forward solver crash')
-
-  
-    # def dot_product(self, simu_type = 'obs'):
-    #     ''' Calculate dot product of two wavefields
-    #     '''
-    #     pass
 
 
     def __check__(self):

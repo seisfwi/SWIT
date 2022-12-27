@@ -90,6 +90,7 @@ contains
     store_snap = .false.
     store_boundary = .false.
     if (par%store_snap .eq. 1) store_snap = .true.
+    if (par%store_boundary .eq. 1) store_boundary = .true.
 
     ! Forward modeling using dynamic load balancing
     call get_assigned(1, coord%ns, is1, is2)
@@ -248,7 +249,6 @@ contains
     call stop_mpi
 
     end subroutine adjoint_modeling
-    
 
 
   !-----------------------------------------------------------------------------------------
@@ -324,7 +324,6 @@ contains
 
     ! Adjoint modeling using dynamic load balancing
     store_snap = .false.
-    store_boundary = .true.
 
     ! Loop over sources
     call get_assigned(1, coord%ns, is1, is2)
@@ -347,13 +346,9 @@ contains
       ! Read forward source: ./config/wavelet/src1.bin, src2.bin, ...
       call filename(str, par%sourcefile, is, '.bin')
       call read_binfile(str, s, par%nt)
-      
-      ! Forward modeling
-      call staggered42_modeling_is(is, par, coord, s, c, den, fs, nx_pml, nz_pml, &
-                  npml, damp_global, store_boundary, store_snap)
     
-      ! Read adjoint source
-      call filename(str, par%sourcefile, is, 'adj_.bin')
+      ! Read adjoint source: ./config/wavelet/src1_adj.bin, src2_adj.bin, ...
+      call filename(str, par%sourcefile, is, '_adj.bin')
       call read_binfile(str, s_adj, par%nt, coord%ngmax) 
       
       ! Read boundary, p_end, u_end, w_end

@@ -6,39 +6,147 @@
 #   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
 #   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
 #
-#   Workflow module
+#   Main module
 #
 ###############################################################################
 
 
+# import modules
+import datetime, time
+import sys
+import numpy as np
+from utils import read_yaml, load_model, source_wavelet
+from base import Config, Model, Source, Receiver
+from solver import Solver
+
+FWI = None
+RTM = None
 
 class SWIT(object):
 
-    def __init__(self, config, model, source, receiver, precessor, optimizer):
-        self.config = config
-        self.model = model
-        self.source = source
-        self.receiver = receiver
-        self.precessor = precessor
-        self.optimizer = optimizer
+    def __init__(self, config_file):
 
-    def initilize(self):
+        # read config file
+        try:
+            par = read_yaml(config_file)
+        except:
+            raise FileNotFoundError('Config file not found: {}'.format(config_file))
+
+        # job type
+        self.job_type = par['Config']['job_type'].lower()
+
+        # retrieve parameters
+        try:
+            # config parameters
+            work_path = par['Config']['work_path']
+            mpi_num = par['Config']['mpi_num']
+
+            # model parameters
+            nx = par['Model']['nx']
+            nz = par['Model']['nz']
+            dx = par['Model']['dx']
+            dt = par['Model']['dt']
+            nt = par['Model']['nt']
+            pml = par['Model']['pml']
+            vp = load_model(par['Model']['vp_path'], nx, nz)    # load model from file
+            rho = load_model(par['Model']['rho_path'])          # load model from file 
+            
+            # source parameters
+            f0 = par['Source']['f0']
+            amp0 = par['Source']['amp0']
+            src_type = par['Source']['type']
+
+            # load source coordinates
+            src_coord_file = par['Source']['coord_file']
+            try:
+                src_coord = np.loadtxt(src_coord_file)
+            except:
+                msg = 'Source coordinate file not found: {}'.format(src_coord_file)
+                raise FileNotFoundError(msg)
+
+            # set up source wavelet
+            src_num = src_coord.shape[0]            
+            wavelet  = np.zeros((src_num, nt))                          # Source wavelet
+            for isrc in range(src_num):
+                wavelet[isrc,:] = source_wavelet(amp0, nt, dt, f0, src_type)
+
+            # receiver parameters
+            rec_type = par['Receiver']['type']
+
+            # load receiver coordinates
+            rec_coord_file = par['Receiver']['coord_file']
+            try:
+                rec_coord = []
+                for irec in range(len(rec_coord_file)):
+                    rec_coord.append(np.loadtxt(rec_coord_file[irec]))
+            except:
+                msg = 'Receiver coordinate file not found: {}'.format(rec_coord_file)
+                raise FileNotFoundError(msg)
+
+        except:
+            raise KeyError('Some parameters are missing or wrong in the config file.')
+
+
+        # configuration, model, source, receiver are required for all jobs
+        self.config = Config(work_path, mpi_num)
+        self.model = Model(nx, nz, dx, dt, nt, pml, vp, rho)
+        self.source = Source(src_coord, wavelet, f0)
+        self.receiver = Receiver(rec_coord, rec_type)
+
+        # processor, optimizer are optionally required for FWI or RTM
+        if self.job_type in ['fwi', 'rtm']:
+
+            # processor parameters
+            self.processor = None
+
+
+            # optimizer parameters
+            if self.job_type in ['fwi']:
+                self.optimizer = None
+
+
+    def run(self, simu_tag = 'obs', save_snap = False):
+        # Forward simulation
+        if self.job_type in ['forward']:
+            solver = Solver(self.config, self.model, self.source, self.receiver)
+            solver.forward(simu_tag = simu_tag, save_snap = save_snap)
         
-        # initilize solver, precessor and optimizer
-        self.solver = solver.Solver(self.config, self.model, self.source, self.receiver)
-        self.precessor = precessor.Precessor(self.config, self.precessor)
-        self.optimizer = optimizer.Optimizer(self.config, self.optimizer)
+        # Full Waveform Inversion
+        elif self.job_type in ['fwi']:
+            self.fwi = FWI(self.config, self.model, self.source, self.receiver, self.processor, self.optimizer)
+            self.fwi.run()
+        
+        # Reverse Time Migration
+        elif self.job_type in ['rtm']:
+            self.rtm = RTM(self.config, self.model, self.source, self.receiver, self.processor)
+            self.rtm.run()
+            
+        # Unknown job type
+        else:
+            msg = 'Support job types: Forward, FWI, RTM. \n'
+            err = 'Unknown job type: {}'.format(self.config['Config']['job_type'])
+            raise ValueError(msg + err)
 
-        # initilize solver, precessor and optimizer
-        self.solver.initilize()
-        self.precessor.initilize()
-        self.optimizer.initilize()
 
-
-    def run_FWI(self):
-        pass
-
-    def run_RTM(self):
-        pass
-
+if __name__ == '__main__':
     
+    # check if all required parameters are given
+    if len(sys.argv) != 2:
+        print("Usage: SWIT.py config.yaml")
+        sys.exit(1)
+
+    # read config file
+    config_file = sys.argv[1]
+
+    # initilize SWIT
+    swit = SWIT(config_file)
+    
+    # set timer
+    start_time = time.time()
+
+    # run SWIT
+    swit.run()
+
+    # print running time
+    consumed_time = datetime.timedelta(seconds = time.time() - start_time)
+    print('SWIT running time: {}'.format(consumed_time))

@@ -60,14 +60,14 @@ class Solver(object):
         if os.system('which fd2dmpi') != 0:
             raise ValueError('Cannot find fd2dmpi, please check your wavefield solver installation.')
 
-        # run the forward solver with mpi
-        cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.config.mpi_num, self.config.path + 'config/solver.config')
-        status = subprocess.getstatusoutput(cmd)
-
-        # check the status of forward solver
-        if status[0]:
-            print(status[1])
-            raise ValueError('Forward solver crash')
+        # # submit job
+        # os.chdir(self.config.homepath)
+        # solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (self.config.mpiproc, 
+        #             self.config.homepath + 'parfile/forward_parfile/parfile')
+        # status = subprocess.getstatusoutput(solver_cmd)
+        # if status[0]:
+        #     print(status[1])
+        #     raise ValueError('Forward solver crash')
 
 
     def prepare_configfile(self, simu_type, simu_tag, save_snap):
@@ -229,7 +229,6 @@ class Solver(object):
         if self.config.mpi_num > self.source.num:
             print('Warning: mpi number is larger than source number, reset to source number.')
             self.config.mpi_num = self.source.num
-
 
     def __info__(self):
         ''' Print solver information

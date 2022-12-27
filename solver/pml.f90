@@ -77,9 +77,16 @@ real, intent(in) :: dx, vmin
 real             :: a, xa, kappa
 integer          :: ix, iz
 
+
 damp_global = 0.0
 a = (npml-1)*dx
-kappa = 3.0*vmin*log(1000.0)/(2.0*a)  ! Adjust the damping effect.
+
+! Set the damping factor kappa
+if (vmin .eq. 0.0) then
+  kappa = 3.0*1000.*log(1000.0)/(2.0*a)  ! Adjust the damping effect.
+else
+  kappa = 3.0*vmin*log(1000.0)/(2.0*a)   ! Adjust the damping effect.
+endif
 
 do ix=1,npml
   xa = real(ix-1)*dx/a

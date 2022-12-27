@@ -10,9 +10,9 @@
 #
 ###############################################################################
 
-import os
-import yaml
+
 import numpy as np
+
 
 
 def source_wavelet(amp0, nt, dt, f0, source_type):
@@ -61,67 +61,3 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
         raise ValueError(msg + err)
 
     return wavelet
-
-
-
-def read_yaml(filename):
-    ''' A function to read YAML file
-    '''
-    with open(filename) as f:
-        config = yaml.safe_load(f)
- 
-    return config
-
-
-def write_yaml(config, filename):
-    ''' A function to write YAML file
-    '''
-    with open(filename, 'w') as f:
-        yaml.dump(config, f)
-
-
-def load_model(file, nx, nz):
-    ''' A function to load model from file
-
-        Parameters:
-        -----------
-        file: str
-            Name of the model file
-        nx: int
-            Number of grid points in x direction
-        nz: int
-            Number of grid points in z direction
-    '''
-
-    if file.endswith('.npy'):
-        raise TypeError('Model file name must be a string.')
-
-    # output message
-    print('Loading model from file: {}'.format(file))
-
-    if not os.path.isfile(file):
-        raise FileNotFoundError('Model file not found: {}'.format(file))
-
-    # npy file
-    if file.endswith('.npy'):
-        model = np.load(file)
-    # plain text file
-    elif file.endswith('.dat') or file.endswith('.txt'):
-        model = np.fromfile(file, dtype=np.float32)
-    # binary file
-    elif file.endswith('.bin'):
-        model = np.fromfile(file, dtype=np.float32).reshape((nx, nz))
-    else:
-        msg = 'Support model file types: .npy, .dat, .txt, .bin. \n'
-        err = 'Unknown model file type: {}'.format(file)
-        raise ValueError(msg + err)
-
-    # reshape model
-    try:
-        model = model.reshape((nx, nz))
-    except:
-        msg = 'Model file does not match the specified grid size. \n'
-        err = 'Model file: {}, grid size: ({}, {})'.format(file, nx, nz)
-        raise ValueError(msg + err)
-
-    return model

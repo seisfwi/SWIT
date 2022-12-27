@@ -22,8 +22,15 @@ implicit none
 
 character*256 :: parfile
     
+    ! Check the command line argument
+    if (iargc() < 1) then
+        write(*,*) 'Error: No parameter file specified.'
+        write(*,*) '    Usage: fd2dmpi config=solver.config'
+        stop 
+    endif
+
     ! Read the parameter file
-    call readCmd('par',parfile,'solver.config')
+    call readCmd('config', parfile, 'solver.config')
     call readParFile(parfile,'jobtype',jobtype)
     
     ! Forward modeling

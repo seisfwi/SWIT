@@ -109,10 +109,11 @@ subroutine staggered42_modeling_is(is, par, coord, s, c, den, fs, nx_pml, nz_pml
         alpha = den(iz,ix)*c(iz,ix)*c(iz,ix)*par%dt/(par%dx)
         kappa = damp(iz,ix)*par%dt
         p(iz,ix) = (1.0-kappa)*p(iz,ix) - alpha* &
-        (c1_staggered*(u(iz,ix)-u(iz,ix-1) + w(iz,ix)-w(iz-1,ix)) + &
-        c2_staggered*(u(iz,ix+1)-u(iz,ix-2) + w(iz+1,ix)-w(iz-2,ix)))
+        (c1_staggered*(u(iz,  ix)-u(iz,ix-1) + w(  iz,ix)-w(iz-1,ix)) + &
+         c2_staggered*(u(iz,ix+1)-u(iz,ix-2) + w(iz+1,ix)-w(iz-2,ix)))
       enddo
     enddo
+
 
     ! Add source
     beta = par%dt
@@ -403,7 +404,7 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
                                                 +c2_staggered*(p(iz,ix+2)-p(iz,ix-1)))
     enddo
   enddo
-  
+
   ! Update verticle particle velocity: w
   do ix=2,nx_pml-1
     do iz=2,nz_pml-2

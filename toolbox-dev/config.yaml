@@ -1,0 +1,20 @@
+Config:
+  mpi_num: 40
+  work_path: /scr2/haipeng/SWIT-1.1/00_forward/
+Model:
+  dt: 0.002
+  dx: 25
+  nt: 2001
+  nx: 481
+  nz: 141
+  pml: 40
+  rho_file: /homes/sep/haipeng/develop/SWIT-1.0/examples/case-01-marmousi2/model/Marmousi_481_141_25m.dat
+  vp_file: /homes/sep/haipeng/develop/SWIT-1.0/examples/case-01-marmousi2/model/Marmousi_481_141_25m.dat
+Receiver:
+  rec_comp: vz
+  recxz: /homes/sep/haipeng/develop/SWIT-1.0/examples/case-01-marmousi2/source/receiver_coordinate.dat
+Source:
+  amp0: 1.0
+  f0: 5.0
+  source_type: ricker
+  srcxz: /homes/sep/haipeng/develop/SWIT-1.0/examples/case-01-marmousi2/source/source_coordinate.dat

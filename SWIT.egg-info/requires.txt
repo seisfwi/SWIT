@@ -1,5 +1,0 @@
-numpy
-scipy
-obspy
-matplotlib
-multiprocess

@@ -27,7 +27,7 @@ OBJS = $(DIR_OBJ)/global.o    \
        $(DIR_OBJ)/pml.o       \
        $(DIR_OBJ)/source.o    \
        $(DIR_OBJ)/fdcore.o       \
-       $(DIR_OBJ)/solver.o
+       $(DIR_OBJ)/fdsolver.o
 
 all: dir fd2dmpi
 
@@ -39,13 +39,8 @@ fd2dmpi: $(OBJS) $(DIR_OBJ)/fd2dmpi.o
 	$(FCC) -o $@ $^ $(LDFLAGS)
 	mv $@ ../$(DIR_EXE)
 
-bin2su.x: $(OBJS) $(DIR_OBJ)/bin2su.o
-	$(FCC) -o $@ $^ $(LDFLAGS)
-	mv $@ ../$(DIR_EXE)
-
 $(DIR_OBJ)/%.o: %.f90
 	$(FCC) -o $@ $< $(F90FLAGS)
 
 clean:
 	rm -f $(DIR_EXE)/* $(DIR_OBJ)/*.o $(DIR_MOD)/*.mod;
-

@@ -11,7 +11,7 @@
 
 
 ! module for 2D applications including forward and adjoint modeling
-module solver
+module fdsolver
 
 use fdcore
 use datatype
@@ -349,7 +349,7 @@ contains
     
       ! Read adjoint source: ./config/wavelet/src1_adj.bin, src2_adj.bin, ...
       call filename(str, par%sourcefile, is, '_adj.bin')
-      call read_binfile(str, s_adj, par%nt, coord%ngmax) 
+      call read_binfile(str, s_adj, par%nt, coord%ng(is)) 
       
       ! Read boundary, p_end, u_end, w_end
       call filename(str, par%data_out, is, '/boundary.bin')
@@ -411,5 +411,4 @@ contains
 
   end subroutine gradient_computing
 
-end module solver
-
+end module fdsolver

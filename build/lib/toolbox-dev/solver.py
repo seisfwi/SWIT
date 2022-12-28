@@ -123,7 +123,7 @@ class Solver(object):
         else:
             msg = "simu_type must be 'forward', 'adjoint' or 'gradient' \n"
             err = 'Unknown simulation type: {}'.format(simu_type)
-            raise ValueError(msg + err)
+            raise ValueError(msg + '\n' + err)
 
         fp.write('COORD_FILE=%s\n'    % (self.config.path + 'config/geometry.config'))
         fp.write('SOURCE_FILE=%s\n'   % (self.config.path + 'config/wavelet/src'))

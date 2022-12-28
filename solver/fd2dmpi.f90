@@ -15,7 +15,7 @@
 !
 program fd2dmpi
 
-use solver
+use fdsolver
 use parser
 
 implicit none
@@ -47,4 +47,3 @@ character*256 :: parfile
     endif
  
 end program fd2dmpi
-

@@ -6,7 +6,8 @@
 #   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
 #   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
 #
-#   Base module, defining the basic classes and functions
+#   Acquisition module defines the basic classes for seismic acquisition,
+#   including Config, Model, Source, Receiver, and Solver
 #
 ###############################################################################
 
@@ -202,82 +203,3 @@ class Receiver(object):
 
 
 
-class optimizer(object):
-    '''
-        optimizer class describes the optimization algorithm
-    '''
-
-    def __init__(self, misfit_type, optim_scheme, max_iter, step_length, 
-                vp_max, vp_min, acqusition_type, grad_mute_size, 
-                grad_smooth_radius, grad_mask = None):
-        '''
-            initialize optimizer class
-
-            input:
-                misfit_type: type of misfit function
-                optim_scheme: optimization scheme
-                max_iter: maximum number of iterations
-                step_length: step length for gradient descent
-                vp_max: maximum value of p-wave velocity
-                vp_min: minimum value of p-wave velocity
-                acqusition_type:  marine or land
-                grad_mute_size: mute the gradient at the top of the model
-                grad_smooth_radius: smooth the gradient with Gaussian filter
-                grad_mask: mask the gradient, 2D array with 0 and 1
-        '''
-
-        self.misfit_type = misfit_type
-        self.optim_scheme = optim_scheme
-        self.max_iter = max_iter
-        self.step_length = step_length
-        self.vp_max = vp_max
-        self.vp_min = vp_min
-        self.acqusition_type = acqusition_type
-        self.grad_mute_size = grad_mute_size
-        self.grad_smooth_radius = grad_smooth_radius
-        self.grad_mask = grad_mask
-
-
-    def __check__(self):
-        '''
-            check the optimizer parameters
-        '''
-
-        # check the type of misfit function
-        if self.misfit_type.lower() not in ['waveform', 'envelope', 'traveltime', 'clobalcorrelation']:
-            raise ValueError('The misfit function can be waveform, envelope, traveltime or clobalcorrelation \n \
-            Not supported misfit function: {}'.format(self.misfit_type))
-
-        # check the optimization scheme
-        if self.optim_scheme.lower() not in ['descent', 'nlcg', 'lbfgs']:
-            raise ValueError('The optimization scheme can be descent, nlcg or lbfgs \n \
-            Not supported optimization scheme: {}'.format(self.optim_scheme))
-
-        #  check the maximum number of iterations
-        if self.max_iter <= 0:
-            raise ValueError('The maximum number of iterations should be larger than 0')
-        
-        # check the step length
-        if self.step_length <= 0 and self.step_length > 0.1:
-            raise ValueError('The step length should be larger than 0, and is recomanded to be smaller than 0.1')
-
-        # check the maximum and minimum value of p-wave velocity
-        if self.vp_max <= self.vp_min:
-            raise ValueError('The maximum value of p-wave velocity should be larger than the minimum value')
-
-        # check the acquisition type
-        if self.acqusition_type.lower() not in ['marine', 'land']:
-            raise ValueError('The acquisition type can be marine or land \n \
-            Not supported acquisition type: {}'.format(self.acqusition_type))
-
-        # check the mute size of the gradient
-        if self.grad_mute_size < 0:
-            raise ValueError('The mute size of the gradient should be no less than 0')
-        
-        # check the smooth radius of the gradient
-        if self.grad_smooth_radius < 0:
-            raise ValueError('The smooth radius of the gradient should be no less than 0')
-
-        # check the mask of the gradient
-        if self.grad_mask is not None:
-            raise NotImplementedError('The mask of the gradient is not implemented yet')

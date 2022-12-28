@@ -19,76 +19,46 @@ import numpy as np
 import obspy
 import scipy.signal as _signal
 from obspy.core import UTCDateTime
-from scipy.signal import hilbert as analytic
+from obspy.io.segy.segy import _read_segy
 
 
-class NumpyEncoder(json.JSONEncoder):
-    ''' Numpy Encoder.
-    '''
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-
-class Struct:
-    ''' Json Decoder. 
-    '''
-
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
-def saveparjson(simu, optim):
-    ''' Save all the simulation and optimaztion parameters as json files.
-    '''
-
-    path = simu.system.homepath+'parfile/'
-    savejson(path + 'model.json',  simu.model)
-    savejson(path + 'source.json', simu.source)
-    savejson(path + 'reciver.json', simu.receiver)
-    savejson(path + 'system.json', simu.system)
-    savejson(path + 'optimize.json', optim)
-
-
-def savejson(filename, obj):
-    ''' Save object using json. 
-    '''
-    with open(filename, 'w') as file:
-        json.dump(obj.__dict__, file, sort_keys=True, indent=4, cls=NumpyEncoder)
-
-
-def loadjson(filename):
-    ''' Load object using json. 
-    '''
-    with open(filename, 'r') as file:
-        # parse the json file into diction and the convert into class
-        obj = Struct(**json.load(file))
-        # convert to numpy array for convience
-        for att in obj.__dict__:
-            setattr(obj, att, np.array(getattr(obj, att)))
-        return obj
-
-
-def save_float(filename, obj):
+def save_float(filename, data):
     ''' Save bin file (float32)
+
+    Parameters
+    ----------
+    filename : str
+        file name
+    data : 1D array (float32)
+        data to be saved
     '''
+
     fp = open(filename, "wb")
-    np.asarray(obj, dtype=np.float32).tofile(fp)
+    np.asarray(data, dtype=np.float32).tofile(fp)
     fp.close()
 
 
 def load_float(filename):
     ''' Load bin file (float32)
+
+    Parameters
+    ----------
+    filename : str
+        file name
+
+    Returns
+    -------
+    data : 1D array (float32)
+        data to be read
     '''
     fp = open(filename, 'rb')
-    obj = np.fromfile(fp, dtype=np.float32)
+    data = np.fromfile(fp, dtype=np.float32)
     fp.close()
 
-    return np.array(obj)
+    return np.array(data)
 
 
-def loadsu(filename):
+def load_su(filename):
     ''' Reads Seismic Unix files. if nt > 32768, this function will not work. 
         Find solution in Seisflows/plugins/writer.py or reader.py
     '''
@@ -97,7 +67,7 @@ def loadsu(filename):
     return traces
 
 
-def savesu(filename, trace):
+def save_su(filename, trace):
     ''' save su file,     max_npts = 32767
     '''
 
@@ -113,6 +83,52 @@ def savesu(filename, trace):
             tr.stats.delta = dummy_delta
     # write data to file
     trace.write(filename, format='SU')
+
+
+def load_segy(filename, convert_to_array = False):
+    ''' Reads segy files. 
+    '''
+    traces = _read_segy(filename)
+
+    if convert_to_array:
+        traces = segy2array(traces)
+
+    return traces
+
+
+def segy2array(segy_data):
+    ''' convert segy traces to array
+    '''
+    # retrieve data parameters
+    ntr = len(segy_data.traces)
+    nt = segy_data.traces[0].npts
+    dt = segy_data.binary_file_header.sample_interval_in_microseconds / 1000000. # in seconds
+
+    # convert to array
+    data = np.zeros((ntr, nt), dtype=np.float32)
+    for itr in range(ntr):
+        data[itr, :] = segy_data.traces[itr].data
+
+    # return data
+    return data, dt
+
+
+def su2array(su_data):
+    ''' convert su traces to array
+    '''
+    # retrieve data parameters
+    ntr = len(su_data)
+    nt = len(su_data[0])
+    dt = 1. / su_data[0].stats.sampling_rate # in seconds
+
+    # convert to array
+    data = np.zeros((ntr, nt), dtype=np.float32)
+    for itr in range(ntr):
+        data[itr, :] = su_data[itr].data
+
+    # return data
+    return data, dt
+
 
 
 def add_su_header(trace, nt, dt, isrc, channel):
@@ -135,7 +151,6 @@ def add_su_header(trace, nt, dt, isrc, channel):
 
         irec += 1
     return trace
-
 
 
 def convert_wavelet_su(dt, wavelet, srcx):
@@ -195,16 +210,6 @@ def array2su(recn, dt, traces_array):
     return obspy.Stream(traces = traces)
 
 
-def su2array(su_data):
-    ''' extract shot gather data into array(srcn, recn, nt)
-    '''
-
-    recn, nt, _ = get_su_parameter(su_data)
-    data = np.zeros((recn, nt), dtype=np.float32)
-    for irec in range(recn):
-        data[irec, :] = su_data[irec].data[:]
-
-    return data
 
 
 def get_su_parameter(trace):
@@ -217,10 +222,7 @@ def get_su_parameter(trace):
     return recn, nt, dt
 
 
-def hilbert(w):
-    ''' hilbert transformation
-    '''
-    return np.imag(analytic(w))
+
 
 
 def array2vector(array):
@@ -378,282 +380,3 @@ def loadfile_gui(filename, nx, nz):
 
 
 
-def normL2(x):
-    '''The routine normL2 returns the Euclidian norm of a vector x of size n
-    
-    Args:
-
-    Returns:
-    '''
-
-    return np.linalg.norm(x)
-
-
-def scalL2(x, y):
-    '''
-     The routine scalL2 returns the scalar product between two vectors x and y
-    '''
-
-    return np.inner(x, y)
-
-
-
-def print_info(optimize, fcost):
-    ''' print  information
-    '''
-
-    ng = normL2(optimize.grad)
-
-    if(optimize.FLAG == 'INIT'):
-        f = open('iterate_%s.dat'%(optimize.method), 'w')
-        if(optimize.method == 'SD'):
-            f.write('**********************************************************************\n')
-            f.write('         STEEEPEST DESCENT ALGORITHM         \n')
-            f.write('**********************************************************************\n')
-        elif(optimize.method == 'CG'):
-            f.write('**********************************************************************\n')
-            f.write('         NONLINEAR CONJUGATE GRADIENT ALGORITHM         \n')
-            f.write('**********************************************************************\n')
-        elif(optimize.method == 'LBFGS'):
-            f.write('**********************************************************************\n')
-            f.write('             l-BFGS ALGORITHM                \n')
-            f.write('**********************************************************************\n')
-        elif(optimize.method == 'PLBFGS'):
-            f.write('**********************************************************************\n')
-            f.write('             PRECONDITIONED l-BFGS ALGORITHM                \n')
-            f.write('**********************************************************************\n')
-
-        f.write('     Convergence criterion  : %10.2e\n' %optimize.conv)
-        f.write('     Niter_max              : %10d\n'   %optimize.niter_max)
-        f.write('     Initial cost is        : %10.2e\n' %optimize.f0)
-        f.write('     Initial norm_grad is   : %10.2e\n' %ng)
-        f.write('**********************************************************************\n')
-        f.write('   Niter      fk         ||gk||       fk/f0        alpha        nls      ngrad    \n')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d\n'
-        %(optimize.cpt_iter, fcost, ng, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.nfwd_pb))
-        f.close()
-
-    elif(optimize.FLAG == 'CONV'):
-        f = open('iterate_%s.dat'%(optimize.method), 'a')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d\n'
-        %(optimize.cpt_iter, fcost, ng, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.nfwd_pb))
-        f.write('**********************************************************************\n')
-
-        if(optimize.cpt_iter >= optimize.niter_max):
-            f.write('  STOP: MAXIMUM NUMBER OF ITERATION REACHED    \n')
-        else:
-            f.write('  STOP: CONVERGENCE CRITERION SATISFIED        \n')
-            f.write('**********************************************************************\n')
-            f.close()
-
-    elif(optimize.FLAG == 'FAIL'):
-        f = open('iterate_%s.dat'%(optimize.method), 'a')
-        f.write('**********************************************************************\n')
-        f.write('  STOP: LINESEARCH FAILURE    \n')
-        f.write('**********************************************************************\n')
-        f.close()
-    else:
-        f = open('iterate_%s.dat'%(optimize.method), 'a')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d\n'
-        %(optimize.cpt_iter, fcost, ng, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.nfwd_pb))
-        f.close()
-
-
-
-def print_info_TRN(optimize, fcost):
-    
-    if(optimize.FLAG=='INIT') :
-        f = open('iterate_TRN.dat', 'w')
-        f.write('******************************************************************************************\n')
-        f.write('                                 TRUNCATED NEWTON ALGORITHM                               \n')
-        f.write('******************************************************************************************\n')
-        f.write('     Convergence criterion  : %10.2e \n' %optimize.conv)
-        f.write('     Niter_max              : %7d \n'    %optimize.niter_max)
-        f.write('     Initial cost is        : %10.2e \n' %optimize.f0)
-        f.write('     Initial norm_grad is   : %10.2e \n' %optimize.norm_grad)
-        f.write('     Maximum CG iter        : %7d \n'    %optimize.niter_max_CG)
-        f.write('******************************************************************************************\n')
-        f.write('   Niter      fk         ||gk||       fk/f0          alpha      nls     nit_CG      eta       ngrad     nhess \n')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d %12.2e %8d %8d \n'%(
-        optimize.cpt_iter, fcost, optimize.norm_grad, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.cpt_iter_CG, optimize.eta, optimize.nfwd_pb, optimize.nhess))
-        f.close()
-
-        f = open('iterate_TRN_CG.dat', 'w')
-        f.write('******************************************************************************************\n')
-        f.write('                                 TRUNCATED NEWTON ALGORITHM                               \n')
-        f.write('                                      INNER CG HISTORY                                    \n')
-        f.write('******************************************************************************************\n')
-        f.write('     Convergence criterion  : %10.2e \n' %optimize.conv)
-        f.write('     Niter_max              : %7d \n'    %optimize.niter_max)
-        f.write('     Initial cost is        : %10.2e \n' %optimize.f0)
-        f.write('     Initial norm_grad is   : %10.2e \n' %optimize.norm_grad)
-        f.write('     Maximum CG iter        : %7d \n'    %optimize.niter_max_CG)
-        f.write('******************************************************************************************\n')
-        f.close()
-    elif(optimize.FLAG=='CONV'):
-        f = open('iterate_TRN.dat', 'a')
-        f.write('**********************************************************************\n')
-        if(optimize.cpt_iter == optimize.niter_max):
-            f.write('  STOP: MAXIMUM NUMBER OF ITERATION REACHED    \n')
-        else:
-            f.write('  STOP: CONVERGENCE CRITERION SATISFIED        \n')
-        
-        f.write('**********************************************************************\n')
-        f.close()
-
-    elif(optimize.FLAG=='FAIL'):
-        f = open('iterate_TRN.dat', 'a')
-        f.write('**********************************************************************\n')
-        f.write('  STOP: LINESEARCH FAILURE    \n')
-        f.write('**********************************************************************\n')
-        f.close()
-    elif(optimize.comm=='DESC'):
-        f = open('iterate_TRN_CG.dat', 'a')
-        if(optimize.CG_phase=='INIT'):
-            f.write('-------------------------------------------------------------------------------------------------\n')
-            f.write(' NONLINEAR ITERATION %4d  ETA IS : %12.2e \n'%(optimize.cpt_iter, optimize.eta))
-            f.write('-------------------------------------------------------------------------------------------------\n')
-            f.write('  Iter_CG        qk       norm_res      norm_res/||gk||  \n')
-            f.write('%8d %12.2e %12.2e %12.2e \n'%(optimize.cpt_iter_CG, optimize.qk_CG, optimize.norm_residual, optimize.norm_residual/optimize.norm_grad))
-        else:
-            f.write('%8d %12.2e %12.2e %12.2e \n'%(optimize.cpt_iter_CG, optimize.qk_CG, optimize.norm_residual, optimize.norm_residual/optimize.norm_grad))
-        f.close()            
-    else:
-        f = open('iterate_TRN.dat', 'a')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d %12.2e %8d %8d \n'%(
-        optimize.cpt_iter, fcost, optimize.norm_grad, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.cpt_iter_CG, optimize.eta, optimize.nfwd_pb, optimize.nhess))
-        f.close()
-
-
-def print_info_PTRN(optim, fcost, FLAG):
-
-    if(FLAG=='INIT'):
-        f = open('iterate_PTRN.dat', 'w')
-        f.write('******************************************************************************************\n')
-        f.write('                      PRECONDITIONED TRUNCATED NEWTON ALGORITHM                           \n')
-        f.write('******************************************************************************************\n')
-        f.write('     Convergence criterion  : %10.2e \n'%optim.conv)
-        f.write('     Niter_max              : %7d \n'%optim.niter_max)
-        f.write('     Initial cost is        : %10.2e \n'%optim.f0)
-        f.write('     Initial norm_grad is   : %10.2e \n'%optim.norm_grad)
-        f.write('     Maximum CG iter        : %7d \n'%optim.niter_max_CG)
-        f.write('******************************************************************************************\n')
-        f.write('   Niter      fk         ||gk||       fk/f0          alpha      nls     nit_CG      eta       ngrad     nhess \n')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d %12.2e %8d %8d \n'%(
-        optim.cpt_iter, fcost, optim.norm_grad, fcost/optim.f0, optim.alpha, optim.cpt_ls, optim.cpt_iter_CG, optim.eta, optim.nfwd_pb, optim.nhess))
-        f.close()
-
-        f = open('iterate_PTRN_CG.dat', 'w')
-        f.write('******************************************************************************************\n')
-        f.write('                        PRECONDITIONED TRUNCATED NEWTON ALGORITHM                         \n')
-        f.write('                                      INNER CG HISTORY                                    \n')
-        f.write('******************************************************************************************\n')
-        f.write('     Convergence criterion  : %10.2e \n'%optim.conv)
-        f.write('     Niter_max              : %7d \n'%optim.niter_max)
-        f.write('     Initial cost is        : %10.2e \n'%optim.f0)
-        f.write('     Initial norm_grad is   : %10.2e \n'%optim.norm_grad)
-        f.write('     Maximum CG iter        : %7d \n'%optim.niter_max_CG)
-        f.write('******************************************************************************************\n')
-        f.close()
-
-    elif(FLAG=='CONV'):
-        f = open('iterate_PTRN.dat', 'a')
-        f.write('**********************************************************************\n')
-        if(optim.cpt_iter==optim.niter_max):
-            f.write('  STOP: MAXIMUM NUMBER OF ITERATION REACHED    \n')
-        else:
-            f.write('  STOP: CONVERGENCE CRITERION SATISFIED        \n')
-        f.write('**********************************************************************\n')
-        f.close()
-
-    elif(FLAG=='FAIL'):
-        f = open('iterate_PTRN.dat', 'a')
-        f.write('**********************************************************************\n')
-        f.write('  STOP: LINESEARCH FAILURE    \n')
-        f.write('**********************************************************************\n')
-        f.close()     
-    elif(optim.comm=='DES1'):
-        f = open('iterate_PTRN_CG.dat', 'a')
-        f.write('-------------------------------------------------------------------------------------------------\n')
-        f.write(' NONLINEAR ITERATION %4d  ETA IS : %12.2e \n'%(optim.cpt_iter, optim.eta))
-        f.write('-------------------------------------------------------------------------------------------------\n')
-        f.write('  Iter_CG        qk       norm_res      norm_res/||gk||  \n')
-        f.write('%8d %12.2e %12.2e %12.2e \n'%(optim.cpt_iter_CG, optim.qk_CG, optim.norm_residual, optim.norm_residual/optim.norm_grad))
-        f.close()     
-
-    elif(optim.comm=='DES2'):
-        f = open('iterate_PTRN_CG.dat', 'a')
-        f.write('%8d %12.2e %12.2e %12.2e \n'%(optim.cpt_iter_CG, optim.qk_CG, optim.norm_residual, optim.norm_residual/optim.norm_grad))
-        f.close()     
-    else:
-        f = open('iterate_PTRN.dat', 'a')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d %12.2e %8d %8d \n'%(
-        optim.cpt_iter, fcost, optim.norm_grad, fcost/optim.f0, optim.alpha, optim.cpt_ls, optim.cpt_iter_CG, optim.eta, optim.nfwd_pb, optim.nhess))
-        f.close()
-
-
-def print_info_PTRN(optimize, fcost):
-    
-    if(optimize.FLAG=='INIT'):
-        f = open('iterate_PTRN.dat', 'w')
-        f.write('******************************************************************************************\n')
-        f.write('                      PRECONDITIONED TRUNCATED NEWTON ALGORITHM                           \n')
-        f.write('******************************************************************************************\n')
-        f.write('     Convergence criterion  : %10.2e \n'%optimize.conv)
-        f.write('     Niter_max              : %7d \n'   %optimize.niter_max)
-        f.write('     Initial cost is        : %10.2e \n'%optimize.f0)
-        f.write('     Initial norm_grad is   : %10.2e \n'%optimize.norm_grad)
-        f.write('     Maximum CG iter        : %7d \n'   %optimize.niter_max_CG)
-        f.write('******************************************************************************************\n')
-        f.write('   Niter      fk         ||gk||       fk/f0          alpha      nls     nit_CG      eta       ngrad     nhess \n')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d %12.2e %8d %8d \n'%(
-        optimize.cpt_iter, fcost, optimize.norm_grad, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.cpt_iter_CG, optimize.eta, optimize.nfwd_pb, optimize.nhess))
-        f.close()
-
-        f = open('iterate_PTRN_CG.dat', 'w')
-        f.write('******************************************************************************************\n')
-        f.write('                        PRECONDITIONED TRUNCATED NEWTON ALGORITHM                         \n')
-        f.write('                                      INNER CG HISTORY                                    \n')
-        f.write('******************************************************************************************\n')
-        f.write('     Convergence criterion  : %10.2e \n'%optimize.conv)
-        f.write('     Niter_max              : %7d \n'   %optimize.niter_max)
-        f.write('     Initial cost is        : %10.2e \n'%optimize.f0)
-        f.write('     Initial norm_grad is   : %10.2e \n'%optimize.norm_grad)
-        f.write('     Maximum CG iter        : %7d \n'   %optimize.niter_max_CG)
-        f.write('******************************************************************************************\n')
-        f.close()
-
-    elif(optimize.FLAG=='CONV'):
-        f = open('iterate_PTRN.dat', 'a')
-        f.write('**********************************************************************\n')
-        if(optimize.cpt_iter == optimize.niter_max):
-            f.write('  STOP: MAXIMUM NUMBER OF ITERATION REACHED    \n')
-        else:
-            f.write('  STOP: CONVERGENCE CRITERION SATISFIED        \n')
-        f.write('**********************************************************************\n')
-        f.close()
-
-    elif(optimize.FLAG=='FAIL'):
-        f = open('iterate_PTRN.dat', 'a')
-        f.write('**********************************************************************\n')
-        f.write('  STOP: LINESEARCH FAILURE    \n')
-        f.write('**********************************************************************\n')
-        f.close()     
-    elif(optimize.comm=='DES1'):
-        f = open('iterate_PTRN_CG.dat', 'a')
-        f.write('-------------------------------------------------------------------------------------------------\n')
-        f.write(' NONLINEAR ITERATION %4d  ETA IS : %12.2e \n'%(optimize.cpt_iter, optimize.eta))
-        f.write('-------------------------------------------------------------------------------------------------\n')
-        f.write('  Iter_CG        qk       norm_res      norm_res/||gk||  \n')
-        f.write('%8d %12.2e %12.2e %12.2e \n'%(optimize.cpt_iter_CG, optimize.qk_CG, optimize.norm_residual, optimize.norm_residual/optimize.norm_grad))
-        f.close()     
-
-    elif(optimize.comm=='DES2'):
-        f = open('iterate_PTRN_CG.dat', 'a')
-        f.write('%8d %12.2e %12.2e %12.2e \n'%(optimize.cpt_iter_CG, optimize.qk_CG, optimize.norm_residual, optimize.norm_residual/optimize.norm_grad))
-        f.close()     
-    else:
-        f = open('iterate_PTRN.dat', 'a')
-        f.write('%6d %12.2e %12.2e %12.2e %12.2e %8d %8d %12.2e %8d %8d \n'%(
-        optimize.cpt_iter, fcost, optimize.norm_grad, fcost/optimize.f0, optimize.alpha, optimize.cpt_ls, optimize.cpt_iter_CG, optimize.eta, optimize.nfwd_pb, optimize.nhess))
-        f.close()

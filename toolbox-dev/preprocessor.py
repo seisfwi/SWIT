@@ -14,7 +14,7 @@
 import numpy as np
 import os
 
-class Processor(object):
+class Preprocessor(object):
     ''' 
         preprocessor class describes the data preprocessing
     '''
@@ -60,6 +60,27 @@ class Processor(object):
         # set one thread for scipy to perform the filtering, which is equivalent to 
         #   $ export OMP_NUM_THREADS=1
         os.environ["OMP_NUM_THREADS"] = "1" 
+
+        # print the information of the preprocessor
+        self.__info__()
+
+    def __info__(self):
+        '''
+            print the information of the preprocessor
+        '''
+
+        print('Preprocessor information:')
+        print('    Data filter: {}'.format(self.fre_filter))
+        print('    Low frequency: {} Hz'.format(self.fre_low))
+        print('    High frequency: {} Hz'.format(self.fre_high))
+        print('    Mute late arrivals: {}'.format(self.mute_late_arrival))
+        print('    Late arrival mute window: {} s'.format(self.mute_late_window))
+        print('    Data normalization: {}'.format(self.normalize))
+        print('    Mute short offset: {}'.format(self.mute_offset_short))
+        print('    Mute long offset: {}'.format(self.mute_offset_long))
+        print('    Short offset distance: {} m'.format(self.mute_offset_short_dis))
+        print('    Long offset distance: {} m'.format(self.mute_offset_long_dis))
+
 
 
     def __check__(self):

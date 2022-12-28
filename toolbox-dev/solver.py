@@ -18,6 +18,7 @@ from scipy import integrate
 
 from tools import save_float
 
+
 class Solver(object):
     ''' Acoustic Wavefiled Solver class
     '''
@@ -38,29 +39,54 @@ class Solver(object):
         self.__info__()
 
 
-    def run(self, simu_type = 'forward', simu_tag = 'obs', save_snap = 0, save_boundary = 0):
+    def run(self, simu_type = 'forward', simu_tag = 'obs', data_format = 'bin', save_snap = False, save_boundary = False):
         ''' Forward solver
+
+        Parameters
+        ----------  
+        simu_type : str
+            simulation type, 'forward', 'adjoint' or 'gradient'
+        simu_tag : str
+            simulation tag that makes the simulation results unique, 'obs' or 'syn'
+        data_format : str
+            data format, 'bin' or 'su'
+        save_snap : boolean
+            save snapshot data or not
+        save_boundary : boolean
+            save boundary data or not, usef for wavefield reconstruction
         '''
 
         # check the specification of the simulation type
         if simu_type not in ['forward', 'adjoint', 'gradient']:
             msg = "simu_type must be 'forward', 'adjoint' or 'gradient' \n"
             err = 'Unknown simulation type: {}'.format(simu_type)
-            raise ValueError(msg + err)
+            raise ValueError(msg + '\n' + err)
         
+        # check the specification of the simulation tag
+        if simu_tag not in ['obs', 'syn']:
+            msg = "simu_tag must be 'obs' or 'syn' \n"
+            err = 'Unknown simulation tag: {}'.format(simu_tag)
+            raise ValueError(msg + '\n' + err)
+
+        # check the specification of the data format
+        if data_format not in ['bin', 'su']:
+            msg = "data_format must be 'bin' or 'su' \n"
+            err = 'Unknown data format: {}'.format(data_format)
+            raise ValueError(msg + '\n' + err)
+
         # check mpi and wavefield solver fd2dmpi
         for cmd in ['which mpirun', 'which fd2dmpi']:
-            if os.system(cmd) != 0:
+            if subprocess.getstatusoutput(cmd)[0] != 0:
                 raise ValueError('Cannot find {}, please check your mpi installation.'.format(cmd))
 
         # create working directory
         for isrc in range(self.source.num):
             ifolder = self.config.path + 'data/{}/src{}'.format(simu_tag, isrc+1)
-            if not os.path.exists(ifolder) and save_snap == 1:
+            if not os.path.exists(ifolder):
                 os.system('mkdir -p %s' % ifolder)
 
         # prepare the config file for the solver
-        self.prepare_configfile(simu_type, simu_tag, save_snap, save_boundary)
+        self.prepare_configfile(simu_type, simu_tag, data_format, save_snap, save_boundary)
 
         # run the solver with mpi
         cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.config.mpi_num, self.config.path + 'config/solver.config')
@@ -76,12 +102,19 @@ class Solver(object):
         ''' Set model parameters
         '''
         if vp is not None:
-            self.model.vp = vp
+            try:
+                self.model.vp = vp.reshape(self.model.vp.shape)
+            except:
+               raise ValueError('The shape of vp does not match the shape of the model')
+
         if rho is not None:
-            self.model.rho = rho
+            try:
+                self.model.rho = rho.reshape(self.model.rho.shape)
+            except:
+               raise ValueError('The shape of rho does not match the shape of the model')
+        
 
-
-    def prepare_configfile(self, simu_type, simu_tag, save_snap, save_boundary):
+    def prepare_configfile(self, simu_type, simu_tag, data_format, save_snap, save_boundary):
         ''' Prepare configuration files for forward solver, including:
                 1. source wavelet files: src1.bin, src2.bin, ...
                 2. velocity and density files: vp.bin, rho.bin
@@ -136,7 +169,7 @@ class Solver(object):
         fp.write('DATA_OUT=%s\n'      % (self.config.path + 'data/{}/src'.format(simu_tag)))
         fp.write('VEL_IN=%s\n'        % (self.config.path + 'config/vp.bin'))
         fp.write('DENSITYFILE=%s\n'   % (self.config.path + 'config/rho.bin'))
-        fp.write('FILEFORMAT=bin\n')
+        fp.write('FILEFORMAT=%s\n'    % data_format)
         fp.write('NX=%d\n'            % self.model.nx)
         fp.write('NZ=%d\n'            % self.model.nz)
         fp.write('DX=%f\n'            % self.model.dx)
@@ -197,14 +230,13 @@ class Solver(object):
     def __info__(self):
         ''' Print solver information
         '''
-        print('*****************************************************')
-        print('\n    Seismic Waveform Inversion Toolbox: Forward    \n')
-        print('*****************************************************\n')
-        print('Solver: nt = {}, dt = {} ms, time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
-        print('Solver: nx = {}, nz = {}, dx = {} m'.format(self.model.nx, self.model.nz, self.model.dx))
-        print('Solver: x  = 0 ~ {} km'.format(self.model.x[-1]/1000))
-        print('Solver: z  = 0 ~ {} km'.format(self.model.z[-1]/1000))        
-        print('Solver: vp = {} ~ {} m/s'.format(self.model.vp.min(), self.model.vp.max()))
-        print('Solver: Source number = {}'.format(self.source.num))
-        print('Solver: Receiver component = {}'.format(self.receiver.comp))
-        print('Solver: {} task in parallel\n'.format(self.config.mpi_num))
+
+        print('Solver information:')
+        print('    nt = {}, dt = {} ms, time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
+        print('    nx = {}, nz = {}, dx = {} m'.format(self.model.nx, self.model.nz, self.model.dx))
+        print('    x  = 0 ~ {} km'.format(self.model.x[-1]/1000))
+        print('    z  = 0 ~ {} km'.format(self.model.z[-1]/1000))        
+        print('    vp = {} ~ {} m/s'.format(self.model.vp.min(), self.model.vp.max()))
+        print('    Source number = {}'.format(self.source.num))
+        print('    Receiver component = {}'.format(self.receiver.comp))
+        print('    {} task in parallel\n'.format(self.config.mpi_num))

@@ -58,6 +58,6 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
     else:
         msg = 'Support source types: Rikcer, Guassian, Ramp. \n'
         err = 'Unknown source type: {}'.format(source_type)
-        raise ValueError(msg + err)
+        raise ValueError(msg + '\n' + err)
 
     return wavelet

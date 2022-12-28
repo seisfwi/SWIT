@@ -58,7 +58,7 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
     else:
         msg = 'Support source types: Rikcer, Guassian, Ramp. \n'
         err = 'Unknown source type: {}'.format(source_type)
-        raise ValueError(msg + err)
+        raise ValueError(msg + '\n' + err)
 
     return wavelet
 
@@ -114,7 +114,7 @@ def load_model(file, nx, nz):
     else:
         msg = 'Support model file types: .npy, .dat, .txt, .bin. \n'
         err = 'Unknown model file type: {}'.format(file)
-        raise ValueError(msg + err)
+        raise ValueError(msg + '\n' + err)
 
     # reshape model
     try:
@@ -122,6 +122,6 @@ def load_model(file, nx, nz):
     except:
         msg = 'Model file does not match the specified grid size. \n'
         err = 'Model file: {}, grid size: ({}, {})'.format(file, nx, nz)
-        raise ValueError(msg + err)
+        raise ValueError(msg + '\n' + err)
 
     return model

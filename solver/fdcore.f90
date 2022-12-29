@@ -433,7 +433,7 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
                    c2_staggered*(u(iz,ix+1)-u(iz,ix-2) + w(iz+1,ix)-w(iz-2,ix)))
     enddo
   enddo
-  
+
   ! Add source
   do ig=1,coord%ng(is)
     igx = npml + int(coord%xg(is,ig)/par%dx)+1

@@ -11,375 +11,368 @@
 ###############################################################################
 
 
+import time
+from multiprocessing import Pool
+
 import numpy as np
 import os
+from scipy.signal import butter, filtfilt
+
+from tools import load_waveform_data, save_float
+
 
 class Preprocessor(object):
-    ''' 
-        preprocessor class describes the data preprocessing
+    '''  preprocessor class describes the data preprocessing
+
+    Parameters
+    ----------
+    filter : str
+        Type of the data filter, 'lowpass', 'bandpass', 'highpass' or 'none'
+    filter_low : float
+        Low frequency of the data filter in Hz
+    filter_high : float
+        High frequency of the data filter in Hz
+    mute_late_arrival : bool
+        Whether to mute the late arrivals after the first break
+    mute_late_size : float
+        Time window of the late arrivals to be muted in seconds
+    normalize_data : bool
+        Whether to normalize the trace by its maximum amplitude (trace by trace)
+    mute_near_offset : bool
+        Whether to mute the near offset traces
+    mute_near_distance : float  
+        Distance of the near offset traces to be muted in meters
+    mute_far_offset : bool 
+        Whether to mute the far offset traces
+    mute_far_distance : float
+        Distance of the far offset traces to be muted in meters
     '''
 
-    def __init__(self, fre_filter, fre_low, fre_high, 
-                 mute_late_arrival, mute_late_window, normalize,
-                 mute_offset_short, mute_offset_long, 
-                 mute_offset_short_dis, mute_offset_long_dis):
-        '''
-            initialize source class
-
-            input:
-                fre_filter: filter the data or not
-                fre_low: low frequency of the bandpass filter
-                fre_high: high frequency of the bandpass filter
-                mute_late_arrival: mute late arrivals or not
-                mute_late_window: window length for late arrival mute
-                normalize: normalize the data or not
-                mute_offset_short: mute short offset or not
-                mute_offset_long: mute long offset or not
-                mute_offset_short_dis: short offset distance    (units: m)
-                mute_offset_long_dis: long offset distance      (units: m)
+    def __init__(self, filter_data = 'bandpass', filter_low = 5.0, filter_high = 10.0, 
+                 mute_late_arrival = False, mute_late_size = 0.5, 
+                 normalize_data = False,
+                 mute_near_offset = False, mute_near_distance = 500, 
+                 mute_far_offset = False, mute_far_distance = 8000):
+        ''' Initialize preprocessor class
         '''
 
         # data filter
-        self.fre_filter = fre_filter
-        self.fre_low = fre_low
-        self.fre_high = fre_high
+        self.filter_data = filter_data
+        self.filter_low = filter_low
+        self.filter_high = filter_high
 
-        # pick first break and mute later arrivals
+        # mute later arrivals after the first break
         self.mute_late_arrival = mute_late_arrival
-        self.mute_late_window = mute_late_window
+        self.mute_late_size = mute_late_size
 
         # data normalization
-        self.normalize = normalize
+        self.normalize_data = normalize_data
 
         # data offset mute
-        self.mute_offset_short = mute_offset_short
-        self.mute_offset_long = mute_offset_long
-        self.mute_offset_short_dis = mute_offset_short_dis           
-        self.mute_offset_long_dis = mute_offset_long_dis             
+        self.mute_near_offset = mute_near_offset
+        self.mute_far_offset = mute_far_offset
+        self.mute_near_distance = mute_near_distance
+        self.mute_far_distance = mute_far_distance
 
-        # set one thread for scipy to perform the filtering, which is equivalent to 
-        #   $ export OMP_NUM_THREADS=1
-        os.environ["OMP_NUM_THREADS"] = "1" 
+        # set one thread for scipy to perform the filtering
+        os.environ["OMP_NUM_THREADS"] = "1"    # $ export OMP_NUM_THREADS=1
+    
+        # check the parameters
+        self.__check__()
 
         # print the information of the preprocessor
         self.__info__()
 
+
     def __info__(self):
+        ''' Print the information of the preprocessor
         '''
-            print the information of the preprocessor
-        '''
-
-        print('Preprocessor information:')
-        print('    Data filter: {}'.format(self.fre_filter))
-        print('    Low frequency: {} Hz'.format(self.fre_low))
-        print('    High frequency: {} Hz'.format(self.fre_high))
+        print('\nPreprocessor information:')
+        print('    Filter data       : {}'.format(self.filter_data))
+        print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
+        print('    Highcut frequency : {} Hz'.format(self.filter_high))
         print('    Mute late arrivals: {}'.format(self.mute_late_arrival))
-        print('    Late arrival mute window: {} s'.format(self.mute_late_window))
-        print('    Data normalization: {}'.format(self.normalize))
-        print('    Mute short offset: {}'.format(self.mute_offset_short))
-        print('    Mute long offset: {}'.format(self.mute_offset_long))
-        print('    Short offset distance: {} m'.format(self.mute_offset_short_dis))
-        print('    Long offset distance: {} m'.format(self.mute_offset_long_dis))
-
+        print('    Mute time window  : {} s'.format(self.mute_late_size))
+        print('    Mute near offset  : {}'.format(self.mute_near_offset))
+        print('    Mute near dist    : {} m'.format(self.mute_near_distance))
+        print('    Mute far offset   : {}'.format(self.mute_far_offset))
+        print('    Mute far dist     : {} m'.format(self.mute_far_distance))
+        print('    Data normalization: {}'.format(self.normalize_data))
 
 
     def __check__(self):
 
         # check the data filter
-        if self.fre_filter not in ['Lowpass', 'Bandpass', 'Highpass', 'None']:
-            raise ValueError(' The filter type is Lowpass, Bandpass, Highpass or None\n  \
-                Not supported frequency filter: {}'.format(self.fre_filter))
+        if self.filter_data.lower() not in ['lowpass', 'bandpass', 'highpass', 'none']:
+            msg = 'The filter type is Lowpass, Bandpass, Highpass or None'
+            err = 'Not supported filter type: {}'.format(self.filter)
+            raise ValueError(msg + '\n' + err)
 
-        if self.fre_low > self.fre_high:
+        # check the low and high frequency
+        if self.filter_low > self.filter_high:
             raise ValueError('The low frequency is larger than the high frequency')
 
         # check the late arrival mute
-        if self.mute_late_arrival and self.mute_late_window <= 0:
+        if self.mute_late_arrival and self.mute_late_size <= 0:
             raise ValueError('The late arrival mute window should be larger than 0')
 
-        # check the data normalization
-        if self.normalize not in ['Max-Trace', 'L1-Event', 'L2-Event', 'L1-Trace', 'L2-Trace', 'None']:
-            raise ValueError('The normalization type is Max-Trace, L1-Event, L2-Event, L1-Trace, L2-Trace or None \n \
-                Not supported normalization type: {}'.format(self.normalize))
 
         # check the data offset mute
-        if self.mute_offset_short_dis > self.mute_offset_long_dis:
+        if self.mute_near_offset > self.mute_far_distance:
             raise ValueError('The short offset distance is larger than the long offset distance')
 
 
-    def apply_filter(optim, trace):
-    ''' apply filter
+    def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, src_coord = None, rec_coord = None):
+        ''' run the preprocessor to process the data in the provided directory
+
+        Parameters
+        ----------
+        data_path: str
+            the path of the data directory
+        src_num: int
+            the number of sources
+        mpi_num: int
+            the number of MPI processes
+        nt: int
+            the number of time samples
+        dt: float
+            the time sampling interval in seconds
+        src_coord: 2D array of float
+            the source coordinates in meters
+        rec_coord: lisft of 2D array of float
+            the receiver coordinates in meters
+        '''
+
+        # print('Start preprocessing the data in: {} ...'.format(data_path))
+        # create a pool of processes
+        pool = Pool(mpi_num)
+
+        # loop over the sources
+        for isrc in range(src_num):
+            # get the directory of the data
+            load_path = os.path.join(data_path, 'src{}/sg'.format(isrc+1))
+            
+            # get the offset
+            offset = src_coord[isrc, 0] - rec_coord[isrc][:, 0]
+            
+            # process the data
+            pool.apply_async(self.process_workflow_it, (load_path, nt, dt, offset,) )
+            
+            # wait for a while
+            time.sleep(0.01)
+
+        # close the pool and wait for all processes to be done
+        pool.close()
+
+        # block at this line until all processes are done
+        pool.join()
+
+
+    def process_workflow_it(self, load_path, nt, dt, offset):
+        ''' process the data in the provided directory
+        '''
+
+        # load data
+        trace, _ = load_waveform_data(load_path, nt)
+
+        # get parameters
+        ntrace, nt = trace.shape
+
+        if len(offset) != ntrace:
+            raise RuntimeError('offset and trace are not consistant\n')
+
+        # dafault parameters
+        length = 200
+    
+        # mute short traces
+        if self.mute_near_offset:
+            trace[abs(offset) < self.mute_near_distance,:] = 0.
+        
+        # mute far traces
+        if  self.mute_far_offset:
+            trace[abs(offset) > self.mute_far_distance,:] = 0.
+        
+        # pick the first arrival and mute late arrival
+        if self.mute_late_arrival:
+
+            # calculate the first break in grid size
+            pick = brutal_picker(trace) + np.ceil(self.mute_late_size/dt)
+            
+            # safeguard window
+            itmin = (pick  - length/2).astype(int)
+            itmax = (itmin + length  ).astype(int)
+
+            # construct the taper
+            taper = np.ones(nt)
+            win = np.sin(np.linspace(0, np.pi, 2*length)) [0:length]
+            
+            # mute late arrivals
+            for i in range(ntrace):
+                trace[i,:] *= (1.0 - custom_mask(itmin[i], itmax[i], nt, length, taper, win))
+
+        # scipy filtering
+        if self.filter_data.lower() in ['bandpass']:
+            for i in range(ntrace):
+                trace[i] = bandpass_filter(trace[i], self.filter_low, self.filter_high, dt, order=4)
+        
+        elif self.filter_data.lower() in ['lowpass']:
+            for i in range(ntrace):
+                trace[i] = lowpass_filter(trace[i], self.filter_low, dt, order=4)
+        
+        elif self.filter_data.lower() in ['highpass']:
+            for i in range(ntrace):
+                trace[i] = highpass_filter(trace[i], self.filter_high, dt, order=4)
+        
+        elif self.filter_data.lower() in ['none']:
+            pass
+        
+        else:
+            raise RuntimeError('Not supported filter type: {}\n'.format(self.filter_data))
+        
+        # normalization
+        if self.normalize_data:
+            for i in range(ntrace):
+                w = 0.
+                w = np.max(abs(trace[i]))
+                if w > 0:    
+                    trace[i] /= w
+        
+        # always save the processed data as binary file, note that the data is flattened
+        save_float(load_path + '_processed.bin', trace.flatten())
+
+
+def brutal_picker(trace, threshold=0.001):
+    ''' pick the first arrival based on the amplitude of the trace 
+
+    Parameters
+    ----------
+    trace: 2D array of float
+        the seismic traces
+    
+    Returns
+    -------
+    pick: 1D array of int
+        the index of the first arrival
     '''
-    # get parameters
-    recn, nt, dt = get_su_parameter(trace)
-    fre_filter = optim.fre_filter
-    fre_low = optim.fre_low
-    fre_high = optim.fre_high
 
-    # scipy filtering
-    if fre_filter.lower() in ['none']:
-        pass
-    else:
-        # convert into numpy array
-        data = su2array(trace)
+    pick = [(abs(trace[i]) > threshold * np.max(abs(trace[i]))).argmax(axis=-1) 
+        for i in range(len(trace))]
 
-        if fre_filter.lower() in ['bandpass']:
-            data_proc = butter_bandpass_filter(data, fre_low, fre_high, dt, order=4)
-        elif fre_filter.lower() in ['lowpass']:
-            data_proc = butter_lowpass_filter(data, fre_low, dt, order=4)
-        elif fre_filter.lower() in ['highpass']:
-            data_proc = butter_highpass_filter(data, fre_high, dt, order=4)
-
-        # replace the original waveform in the SU stream
-        for irec in range(recn):
-            trace[irec].data[:] = data_proc[irec]
-
-        # detrend and taper
-        for tr in trace:
-            tr.detrend('demean')
-            tr.detrend('linear')
-            tr.taper(0.05, type='hann')
+    return np.array(pick)
 
 
-    def apply_mute(optim, trace, use_first_break_in_su_header):
-        ''' apply time window and offset window mute.
-        '''
-        # set parameters
-        length = 100
-        recn, nt, dt = get_su_parameter(trace)
+def custom_mask(itmin, itmax, nt, length, mask, win):
+    ''' Constructs tapered mask that can be applied to trace to
+        mute early or late arrivals.
+    
+    Parameters
+    ----------
+    itmin: int
+        the start index of the mask
+    itmax: int
+        the end index of the mask
+    nt: int 
+        the number of time samples
+    length: int
+        the length of the taper
+    mask: 1D array of float
+        the mask to be applied
+    win: 1D array of float
+        the taper
 
-        mute_late_arrival = optim.mute_late_arrival
-        mute_late_window  = optim.mute_late_window
-        mute_offset_short = optim.mute_offset_short
-        mute_offset_long  = optim.mute_offset_long
-        mute_offset_short_dis = optim.mute_offset_short_dis         # (units: m)
-        mute_offset_long_dis  = optim.mute_offset_long_dis          # (units: m)
+    Returns
+    -------
+    mask: 1D array of float
+        the mask to be applied
+    '''
 
-        for tr in trace:        
-            # mute short offset traces
-            if mute_offset_short:
-                mute_offset(tr, mute_offset_short_dis, 'short')
+    if 1 < itmin < itmax < nt:
+        mask[0:itmin] = 0.
+        mask[itmin:itmax] = win*mask[itmin:itmax]
+    elif itmin < 1 <= itmax:
+        mask[0:itmax] = win[length-itmax:length]*mask[0:itmax]
+    elif itmin < nt < itmax:
+        mask[0:itmin] = 0.
+        mask[itmin:nt] = win[0:nt-itmin]*mask[itmin:nt]
+    elif itmin > nt:
+        mask[:] = 0.
 
-            # mute long offset traces
-            if mute_offset_long:
-                mute_offset(tr, mute_offset_long_dis, 'long')
-
-        # pick the first arrival and mute the late or early arrival
-        if mute_late_arrival:
-
-            # decide mute late or early arrivals W.R.T first break
-            if mute_late_window > 0.0:
-                mutetype = 'late'
-            else:
-                mutetype = 'early'
-            
-            # mute window in second
-            mute_window = abs(mute_late_window)
-            
-            # use the firsy arrival in the header
-            if use_first_break_in_su_header:
-                itrace = 0
-                pick = np.zeros(len(trace))
-                for tr in trace:
-                    pick[itrace] = int((tr.stats.su.trace_header.mute_time_start_time_in_ms/1000 + mute_window)/dt)
-                    itrace +=1
-            # pick the first arrival in a brutal manner 
-            else:
-                pick = brutal_picker(trace) + np.ceil(mute_window/dt)
-
-            itrace = 0
-            for tr in trace:
-                # set mute window
-                itmin = int(pick[itrace] - length/2)
-                itmax = int(itmin + length)
-                # apply mute
-                mute_arrival(tr, itmin, itmax, mutetype, nt, length)
-                itrace +=1
+    return mask
 
 
-    def apply_normalize(optim, trace):
-        ''' apply normalize using L1 or L2 norms on whole event or single trace
-        '''
+def bandpass_filter(data, lowcut, highcut, dt, order=4):
+    '''Butterworth bandpass filter from scipy Cookbook
+    
+    Parameters
+    ----------
+    data: 1D array of float
+        the data to be filtered
+    lowcut: float
+        the lowcut frequency
+    highcut: float
+        the highcut frequency
+    dt: float
+        the sampling interval
+    order: int
+        the order of the filter (default: 4)
+    '''
 
-        # parameter
-        normalize = optim.normalize
+    fs = 1.0 / dt
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    data_bp = filtfilt(b, a, data)
 
-        if 'L1-Trace' in normalize:
-            # normalize each trace by its L1 norm
-            for tr in trace:
-                w = 0.
-                w = np.linalg.norm(tr.data, ord=1)
-                if w > 0:
-                    tr.data /= w
-        elif 'L2-Trace' in normalize:
-            # normalize each trace by its L2 norm
-            for tr in trace:
-                w = 0.
-                w = np.linalg.norm(tr.data, ord=2)
-                if w > 0:
-                    tr.data /= w
-        elif 'Max-Trace' in normalize:
-            # normalize each trace by the max value
-            for tr in trace:
-                w = 0.
-                w = np.max(abs(tr.data))
-                if w > 0:
-                    tr.data /= w
-        else:
-            pass
-        
-        if 'L1-Event' in normalize:
-            # normalize event by L1 norm of all data
-            w = 0.
-            for tr in trace:
-                w += np.linalg.norm(tr.data, ord=1)
-            for tr in trace:
-                tr.data /= w
-        elif 'L2-Event' in normalize:
-            # normalize event by L2 norm of all data
-            w = 0.
-            for tr in trace:
-                w += np.linalg.norm(tr.data, ord=2)
-            for tr in trace:
-                tr.data /= w
-        else:
-            pass
+    return np.asarray(data_bp, dtype=np.float32)
 
 
-    def brutal_picker(trace):
-        ''' pick the first arrival 
-        '''
-        
-        trace  = su2array(trace)
-        threds = 0.001 * np.max(abs(trace), axis=-1)
+def lowpass_filter(data, highcut, dt, order=4):
+    '''Butterworth lowpass filter from scipy Cookbook
 
-        pick = [(abs(trace[i,:]) > threds[i]).argmax(axis=-1) for i in range(trace.shape[0])]
+    Parameters
+    ----------
+    data: 1D array of float
+        the data to be filtered
+    highcut: float
+        the highcut frequency
+    dt: float
+        the sampling interval
+    order: int
+        the order of the filter (default: 4)
+    '''
 
-        return np.array(pick)
+    fs = 1.0 / dt
+    nyq = 0.5 * fs
+    high = highcut / nyq
+    b, a = butter(order, high, btype='low')
+    data_lp = filtfilt(b, a, data)
+
+    return np.asarray(data_lp, dtype=np.float32)
 
 
 
-    def mute_offset(trace, mute_dist, mutetype):
-        ''' mutes traces according to offset
-        '''
+def highpass_filter(data, lowcut, dt, order=4):
+    '''Butterworth highpass filter from scipy Cookbook
+    
+    Parameters
+    ----------
+    data: 1D array of float
+        the data to be filtered
+    lowcut: float
+        the lowcut frequency
+    dt: float
+        the sampling interval
+    order: int
+        the order of the filter (default: 4)
+    '''
 
-        # offset
-        offset = abs(trace.stats.distance)
+    fs = 1.0 / dt
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    b, a = butter(order, low, btype='hp')
+    data_hp = filtfilt(b, a, data)
 
-        if mutetype in ['short']:
-            if offset < mute_dist:
-                trace.data[:] = 0.
-        elif mutetype in ['long']:
-            if offset > mute_dist:
-                trace.data[:] = 0.
-        else:
-            raise ValueError('Wrong mutetype')
-
-
-    def mute_arrival(trace, itmin, itmax, mutetype, nt, length):
-        ''' applies tapered mask to record section, muting early or late arrivals
-        '''
-
-        # apply tapered mask
-        if mutetype in ['early']:
-            trace.data *= mask(itmin, itmax, nt, length)
-        elif mutetype in ['late']:
-            trace.data *= (1. - mask(itmin, itmax, nt, length))
-        else:
-            raise ValueError('Wrong mutetype')
+    return np.asarray(data_hp, dtype=np.float32)
 
 
-    # functions acting on individual traces
-    def mask(itmin, itmax, nt, length):
-        ''' constructs tapered mask that can be applied to trace to
-            mute early or late arrivals.
-        '''
-        mask = np.ones(nt)
-        # construct taper
-        win = np.sin(np.linspace(0, np.pi, 2*length))
-        win = win[0:length]
-
-        if 1 < itmin < itmax < nt:
-            mask[0:itmin] = 0.
-            mask[itmin:itmax] = win*mask[itmin:itmax]
-        elif itmin < 1 <= itmax:
-            mask[0:itmax] = win[length-itmax:length]*mask[0:itmax]
-        elif itmin < nt < itmax:
-            mask[0:itmin] = 0.
-            mask[itmin:nt] = win[0:nt-itmin]*mask[itmin:nt]
-        elif itmin > nt:
-            mask[:] = 0.
-
-        return mask
-
-    # scipy bandpass filter
-    def butter_bandpass_filter(data, lowcut, highcut, dt, order=4):
-        '''Butterworth bandpass filter from scipy Cookbook
-        '''
-        fs = 1.0 / dt
-        nyq = 0.5 * fs
-        low = lowcut / nyq
-        high = highcut / nyq
-        b, a = butter(order, [low, high], btype='band')
-        data_bp = filtfilt(b, a, data)
-
-        return data_bp
-
-    # scipy lowpass filter
-    def butter_lowpass_filter(data, highcut, dt, order=4):
-        '''Butterworth lowpass filter from scipy Cookbook
-        '''
-
-        fs = 1.0 / dt
-        nyq = 0.5 * fs
-        high = highcut / nyq
-        b, a = butter(order, high, btype='low')
-        data_lp = filtfilt(b, a, data)
-
-        return data_lp
-
-    # scipy highpass filter
-    def butter_highpass_filter(data, lowcut, dt, order=4):
-        '''Butterworth highpass filter from scipy Cookbook
-        '''
-
-        fs = 1.0 / dt
-        nyq = 0.5 * fs
-        low = lowcut / nyq
-        b, a = butter(order, low, btype='hp')
-        data_hp = filtfilt(b, a, data)
-
-        return data_hp
-
-
-    def source_wavelet_process(stf, stf_dt=0.001, use_dt = 0.001, use_nt=4001, shift = 0.0, lowpass = 0, highpass = 50, taper_beg=0.005):
-        ''' source wavelet process
-        '''
-        # convert to su
-        stf = array2su(1, stf_dt, stf)
-        t0 = stf[0].stats.starttime 
-        stf.resample(1.0/use_dt)
-        stf.detrend('demean')
-        stf.detrend('linear')
-        # filter
-        if lowpass == 0:
-            stf.filter('lowpass', freq=highpass)#, corners=4, zerophase=True)
-        elif 0 < lowpass < highpass:
-            stf.filter('bandpass', freqmin=lowpass, freqmax=highpass)#, corners=4, zerophase=True)
-        else:
-            pass
-        stf.trim(starttime=t0, endtime=t0 + use_dt*(use_nt-1), 
-                pad=True, nearest_sample=True, fill_value=0.)
-        #stf[0].data[:] = smooth1d(stf[0].data[:], window_len = 5)
-        # apply shift
-        if shift > 0:
-            shift = int(shift//use_dt)
-            stf[0].data[0:-1-shift] =  stf[0].data[shift:-1]
-        
-        stf.taper(taper_beg, type='hann', side='left')
-
-        stf = stf[0].data[:]
-        if stf.size != use_nt:
-            ValueError('wrong size of the source wavelet')
-
-        return stf

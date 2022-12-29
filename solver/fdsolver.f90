@@ -226,11 +226,11 @@ contains
 
       ! Export seismogram in SU format or binary format
       if (par%fileformat(1:2) == 'su') then
-        call filename(output, par%data_out, is, '_sg.su')
+        call filename(output, par%data_out, is, '/sg.su')
         call write_sufile(output, csg(:,1:coord%ng(is)), par%nt, coord%ng(is), &
                           par%dt, 1.0, coord%xs(is), coord%xg(is,:))
       else
-        call filename(output, par%data_out, is, '_sg.bin')
+        call filename(output, par%data_out, is, '/sg.bin')
         call write_binfile(output, csg(:,1:coord%ng(is)), par%nt, coord%ng(is))
       endif
 

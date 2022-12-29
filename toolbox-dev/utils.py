@@ -10,10 +10,10 @@
 #
 ###############################################################################
 
-import os
-import yaml
-import numpy as np
 
+import numpy as np
+from tools import smooth2d
+import scipy.signal
 
 def source_wavelet(amp0, nt, dt, f0, source_type):
     ''' Source wavelet
@@ -30,6 +30,11 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
             Dominant frequency of the source wavelet
         source_type: str
             Type of the source wavelet
+
+        Returns:
+        --------
+        wavelet: 1D array
+            Source wavelet
     '''
 
     # set up time axis and wavelet
@@ -63,65 +68,92 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
     return wavelet
 
 
-
-def read_yaml(filename):
-    ''' A function to read YAML file
-    '''
-    with open(filename) as f:
-        config = yaml.safe_load(f)
- 
-    return config
-
-
-def write_yaml(config, filename):
-    ''' A function to write YAML file
-    '''
-    with open(filename, 'w') as f:
-        yaml.dump(config, f)
-
-
-def load_model(file, nx, nz):
-    ''' A function to load model from file
+def generate_preconditioner(for_illum, adj_illum, epsilon = 0.0001):
+    ''' Generate preconditioner
 
         Parameters:
         -----------
-        file: str
-            Name of the model file
-        nx: int
-            Number of grid points in x direction
-        nz: int
-            Number of grid points in z direction
+        for_illum: 2D array
+            Forward illumination
+        adj_illum: 2D array
+            Adjoint illumination
+        epsilon: float
+            Small value to avoid zero division
+
+        Returns:
+        --------
+        precond: 2D array
+            Preconditioner
     '''
 
-    if file.endswith('.npy'):
-        raise TypeError('Model file name must be a string.')
-
-    # output message
-    print('Loading model from file: {}'.format(file))
-
-    if not os.path.isfile(file):
-        raise FileNotFoundError('Model file not found: {}'.format(file))
-
-    # npy file
-    if file.endswith('.npy'):
-        model = np.load(file)
-    # plain text file
-    elif file.endswith('.dat') or file.endswith('.txt'):
-        model = np.fromfile(file, dtype=np.float32)
-    # binary file
-    elif file.endswith('.bin'):
-        model = np.fromfile(file, dtype=np.float32).reshape((nx, nz))
+    # set proper smoothing size, 40 grids in default
+    if min(for_illum.shape) > 40:
+        smooth_size = 40
+    # if the grid number is less than 40, use half of the grid number
     else:
-        msg = 'Support model file types: .npy, .dat, .txt, .bin. \n'
-        err = 'Unknown model file type: {}'.format(file)
-        raise ValueError(msg + '\n' + err)
+        smooth_size = int(min(for_illum.shape)/2)
 
-    # reshape model
-    try:
-        model = model.reshape((nx, nz))
-    except:
-        msg = 'Model file does not match the specified grid size. \n'
-        err = 'Model file: {}, grid size: ({}, {})'.format(file, nx, nz)
-        raise ValueError(msg + '\n' + err)
+    # smooth the forward and adjoint illuminations
+    for_illum = smooth2d(for_illum, smooth_size)
+    adj_illum = smooth2d(adj_illum, smooth_size)
 
-    return model
+    # apply the approximated inverse Hessian
+    precond = for_illum / np.max(for_illum) + adj_illum / np.max(adj_illum)
+    precond /=  np.max(precond)
+    precond[precond < epsilon] = epsilon
+
+    return precond
+
+
+def generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 20):
+    ''' Generate mask
+
+        Parameters:
+        -----------
+        nx: int
+            Number of grids in x direction
+        nz: int
+            Number of grids in z direction
+        acquisition_type: str
+            Type of the mask, 'land' or 'marine'
+        threshold: float
+            Threshold of the mask for tapering in the land case, 0.05 in default
+        mask_size: int
+            Size of the mask
+
+        Returns:
+        --------
+        mask: 2D array
+            Mask
+    '''
+
+    # generate a must mask for marine case, mask_size is the number of grids of water
+    if acquisition_type.lower() in ['marine']:
+        mask = np.ones((nx, nz))
+        for ix in range(nx):
+            mask[ix, :mask_size] = 0.0
+
+    # generate a damping mask for land case to suppress the strong gradients around the source
+    elif acquisition_type.lower() in ['land']:
+       
+        mask = np.zeros((nx, nz))
+        
+        # gaussian window
+        H = scipy.signal.hamming(mask_size*2)[mask_size:]
+        for ix in range(nx):
+            mask[ix, :mask_size] = H
+
+        # smooth the mask
+        mask = smooth2d(mask, span=mask_size//2)
+
+        # scale the mask to 0-1
+        mask /= mask.max()
+        mask *= (1 - threshold)
+        mask = - mask + 1
+        mask = mask * mask      # taper^2 is better than taper^1
+    else:
+        msg = 'Support mask types: land, marine. \n'
+        err = 'Unknown mask type: {}'.format(acquisition_type)
+        raise ValueError(msg + '\n' + err)
+    
+    return mask

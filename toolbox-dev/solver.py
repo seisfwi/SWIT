@@ -10,7 +10,6 @@
 #
 ###############################################################################
 
-
 import os
 import subprocess
 import numpy as np
@@ -20,11 +19,22 @@ from tools import save_float
 
 
 class Solver(object):
-    ''' Acoustic Wavefiled Solver class
+    ''' Acoustic Wavefiled Solver
+
+    Parameters
+    ----------
+    config : object
+        Config class object
+    model : object
+        Model class object
+    source : object
+        Source class object
+    receiver : object
+        Receiver class object
     '''
 
     def __init__(self, config, model, source, receiver):
-        ''' Initialize solver
+        ''' Initialize the solver class
         '''
         # basic class variables for solver
         self.config = config
@@ -47,43 +57,37 @@ class Solver(object):
         simu_type : str
             simulation type, 'forward', 'adjoint' or 'gradient'
         simu_tag : str
-            simulation tag that makes the simulation results unique, 'obs' or 'syn'
+            simulation tag that makes the simulation unique, 'obs', 'syn' or 'adj'
         data_format : str
             data format, 'bin' or 'su'
         save_snap : boolean
             save snapshot data or not
         save_boundary : boolean
-            save boundary data or not, usef for wavefield reconstruction
+            save boundary data or not, for wavefield reconstruction
         '''
 
         # check the specification of the simulation type
         if simu_type not in ['forward', 'adjoint', 'gradient']:
-            msg = "simu_type must be 'forward', 'adjoint' or 'gradient' \n"
+            msg = "simu_type must be 'forward', 'adjoint' or 'gradient'"
             err = 'Unknown simulation type: {}'.format(simu_type)
-            raise ValueError(msg + '\n' + err)
-        
-        # check the specification of the simulation tag
-        if simu_tag not in ['obs', 'syn']:
-            msg = "simu_tag must be 'obs' or 'syn' \n"
-            err = 'Unknown simulation tag: {}'.format(simu_tag)
             raise ValueError(msg + '\n' + err)
 
         # check the specification of the data format
         if data_format not in ['bin', 'su']:
-            msg = "data_format must be 'bin' or 'su' \n"
+            msg = "data_format must be 'bin' or 'su'"
             err = 'Unknown data format: {}'.format(data_format)
             raise ValueError(msg + '\n' + err)
 
         # check mpi and wavefield solver fd2dmpi
         for cmd in ['which mpirun', 'which fd2dmpi']:
             if subprocess.getstatusoutput(cmd)[0] != 0:
-                raise ValueError('Cannot find {}, please check your mpi installation.'.format(cmd))
+                raise ValueError('Cannot find {}, check mpi or solver installation.'.format(cmd))
 
         # create working directory
         for isrc in range(self.source.num):
-            ifolder = self.config.path + 'data/{}/src{}'.format(simu_tag, isrc+1)
-            if not os.path.exists(ifolder):
-                os.system('mkdir -p %s' % ifolder)
+            folder = self.config.path + 'data/{}/src{}'.format(simu_tag, isrc+1)
+            if not os.path.exists(folder):
+                os.system('mkdir -p {}'.format(folder))
 
         # prepare the config file for the solver
         self.prepare_configfile(simu_type, simu_tag, data_format, save_snap, save_boundary)
@@ -92,7 +96,7 @@ class Solver(object):
         cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.config.mpi_num, self.config.path + 'config/solver.config')
         status = subprocess.getstatusoutput(cmd)
 
-        # check the status of the solver
+        # check the final status of the solver
         if status[0]:
             print(status[1])
             raise ValueError('Solver crash')
@@ -121,9 +125,8 @@ class Solver(object):
                 3. geometry config file: geometry.config
                 4. solver config file: solver.config
 
-                Note: the adjoint source wavelet should be saved previously by 
-                other functions in the folder: config/wavelet before running
-                adjoint/gradient solver
+                Note: the adjoint source wavelet should be saved in the folder 
+                "config/wavelet" before running adjoint/gradient solver
         '''
 
         # create configfile directory
@@ -133,12 +136,11 @@ class Solver(object):
 
         # save source wavelet files: src1.bin, src2.bin, ...
         for isrc in range(self.source.num):
-            srcpath = os.path.join(self.config.path, 'config/wavelet/src{}.bin'.format(isrc+1))
-
             # integrate the source wavelet to cancel out the derivative effect of the 1-st order FD scheme
-            src = integrate.cumtrapz(self.source.wavelet[isrc, :], axis=-1, initial=0)
-            save_float(srcpath, src)
-                
+            src = integrate.cumtrapz(self.source.wavelet[isrc,:], axis=-1, initial=0)
+            src_path = os.path.join(self.config.path, 'config/wavelet/src{}.bin'.format(isrc+1))
+            save_float(src_path, src)
+
         # save P-wave velocity and density files: vp.bin, rho.bin
         save_float(os.path.join(self.config.path, 'config/vp.bin'), self.model.vp)
         save_float(os.path.join(self.config.path, 'config/rho.bin'), self.model.rho)
@@ -231,12 +233,13 @@ class Solver(object):
         ''' Print solver information
         '''
 
-        print('Solver information:')
-        print('    nt = {}, dt = {} ms, time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
-        print('    nx = {}, nz = {}, dx = {} m'.format(self.model.nx, self.model.nz, self.model.dx))
-        print('    x  = 0 ~ {} km'.format(self.model.x[-1]/1000))
-        print('    z  = 0 ~ {} km'.format(self.model.z[-1]/1000))        
-        print('    vp = {} ~ {} m/s'.format(self.model.vp.min(), self.model.vp.max()))
-        print('    Source number = {}'.format(self.source.num))
-        print('    Receiver component = {}'.format(self.receiver.comp))
-        print('    {} task in parallel\n'.format(self.config.mpi_num))
+        print('\nSolver information:')
+        print('    Recording time    : nt = {}, dt = {} ms, total time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
+        print('    Model size        : nx = {}, nz = {}, dx = {} m'.format(self.model.nx, self.model.nz, self.model.dx))
+        print('    Model length      : 0 ~ {:4} km'.format(self.model.x[-1]/1000))
+        print('    Model depth       : 0 ~ {:4} km'.format(self.model.z[-1]/1000))
+        print('    Model vp range    : {} ~ {} m/s'.format(self.model.vp.min(), self.model.vp.max()))
+        print('    Recording time    : nt = {}, dt = {} ms, total time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
+        print('    Source number     : {}, locating from {} to {} m.'.format(self.source.num, self.source.coord[0,0], self.source.coord[-1,0]))
+        print('    Receiver type     : {}'.format(self.receiver.comp))
+        print('    MPI task info     : {} sources run in parallel'.format(self.config.mpi_num))

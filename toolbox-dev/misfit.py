@@ -16,8 +16,7 @@ import numpy as np
 from scipy import fftpack
 from scipy.signal import hilbert
 
-from tools import load_su, load_segy, load_float, save_float
-from tools import segy2array, su2array
+from tools import save_float, load_waveform_data
 
 
 def calculate_adjoint_misfit_is(isrc, work_path, dt, nt, misfit_type):
@@ -25,11 +24,13 @@ def calculate_adjoint_misfit_is(isrc, work_path, dt, nt, misfit_type):
     '''
 
     # load observed and synthetic data
-    obs_path = os.path.join(work_path, 'data/obs/src{}/sg'.format(isrc+1))
-    syn_path = os.path.join(work_path, 'data/syn/src{}/sg'.format(isrc+1))
+    obs_path = os.path.join(work_path, 'data/obs/src{}/sg_processed'.format(isrc+1))
+    syn_path = os.path.join(work_path, 'data/syn/src{}/sg_processed'.format(isrc+1))
 
     # load observed data
     obs, obs_dt = load_waveform_data(obs_path, nt)
+    if obs_dt is None:
+        obs_dt = dt
 
     # load synthetic data
     syn, syn_dt = load_waveform_data(syn_path, nt)
@@ -233,28 +234,3 @@ def cross_correlate_max(obs, syn, nt):
     cc[np.where(cc<nt//2)] = cc[np.where(cc<nt//2)] + nt
 
     return cc
-
-
-def load_waveform_data(path, nt):
-    ''' load waveform data from segy, su, or binary files, and convert the data 
-        to numpy array. The file type is detected on the fly based on the file 
-        extension name (.segy, .su, .bin).
-    '''
-
-    # load the waveform data in segy, su, or binary format
-    # 
-
-    if os.path.exists(path + '.segy'):
-        data = load_segy(path + '.segy')
-        data, dt = segy2array(data)
-    elif os.path.exists(path + '.su'):
-        data = load_su(path + '.su')
-        data, dt = su2array(data)
-    elif os.path.exists(path + '.bin'):
-        data = load_float(path + '.bin').reshape(-1, nt)
-        dt = None
-    else:
-        msg = 'processed data: {}.* not found.'.format(path)
-        raise FileNotFoundError(msg)
-
-    return data, dt

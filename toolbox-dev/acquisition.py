@@ -17,23 +17,28 @@ import numpy as np
 
 
 class Config(object):
-    '''
-        config class describes the configuration
+    ''' Config class describes the configuration
+
+        parameters:
+        ----------
+            path: str
+                path to perform the modeling or inversion
+            mpi_num: int
+                number of mpi processes
+            cpu_max_num: int
+                maximum number of CPUs to use
+            fig_aspect: float
+                aspect ratio of the figure (default: 1.0)
     '''
 
-    def __init__(self, path, mpi_num, fig_aspect = 1.0):
-        '''
-            initialize config class
-
-            input:
-                path: path to perform the modeling or inversion
-                mpi_num: number of mpi processes
-                fig_aspect: aspect ratio of the figure
+    def __init__(self, path, mpi_num, cpu_max_num = cpu_count()//2, fig_aspect = 1.0):
+        ''' initialize config class
         '''
 
         # read config file
         self.path = path
         self.mpi_num = mpi_num
+        self.cpu_max_num = cpu_max_num
         self.fig_aspect = fig_aspect
 
         # check the config parameters
@@ -41,8 +46,7 @@ class Config(object):
 
 
     def __check__(self):
-        '''
-            check the config parameters
+        ''' check the config parameters
         '''
         # check path format
         if self.path[-1] != '/':
@@ -54,29 +58,36 @@ class Config(object):
             os.makedirs(self.path)
 
         # check the number of mpi processes
-        if self.mpi_num > cpu_count()// 2:
-            print('Warning: number of mpi processes {} is larger than the number of CPUs, setting it maximum available CPUs to {}.'.format(self.mpi_num, cpu_count()//2))
-            self.mpi_num = cpu_count() // 2
+        if self.mpi_num > self.cpu_max_num:
+            print('Warning: number of mpi processes {} is larger than the number of CPUs, setting it maximum available CPUs to {}.'.format(self.mpi_num, self.cpu_max_num))
+            self.mpi_num = self.cpu_max_num
     
 
 class Model(object):
-    '''
-        model class describes the model for wavefield simulation
+    ''' Model class describes the model for wavefield simulation
+
+        parameters:
+        ----------
+            nx: int
+                number of grid points in x direction
+            nz: int 
+                number of grid points in z direction
+            dx: float
+                grid spacing in x and z directions
+            dt: float   
+                time step, in seconds
+            nt: int
+                number of time steps
+            pml: int
+                width of pml boundary
+            vp: 2d array    
+                p-wave velocity model, in m/s 
+            rho: 2d array
+                density model, in kg/m^3
     '''
 
-    def __init__(self, nx, nz, dx, dt, nt, pml, vp, rho):
-        '''
-            initialize model class
-
-            input:
-                nx: number of grid points in x direction
-                nz: number of grid points in z direction
-                dx: grid spacing in x and z directions
-                dt: time step
-                nt: number of time steps
-                pml: width of pml boundary
-                vp: p-wave velocity model, in kg/m^3
-                rho: density model, in m/s
+    def __init__(self, nx, nz, dx, dt, nt, pml, vp, rho, acquisition_type = 'land'):
+        ''' initialize model class
         '''
 
         # basic parameters
@@ -88,6 +99,7 @@ class Model(object):
         self.pml = pml
         self.rho = rho.copy()
         self.vp = vp.copy()
+        self.acquisition_type = acquisition_type
 
         # pml parameters, free surface at the top
         self.nx_pml = self.nx + self.pml * 2
@@ -120,10 +132,28 @@ class Model(object):
         if np.shape(self.rho) != (self.nx, self.nz):
             raise ValueError('The dimensions of rho are not consistant with nx = {}, nz = {}'.format(self.nx, self.nz))
 
+        # check the pml width
+        if self.pml < 20:
+            print('Warning: the width of pml boundary is recommaned to be larger than 20 grid points')
+
+        # check the acquisition type
+        if self.acquisition_type not in ['land', 'marine']:
+            raise ValueError('The acquisition type must be land or marine')
+            
 
 class Source(object):
-    '''
-        source class describes the source geometry
+    ''' Source class describes the source geometry
+
+        parameters:
+        ----------
+            coord: 2d array
+                coordinates of sources, in meters
+            wavelet: 2d array
+                source wavelet, the first dimension is the number of sources 
+                and the second dimension is the time axis. The source wavelet is 
+                added to the pressure field at the source location.
+            f0: float
+                dominant frequency of the source wavelet, in Hz
     '''
 
     def __init__(self, coord, wavelet, f0):
@@ -146,8 +176,7 @@ class Source(object):
 
 
     def __check__(self):
-        '''
-            check the source parameters
+        ''' check the source parameters
         '''
 
         # check coordinates of sources
@@ -161,17 +190,18 @@ class Source(object):
 
 
 class Receiver(object):
-    '''
-        receiver class describes the receiver geometry
+    ''' Receiver class describes the receiver geometry
+
+        parameters:
+        ----------
+            coord: 2d array
+                coordinates of receivers, in meters
+            comp: str
+                components of receivers, 'vx', 'vz', 'p'
     '''
 
     def __init__(self, coord, comp):
-        '''
-            initialize receiver class
-
-            input:
-                coord: coordinates of receivers, 2D array
-                comp: components of receivers, ['vx', 'vz', 'p']
+        ''' initialize receiver class
         '''
 
         # basic parameters
@@ -190,16 +220,7 @@ class Receiver(object):
         if not isinstance(self.coord, list):
             raise ValueError('coord must be a list of the length of the source number, with a 2D array for each element')
 
-        # components of receivers must be a list
-        if not isinstance(self.comp, list):
-            raise ValueError('comp must be a list')
-
         # check the components of receivers
         for comp in self.comp:
             if comp not in ['vx', 'vz', 'p']:
                 raise ValueError('comp can only be vx, vz or p, or a combination of them')
-
-
-
-
-

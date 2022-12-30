@@ -1,31 +1,45 @@
 ###############################################################################
 #
-# SWIT: Seismic Waveform Inversion Toolbox
+# SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
-# by Haipeng Li at USTC, haipengl@mail.ustc.edu.cn
-# 
-# June, 2021  
+#   A Python package for seismic waveform inversion
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-# Misfit module, some of codes are from: https://github.com/rmodrak/seisflows 
-#                                      & https://github.com/pysit/pysit
+#   Misfit module for calculating misfit functions and adjoint sources
+#   Some of codes are from:  https://github.com/rmodrak/seisflows 
+#                          & https://github.com/pysit/pysit
 #
 ###############################################################################
 
 import os
+
 import numpy as np
 from scipy import fftpack
 from scipy.signal import hilbert
+from tools import load_waveform_data, save_float
 
-from tools import save_float, load_waveform_data
 
-
-def calculate_adjoint_misfit_is(isrc, work_path, dt, nt, misfit_type):
+def calculate_adjoint_misfit_is(isrc, data_path, dt, nt, misfit_type):
     ''' Caculate the adjoint source for a single source
+
+    Parameters
+    ----------
+        isrc : int
+            source index
+        data_path : str
+            working directory
+        dt : float
+            sampling rate
+        nt : int
+            number of time samples
+        misfit_type : str
+            misfit type, 'waveform', 'envelope', 'crosscorrelation' or 'globalcorrelation'
     '''
 
     # load observed and synthetic data
-    obs_path = os.path.join(work_path, 'data/obs/src{}/sg_processed'.format(isrc+1))
-    syn_path = os.path.join(work_path, 'data/syn/src{}/sg_processed'.format(isrc+1))
+    obs_path = os.path.join(data_path, 'data/obs/src{}/sg_processed'.format(isrc+1))
+    syn_path = os.path.join(data_path, 'data/syn/src{}/sg_processed'.format(isrc+1))
 
     # load observed data
     obs, obs_dt = load_waveform_data(obs_path, nt)
@@ -62,7 +76,7 @@ def calculate_adjoint_misfit_is(isrc, work_path, dt, nt, misfit_type):
         raise ValueError(msg + '\n' + err)
     
     # write the adjoint source to file
-    adj_path = os.path.join(work_path, 'config/wavelet/src{}_adj.bin'.format(isrc+1))
+    adj_path = os.path.join(data_path, 'config/wavelet/src{}_adj.bin'.format(isrc+1))
     save_float(adj_path, adj)
 
     # return summed misfit function over all traces for a single source
@@ -224,7 +238,7 @@ def misfit_globalcorrelation(obs, syn, dt):
 
 
 def cross_correlate_max(obs, syn, nt):
-    ''' calculate the cross-correlation lag between two traces
+    ''' Calculate the cross-correlation lag between two traces
     '''
 
     a =   fftpack.fft(obs)

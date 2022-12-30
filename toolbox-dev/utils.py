@@ -3,23 +3,23 @@
 # SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
 #   A Python package for seismic waveform inversion
-#   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
-#   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-#   Solver module
+#   Utils module specfically for waveform modeling, inversion, and migration
 #
 ###############################################################################
 
-
 import numpy as np
-from tools import smooth2d
 import scipy.signal
+from tools import smooth2d
+
 
 def source_wavelet(amp0, nt, dt, f0, source_type):
     ''' Source wavelet
 
-        Parameters:
-        -----------
+    Parameters:
+    -----------
         amp0: float
             Amplitude of the source wavelet
         nt: int
@@ -31,8 +31,8 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
         source_type: str
             Type of the source wavelet
 
-        Returns:
-        --------
+    Returns:
+    --------
         wavelet: 1D array
             Source wavelet
     '''
@@ -68,11 +68,11 @@ def source_wavelet(amp0, nt, dt, f0, source_type):
     return wavelet
 
 
-def generate_preconditioner(for_illum, adj_illum, epsilon = 0.0001):
+def preconditioner(for_illum, adj_illum, epsilon = 0.0001):
     ''' Generate preconditioner
 
-        Parameters:
-        -----------
+    Parameters:
+    -----------
         for_illum: 2D array
             Forward illumination
         adj_illum: 2D array
@@ -80,16 +80,16 @@ def generate_preconditioner(for_illum, adj_illum, epsilon = 0.0001):
         epsilon: float
             Small value to avoid zero division
 
-        Returns:
-        --------
+    Returns:
+    --------
         precond: 2D array
             Preconditioner
     '''
 
-    # set proper smoothing size, 20 grids in default
-    if min(for_illum.shape) > 20:
-        smooth_size = 20
-    # if the grid number is less than 20, use half of the grid number
+    # set proper smoothing size, 30 grids in default
+    if min(for_illum.shape) > 30:
+        smooth_size = 30
+    # if the grid number is less than 30, use half of the grid number
     else:
         smooth_size = int(min(for_illum.shape)/2)
 
@@ -108,8 +108,8 @@ def generate_preconditioner(for_illum, adj_illum, epsilon = 0.0001):
 def generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 20):
     ''' Generate mask
 
-        Parameters:
-        -----------
+    Parameters:
+    -----------
         nx: int
             Number of grids in x direction
         nz: int
@@ -121,8 +121,8 @@ def generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 20):
         mask_size: int
             Size of the mask
 
-        Returns:
-        --------
+    Returns:
+    --------
         mask: 2D array
             Mask
     '''

@@ -21,6 +21,7 @@
 
 import numpy as np
 
+
 class Optimization(object):
     '''
         Optimization based on Fortran subroutines from SEISCOPE OPTIMIZATION TOOLBOX
@@ -75,10 +76,10 @@ class Optimization(object):
         ''' perform nonlinear inversion
         '''
 
-        # Flatten the input arrays to 1D arrays
-        x = x.flatten().copy()
-        grad = grad.flatten().copy()
-        grad_preco = grad_preco.flatten().copy()
+        # copy the input arrays and convert them to 1D arrays
+        x = np.copy(x.flatten())
+        grad = np.copy(grad.flatten())
+        grad_preco = np.copy(grad_preco.flatten())
 
         # Preconditioned Steepest Descent: PSTD
         if self.method == 'SD':

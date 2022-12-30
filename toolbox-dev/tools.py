@@ -1,55 +1,47 @@
 ###############################################################################
 #
-# SWIT: Seismic Waveform Inversion Toolbox
+# SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
-# by Haipeng Li at USTC, haipengl@mail.ustc.edu.cn
+#   A Python package for seismic waveform inversion
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-# June, 2021
-#
-# Tools module, some of codes are from: https://github.com/rmodrak/seisflows
+#   Tools module, some of codes are from: https://github.com/rmodrak/seisflows
 #
 ###############################################################################
 
 import os
-import yaml
 
 import numpy as np
 import obspy
 import scipy.signal as _signal
+import yaml
 from obspy.io.segy.segy import _read_segy
 
 
-
-class Config_object(object):
-    ''' A class to convert dictionary to object
-    '''
-    def __init__(self, d):
-        for k, v in d.items():
-            for k1, v1 in v.items():
-                setattr(self, k1, v1)
-
-            # if isinstance(k, (list, tuple)):
-            #     setattr(self, k, [Config_object(x) if isinstance(x, dict) else x for x in v])
-            # else:
-            #     setattr(self, k, Config_object(v) if isinstance(v, dict) else v)
-
-
 def load_yaml(filename):
-    ''' A function to read YAML file
+    ''' Load YAML file
+
+    Parameters
+    ----------
+        filename : str
+            file name
     '''
-
-    try:
-        with open(filename) as f:
-            config = yaml.safe_load(f)
-        
-    except FileNotFoundError:
-        raise FileNotFoundError('File not found: {}'.format(filename))
-
+    with open(filename) as f:
+        config = yaml.safe_load(f)
+    
     return config
 
 
 def save_yaml(filename, config):
-    ''' A function to save YAML file
+    ''' Save YAML file
+
+    Parameters
+    ----------
+        filename : str
+            file name
+        config : dict
+            configuration dictionary
     '''
     with open(filename, 'w') as f:
         yaml.dump(config, f)
@@ -60,22 +52,18 @@ def load_float(filename):
 
     Parameters
     ----------
-    filename : str
-        file name
+        filename : str
+            file name
 
-    Returns
-    -------
-    data : 1D array (float32)
-        data to be read
+        Returns
+        -------
+        data : 1D array (float32)
+            data to be read
     '''
-    try:
-        fp = open(filename, 'rb')
-        data = np.fromfile(fp, dtype=np.float32)
-        fp.close()
-    except FileNotFoundError:
-        raise FileNotFoundError('File not found: {}'.format(filename))
+    with open(filename, 'rb') as f:
+        data = np.fromfile(f, dtype=np.float32)
 
-    return np.array(data)
+    return data
 
 
 def save_float(filename, data):
@@ -83,35 +71,41 @@ def save_float(filename, data):
 
     Parameters
     ----------
-    filename : str
-        file name
-    data : 1D array (float32)
-        data to be saved
+        filename : str
+            file name
+        data : 1D array (float32)
+            data to be saved
     '''
-
-    fp = open(filename, "wb")
-    np.asarray(data, dtype=np.float32).tofile(fp)
-    fp.close()
+    with open(filename, 'wb') as f:
+        data.astype(np.float32).tofile(f)
 
 
 def load_su(filename):
-    ''' Reads Seismic Unix files. if nt > 32768, this function will not work. 
-        Find solution in Seisflows/plugins/writer.py or reader.py
+    ''' Load Seismic Unix files. if nt > 32768, this function will not work. 
+        
+    Parameters
+        ----------
+        filename : str
+            file name
     '''
-    try: 
-        traces = obspy.read(filename, format='SU', byteorder='<')
-    except FileNotFoundError:
-        raise FileNotFoundError('File not found: {}'.format(filename))
+    traces = obspy.read(filename, format='SU', byteorder='<')
 
     return traces
 
 
 def save_su(filename, trace):
-    ''' save su file,     max_npts = 32767
-    '''
+    ''' Save su file, support max_npts = 32767
 
+    Parameters
+    ----------
+        filename : str
+            file name
+        trace : obspy trace
+            trace to be saved
+    '''
+    
+    # work around obspy data type conversion
     for tr in trace:
-        # work around obspy data type conversion
         tr.data = tr.data.astype(np.float32)
 
     max_delta = 0.065535
@@ -120,26 +114,41 @@ def save_su(filename, trace):
     if trace[0].stats.delta > max_delta:
         for tr in trace:
             tr.stats.delta = dummy_delta
+    
     # write data to file
     trace.write(filename, format='SU')
 
 
-def load_segy(filename, convert_to_array=False):
-    ''' Reads segy files. 
+def load_segy(filename, convert_to_array = False):
+    ''' Load segy file
+
+    Parameters
+    ----------
+        filename : str
+            file name
+        convert_to_array : bool
+            if True, convert segy traces to array
     '''
-    try:
-        traces = _read_segy(filename)
-    except FileNotFoundError:
-        raise FileNotFoundError('File not found: {}'.format(filename))
 
-    if convert_to_array:
-        traces = segy2array(traces)
+    traces = _read_segy(filename)
 
-    return traces
+    return segy2array(traces) if convert_to_array else traces
 
 
 def segy2array(segy_data):
-    ''' convert segy traces to array
+    ''' Convert segy traces to array
+
+    Parameters
+    ----------
+        segy_data : segyio.segyio.SegyFile
+            segy data
+
+    Returns
+    -------
+        data : 2D array (float32)
+            data array
+        dt : float
+            time sample interval
     '''
     # retrieve data parameters
     ntr = len(segy_data.traces)
@@ -156,7 +165,17 @@ def segy2array(segy_data):
 
 
 def su2array(su_data):
-    ''' convert su traces to array
+    ''' Convert su traces to array
+
+    Parameters
+    ----------
+        su_data : list of obspy trace
+            su data (list of obspy trace)
+    
+    Returns
+    -------
+        data : 2D array (float32)
+            data array
     '''
     # retrieve data parameters
     ntr = len(su_data)
@@ -172,24 +191,20 @@ def su2array(su_data):
     return data, dt
 
 
-def gauss2(X, Y, mu, sigma, normalize=True):
-    ''' Evaluates Gaussian over points of X,Y
-    '''
-    D = sigma[0, 0]*sigma[1, 1] - sigma[0, 1]*sigma[1, 0]
-    B = np.linalg.inv(sigma)
-    X = X - mu[0]
-    Y = Y - mu[1]
-    Z = B[0, 0]*X**2. + B[0, 1]*X*Y + B[1, 0]*X*Y + B[1, 1]*Y**2.
-    Z = np.exp(-0.5*Z)
-
-    if normalize:
-        Z *= (2.*np.pi*np.sqrt(D))**(-1.)
-
-    return Z
-
-
 def smooth2d(Z, span = 10):
     ''' Smooths values on 2D rectangular grid
+
+    Parameters
+    ----------
+        Z : 2D array
+            data to be smoothed
+        span : int
+            smoothing span
+
+    Returns
+    -------
+        Z : 2D array
+            smoothed data
     '''
     import warnings
     warnings.filterwarnings('ignore')
@@ -201,7 +216,16 @@ def smooth2d(Z, span = 10):
     (X, Y) = np.meshgrid(x, y)
     mu = np.array([0., 0.])
     sigma = np.diag([span, span])**2.
-    F = gauss2(X, Y, mu, sigma)
+
+    # evaluate Gaussian over points of X,Y
+    D = sigma[0, 0]*sigma[1, 1] - sigma[0, 1]*sigma[1, 0]
+    B = np.linalg.inv(sigma)
+    X = X - mu[0]
+    Y = Y - mu[1]
+    F = B[0, 0]*X**2. + B[0, 1]*X*Y + B[1, 0]*X*Y + B[1, 1]*Y**2.
+    F = np.exp(-0.5*F)
+    F *= (2.*np.pi*np.sqrt(D))**(-1.)
+    
     F = F/np.sum(F)
     W = np.ones(Z.shape)
     Z = _signal.convolve2d(Z, F, 'same')
@@ -211,8 +235,22 @@ def smooth2d(Z, span = 10):
     return Z
 
 
-def smooth1d(x, window_len=11, window='hanning'):
-    ''' smooth the data using a window with requested size.
+def smooth1d(x, window_len = 11, window = 'hanning'):
+    ''' Smooth the data using a window with requested size.
+    
+    Parameters
+    ----------
+        x : 1D array
+            the input signal
+        window_len : int
+            the dimension of the smoothing window; should be an odd integer
+        window : str
+            the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+
+    Returns
+    -------
+        y : 1D array
+            the smoothed signal
     '''
 
     if x.ndim != 1:
@@ -230,8 +268,8 @@ def smooth1d(x, window_len=11, window='hanning'):
 
     s = np.r_[x[window_len-1:0:-1], x, x[-2:-window_len-1:-1]]
 
-    # print(len(s))
-    if window == 'flat':  # moving average
+    # moving average
+    if window == 'flat':
         w = np.ones(window_len, 'd')
     else:
         w = eval('np.'+window+'(window_len)')
@@ -242,16 +280,21 @@ def smooth1d(x, window_len=11, window='hanning'):
 
 
 def load_model(file, nx, nz):
-    ''' A function to load model from file
+    ''' Load model from file (npy, dat, txt, bin)
 
-        Parameters:
-        -----------
+    Parameters:
+    -----------
         file: str
             Name of the model file
         nx: int
             Number of grid points in x direction
         nz: int
             Number of grid points in z direction
+
+    Returns:
+    --------
+        model: 2D array
+            Model array
     '''
 
     # output message
@@ -286,22 +329,36 @@ def load_model(file, nx, nz):
 
 
 def load_waveform_data(path, nt):
-    ''' load waveform data from segy, su, or binary files, and convert the data 
-        to numpy array. The file type is detected on the fly based on the file 
-        extension name (.segy, .su, .bin).
+    ''' Load waveform data from segy, su, or binary format and convert to array
+
+    Parameters
+    ----------
+        path: str
+            Path to the waveform data
+        nt: int
+            Number of time samples
+    
+    Returns
+    -------
+        data: 2D array
+            Waveform data array
+        dt: float
+            Time sampling interval in seconds (None for binary data)
     '''
 
-    # load the waveform data in segy, su, or binary format
-
+    # determine file type on the basis of file extension
     if os.path.exists(path + '.segy'):
         data = load_segy(path + '.segy')
         data, dt = segy2array(data)
+
     elif os.path.exists(path + '.su'):
         data = load_su(path + '.su')
         data, dt = su2array(data)
+
     elif os.path.exists(path + '.bin'):
         data = load_float(path + '.bin').reshape(-1, nt)
         dt = None
+
     else:
         msg = 'waveform data: {}.* not found.'.format(path)
         raise FileNotFoundError(msg)

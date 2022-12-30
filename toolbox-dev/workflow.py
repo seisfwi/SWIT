@@ -3,43 +3,41 @@
 # SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
 #   A Python package for seismic waveform inversion
-#   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
-#   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-#   Workflow module, defining workflow of FWI and RTM
+#   Workflow mudule defines the implementation of FWI and RTM workflows
 #
 ###############################################################################
 
-# import modules
 import os
 import time
-import numpy as np
 from multiprocessing import Pool
 
-# import SWIT modules
+import numpy as np
 from misfit import calculate_adjoint_misfit_is
-from tools import load_float, smooth2d
-from utils import generate_preconditioner, generate_mask
-from plot import plot_model, plot_misfit
+from plot import plot_misfit, plot_model
+from tools import smooth2d
+from utils import preconditioner
 
 
 class FWI(object):
-    ''' Full waveform inversion workflow
+    ''' Full Waveform Inversion workflow
 
     Parameters
     ----------
-    solver : object
-        solver object
-    optimizer : object
-        optimizer object
-    preprocessor : object
-        preprocessor object
+        solver : object
+            solver object
+        optimizer : object
+            optimizer object
+        preprocessor : object
+            preprocessor object
     '''
 
     def __init__(self, solver, optimizer, preprocessor):
         ''' Initialize FWI workflow
         '''
-
+        # basic parameters
         self.solver = solver
         self.optimizer = optimizer
         self.preprocessor = preprocessor
@@ -51,92 +49,54 @@ class FWI(object):
         self.__check_obs_data()
         
 
-    def __check_obs_data(self):
-        ''' Check the existence of observed data
+    def run(self):
+        ''' Run FWI workflow
         '''
 
-        for isrc in range(self.solver.source.num):
-            sg_file = self.solver.config.path + 'data/obs/src' + str(isrc+1) + '/sg'
-            
-            if (not os.path.exists(sg_file + '.segy') and 
-                not os.path.exists(sg_file + '.su') and 
-                not os.path.exists(sg_file + '.bin')) :
-                msg = 'FWI workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
-                raise ValueError(msg)
+        # start the timer
+        start_time = time.time()
 
-        print('FWI workflow: find observed data  in {}data/obs/'.format(self.solver.config.path))
-        print('FWI workflow: start iteration ...\n')
+        # preprocess the obs data
+        self.preprocessor.run(data_path = self.solver.system.path + 'data/obs/', 
+                            src_num = self.solver.source.num, 
+                            mpi_num = self.solver.system.mpi_num, 
+                            nt = self.solver.model.nt, 
+                            dt = self.solver.model.dt,  
+                            src_coord = self.solver.source.coord, 
+                            rec_coord = self.solver.receiver.coord)
 
+        # compute cost and gradient for the initial model
+        vp  = self.optimizer.vp_init
+        rho = self.optimizer.rho_init # rho is not updated in FWI workflow
+        fcost, fcost_all, grad_preco = self.objective_function(vp = vp, rho = rho)
 
-    def __build_dir(self):
-        ''' Build directories for FWI workflow and clean up the previous results if any
-        '''
+        # iterate until convergence or linesearch failure
+        while ((self.optimizer.FLAG != 'CONV') and (self.optimizer.FLAG != 'FAIL')):
 
-        path = self.solver.config.path
-        folders = [path + 'fwi', 
-                   path + 'fwi/grad',
-                   path + 'fwi/model',
-                   path + 'fwi/misfit',
-                   path + 'fwi/waveform',
-                   path + 'fwi/figures',]
+            # update model and linesearch using the preconditioned gradient
+            vp_pre = np.copy(vp)
+            vp = self.optimizer.iterate(vp, fcost, grad_preco, np.copy(grad_preco))
 
-        # print message
-        print('\n')
-        # clean up the previous results and build directories
-        for folder in folders:
-            if os.path.exists(folder):
-                os.system('rm -rf ' + folder)
-                print('FWI workflow: clean previous data in {}'.format(path + 'fwi'))
-            os.makedirs(folder)
-        print('FWI workflow: build working paths in {}'.format(path + 'fwi'))
+            # calculate gradient and misfit from updated model
+            if(self.optimizer.FLAG == 'GRAD'):
+                # print information
+                self.print_iterate_info(fcost, vp, vp_pre)
 
+                # compute cost and gradient for the updated model
+                fcost, fcost_all, grad_preco = self.objective_function(vp = vp, rho = rho)
+                
+                # save the iteration history
+                self.save_results(vp, grad_preco, fcost_all)
 
-    def prepare_adjoint_misfit(self):
-        ''' Prepare the adjoint source and calculate misfit function using the multiprocessing
+                # plot the model, gradient and misfit
+                self.plot_results(vp, grad_preco)
 
-        Returns
-        -------
-        rsd : list of float
-            each element is the summed misfit over all traces for one source
-        
-        Note: the adjoint source will be saved in workpath/config/wavelet/src1_adj.bin ...
-        '''
-
-        # get the parameters
-        work_path = self.solver.config.path
-        pool_num  = self.solver.config.mpi_num
-        src_num  = self.solver.source.num
-        dt = self.solver.model.dt
-        nt = self.solver.model.nt
-        misfit_type = self.optimizer.misfit_type
-
-        # initialize the Pool object
-        pool = Pool(pool_num)
-
-        # apply the function to all sources
-        results = [pool.apply_async(calculate_adjoint_misfit_is, 
-        (isrc, work_path, dt, nt, misfit_type, )) for isrc in range(src_num)]
-        
-        # close the pool and wait for the work to finish
-        pool.close()
-
-        # get the misfits for all sources (not the summed misfit)
-        fcost_all_src = [p.get() for p in results]
-
-        # block at this line until all processes are done
-        pool.join()
-        
-        # sum the misfit over all sources
-        fcost = 0.0
-        for _fcost in fcost_all_src:
-            fcost += _fcost
-
-        # return the summed misfit over all sources
-        return np.array(fcost_all_src), fcost
+        # print the end information
+        self.print_end_info(start_time)
 
 
-    def calculate_gradient_misfit(self, vp = None, rho = None):
-        ''' Calculate gradient of misfit function
+    def objective_function(self, vp = None, rho = None):
+        ''' Objective function for FWI
 
         Parameters
         ----------
@@ -147,149 +107,137 @@ class FWI(object):
         '''
         
         if vp is None and rho is None:
-            msg = 'ERROR: no model provided for gradient calculation'
+            msg = 'FWI workflow ERROR: no model provided for gradient calculation'
             raise ValueError(msg)
 
-        # set model
+        # reset model to solver
         self.solver.set_model(vp = vp, rho = rho)
 
-        # generate sythetic data (save boundary data for wavefield reconstruction)
+        # model the syn data (save boundary for wavefield reconstruction)
         self.solver.run(simu_type = 'forward', simu_tag = 'syn', save_boundary = True)
 
-        # process synthetic data
-        self.preprocessor.run(data_path = self.solver.config.path + 'data/syn/', 
+        # preprocess the syn data
+        self.preprocessor.run(data_path = self.solver.system.path + 'data/syn/', 
                             src_num = self.solver.source.num, 
-                            mpi_num = self.solver.config.mpi_num, 
+                            mpi_num = self.solver.system.mpi_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
                             src_coord = self.solver.source.coord, 
                             rec_coord = self.solver.receiver.coord)
         
-        # prepare adjoint source and calculate misfit
-        fcost_all_src, fcost = self.prepare_adjoint_misfit()
+        # calculate adjoint source and calculate misfit
+        fcost, fcost_all = self.calculate_adjoint_misfit()
 
-        # calculate gradient via adjoint modeling
-        self.solver.run(simu_type = 'gradient', simu_tag = 'syn')
+        # calculate the gradient via adjoint modeling
+        grad, for_illum, adj_illum = self.solver.run(simu_type = 'gradient', simu_tag = 'syn')
 
-        # process gradient
-        grad = self.postprocess_gradient()
+        # postprocess the gradient
+        grad_preco = self.postprocess_gradient(grad, for_illum, adj_illum)
 
         # save misfit and gradient for each iteration
-        return fcost_all_src, fcost, grad
+        return fcost, fcost_all, grad_preco
 
 
-    def postprocess_gradient(self):
-        ''' Postprocess gradient
-            1. read gradient from binary files and sum over all sources
-            2. apply mask
-            3. apply preconditioning
-            4. apply smoothness
-            5. apply normalization with proper scaling factor
+    def calculate_adjoint_misfit(self):
+        ''' Prepare the adjoint source and calculate misfit function
 
         Returns
         -------
-        grad : 2D array (float32)
-            gradient of misfit function
+            rsd : list of float
+                each element is the summed misfit over all traces for one source
+            
+            Note: the adjoint source is saved in config/wavelet/src1_adj.bin, ...
         '''
-        # get the parameters
-        nx = self.solver.model.nx
-        nz = self.solver.model.nz 
-        src_num  = self.solver.source.num
-        acquisition_type = self.solver.model.acquisition_type
 
-        # load gradient and wavefield illumaition from binary files
-        grad = np.zeros((nx, nz))
-        for_illum = np.zeros((nx, nz))
-        adj_illum = np.zeros((nx, nz))
+        # initialize the Pool object
+        pool = Pool(self.solver.system.mpi_num)
 
-        # sum over all sources
-        for isrc in range(src_num):
-            path = os.path.join(self.solver.config.path, 'data/syn/src{}/'.format(isrc+1))
-            grad += load_float(path + 'vp_gradient.bin').reshape(nx, nz)
-            for_illum += load_float(path + 'forward_illumination.bin').reshape(nx, nz)
-            adj_illum += load_float(path + 'adjoint_illumination.bin').reshape(nx, nz)
+        # TODO: add the MPI support for the calculation of misfit
+        # apply to all sources
+        results = [pool.apply_async(calculate_adjoint_misfit_is, (isrc, 
+                            self.solver.system.path, 
+                            self.solver.model.dt, 
+                            self.solver.model.nt, 
+                            self.optimizer.misfit_type, ))
+                for isrc in range(self.solver.source.num)]
 
-        # generate a default mask or use the provided mask
-        if self.optimizer.grad_mask is None:
-            mask = generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 10)
-        else:
-            mask = self.optimizer.grad_mask
-        grad *= mask
+        # close the pool and wait for the work to finish
+        pool.close()
 
-        # TODO: generete the mask only at the beginning of the inversion
-        # apply the preconditioning, which is the approximated inverse Hessian
-        precond = generate_preconditioner(for_illum, adj_illum)
-        grad = grad / np.power(precond, 1.)
+        # get the misfits for all sources (not the summed misfit)
+        fcost_all = np.array([p.get() for p in results])
 
-        # apply smoothness to the gradient, if smoothness is provided
+        # block at this line until all processes are done
+        pool.join()
+    
+        # return the summed misfit over all sources
+        return np.sum(fcost_all), fcost_all
+
+
+    def postprocess_gradient(self, grad, for_illum, adj_illum):
+        ''' Postprocess gradient. 
+            Note that the sequence of operations is important here.
+
+        Parameters
+        ----------
+            grad : 2D array
+                gradient of misfit function
+            for_illum : 2D array
+                forward illumination
+            adj_illum : 2D array
+                adjoint illumination
+
+        Returns
+        -------
+        grad : 2D array
+            preconditioned gradient of misfit function
+        '''
+
+        # mask the gradient
+        grad = grad * self.optimizer.grad_mask
+   
+        # preconditioning the gradient
+        grad = grad / np.power(preconditioner(for_illum, adj_illum), 1.)
+
+        # smooth the gradient if needed
         if self.optimizer.grad_smooth_size > 0:
-            grad = smooth2d(grad, span=self.optimizer.grad_smooth_size)
+            grad = smooth2d(grad, span = self.optimizer.grad_smooth_size)
 
-        # scale the gradient properly
+        # scale the gradient with the maximum allowed update value
         grad = grad / abs(grad).max() * self.optimizer.update_vpmax
 
         return grad
 
 
-    def run(self):
-        ''' Run FWI workflow
+    def print_iterate_info(self, fcost, vp, vp_pre):
+        ''' Print information during FWI iterations
         '''
+        # calculate the maximum update
+        max_update = np.max(np.abs(vp-vp_pre.flatten()))
 
-        # start the timer
-        start_time = time.time()
-
-        # preprocess the obs data
-        self.preprocessor.run(data_path = self.solver.config.path + 'data/obs/', 
-                            src_num = self.solver.source.num, 
-                            mpi_num = self.solver.config.mpi_num, 
-                            nt = self.solver.model.nt, 
-                            dt = self.solver.model.dt,  
-                            src_coord = self.solver.source.coord, 
-                            rec_coord = self.solver.receiver.coord)
-
-        # calculate gradient and misfit from initial model
-        vp = self.optimizer.vp_init
-        rho = self.optimizer.rho_init
-        fcost_all_src, fcost, grad = self.calculate_gradient_misfit(vp = vp, rho = rho)
-
-        # keep iterate while convergence not reached or linesearch not failed
-        while ((self.optimizer.FLAG != 'CONV') and (self.optimizer.FLAG != 'FAIL')):
-            # TODO:  plot initial model
-            # TODO:  simplicify the code below
-            # update model and linesearch using the preconditioned gradient
-            grad_preco = np.copy(grad)
-            vp_old = np.copy(vp).flatten()
-            vp = self.optimizer.iterate(vp, fcost, grad, grad_preco)
-
-            # calculate gradient and misfit from updated model
-            if(self.optimizer.FLAG == 'GRAD'):
-                # print the iteration information
-                print('Iteration: {} \t fcost: {:.4e} \t step: {:7.4f} \t max update: {:7.2f} m/s'.format(
-                    self.optimizer.cpt_iter+1, fcost, self.optimizer.alpha, np.max(np.abs(vp-vp_old))))
-
-                # compute cost and gradient
-                fcost_all_src, fcost, grad = self.calculate_gradient_misfit(vp = vp, rho = rho)
-                
-                # save the iteration history
-                self.save_results(vp, grad, fcost_all_src)
-
-                # plot the model, gradient and misfit
-                self.plot_results(vp, grad)
-
+        # print the information
+        print('Iteration: {} \t fcost: {:.4e} \t step: {:7.4f} \t max update: {:7.2f} m/s'.format(
+                self.optimizer.cpt_iter+1, fcost, self.optimizer.alpha, max_update))
+    
+    
+    def print_end_info(self, start_time):
+        ''' Print end information
+        '''
         # print the end information
         hours, rem = divmod(time.time()-start_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        print('\nFWI workflow: job is finished.')
-        print('FWI workflow: running time is for {:0>2}h {:0>2}m {:.0f}s'.format(int(hours), int(minutes), seconds))
+        print('\nFWI workflow: finished in {:0>2}h {:0>2}m {:.0f}s'.format(int(hours), int(minutes), seconds))
         print('FWI workflow: see convergence history in iterate_{}.log\n'.format(self.optimizer.method))
 
 
     def save_results(self, vp, grad, fcost_all):
         ''' Save results during FWI iterations
         '''
-        np.save(self.solver.config.path + 'fwi/grad/grad_it_{:04d}.npy'.format(self.optimizer.cpt_iter+1), grad)
-        np.save(self.solver.config.path + 'fwi/model/vp_it_{:04d}.npy'.format(self.optimizer.cpt_iter+1), vp)
-        np.save(self.solver.config.path + 'fwi/misfit/fcost_all_it_{:04d}.npy'.format(self.optimizer.cpt_iter+1), fcost_all)
+
+        iter = self.optimizer.cpt_iter+1
+        np.save(self.solver.system.path + 'fwi/grad/grad_it_{:04d}.npy'.format(iter), grad)
+        np.save(self.solver.system.path + 'fwi/model/vp_it_{:04d}.npy'.format(iter), vp)
+        np.save(self.solver.system.path + 'fwi/misfit/fcost_all_it_{:04d}.npy'.format(iter), fcost_all)
 
 
     def plot_results(self, vp, grad):
@@ -301,7 +249,7 @@ class FWI(object):
             vp.reshape(self.solver.model.nx, self.solver.model.nz).T, 
             self.optimizer.vp_min, 
             self.optimizer.vp_max,
-            os.path.join(self.solver.config.path, 'fwi/figures/vp_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
+            os.path.join(self.solver.system.path, 'fwi/figures/vp_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
             'vp', 
             figaspect = 1, 
             colormap = 'jet')
@@ -312,29 +260,72 @@ class FWI(object):
             grad.reshape(self.solver.model.nx, self.solver.model.nz).T, 
             -self.optimizer.update_vpmax, 
             self.optimizer.update_vpmax,
-            os.path.join(self.solver.config.path, 'fwi/figures/grad_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
+            os.path.join(self.solver.system.path, 'fwi/figures/grad_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
             'grad', 
             figaspect = 1, 
             colormap = 'seismic')
 
-        # plot gradient mask
-        if self.optimizer.grad_mask is not None and self.optimizer.cpt_iter == 0:
+        # plot gradient mask on first iteration
+        if self.optimizer.cpt_iter == 0:
             plot_model(self.solver.model.x, 
                 self.solver.model.z,
                 self.optimizer.grad_mask.reshape(self.solver.model.nx, self.solver.model.nz).T, 
                 0, 
                 1,
-                os.path.join(self.solver.config.path, 'fwi/figures/grad_mask.png'), 
+                os.path.join(self.solver.system.path, 'fwi/figures/grad_mask.png'), 
                 'grad mask', 
                 figaspect = 1, 
                 colormap = 'gray')
 
-        # plot_missfit
-        plot_misfit(self.solver.config.path, 
+        # plot_misfit
+        plot_misfit(self.solver.system.path, 
             self.optimizer.method, 
             self.optimizer.cpt_iter+1, 
             self.optimizer.niter_max, 
             self.solver.source.num)
+
+        # plot waveform comparison
+        
+
+
+    def __check_obs_data(self):
+        ''' Check the existence of observed data
+        '''
+
+        for isrc in range(self.solver.source.num):
+            sg_file = self.solver.system.path + 'data/obs/src' + str(isrc+1) + '/sg'
+            
+            if (not os.path.exists(sg_file + '.segy') and 
+                not os.path.exists(sg_file + '.su') and 
+                not os.path.exists(sg_file + '.bin')) :
+                msg = 'FWI workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
+                raise ValueError(msg)
+
+        print('FWI workflow: find observed data  in {}data/obs/'.format(self.solver.system.path))
+        print('FWI workflow: start iteration ...\n')
+
+
+    def __build_dir(self):
+        ''' Build directories for FWI workflow and clean up the previous results if any
+        '''
+
+        # print the working path
+        path = self.solver.system.path
+        print('\nFWI workflow: the working path is in {}'.format(path + 'fwi'))
+
+        # build required directories and clean up the previous results if any
+        folders = [path + 'fwi', 
+                   path + 'fwi/grad',
+                   path + 'fwi/model',
+                   path + 'fwi/misfit',
+                   path + 'fwi/waveform',
+                   path + 'fwi/figures',]
+
+        for folder in folders:
+            if os.path.exists(folder):
+                os.system('rm -rf ' + folder)
+                print('FWI workflow: clean previous data in {}'.format(path + 'fwi'))
+            os.makedirs(folder)
 
 
 class RTM(object):
@@ -360,3 +351,12 @@ class RTM(object):
         '''
         
         raise NotImplementedError
+
+
+class Configuration(object):
+    ''' Configuration class converts dictionary to object attributes
+    '''
+    def __init__(self, dict):
+        for _, value in dict.items():
+            for k, v in value.items():
+                setattr(self, k, v)

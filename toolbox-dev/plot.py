@@ -3,106 +3,25 @@
 # SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
 #   A Python package for seismic waveform inversion
-#   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
-#   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
 #   Plot module defines the plotting functions
 #
 ###############################################################################
 
 import os
+
 import matplotlib
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-def plot_geometry(fig_path, src_coord, rec_coord):
-    ''' Plot source and receiver acquisition geometry.
-
-    Parameters
-    ----------
-    fig_path : str
-        path to save the figure
-    src_coord : 2D array (float32)
-        source coordinates
-    rec_coord : list of 2D array (float32)
-        receiver coordinates
+def plot_waveform_comparison(path, method, iter, niter_max, src_num):
+    ''' Plot waveform comparison
     '''
+    pass
 
-    # plot geometry
-    src_num  = src_coord.shape[0]
-    fig = plt.figure()
-    fig.add_subplot(111)
-    for i in range(src_num):
-        plt.scatter(rec_coord[i][:,0], np.ones(len(rec_coord[i])) * i + 1, c = 'gray', marker='o', s = 2) 
-        plt.scatter(src_coord[i, 0],  i + 1, c = 'red',   marker='*', s = 6)
-
-    plt.ylim(0, src_num+1)
-    plt.yticks(np.arange(0, src_num, 2))
-
-    plt.xlabel('Distance (m)', fontsize=12)
-    plt.ylabel('Shot number', fontsize=12)
-    plt.title('2D Acquisition, %d sources\n' % (src_num), fontsize=14)
-
-    plt.savefig(os.path.join(fig_path, 'config/geometry.png'), dpi=300)
-    plt.close()
-    # plt.show()
-
-
-def plot_wavelet(fig_path, wavelet, t, t_max = 1.0):
-    ''' Plot source time function in the time and Frequency domanin.
-
-    Parameters
-    ----------
-    fig_path : str
-        path to save the figure
-    wavelet : 1D array (float32)
-        source time function
-    t : 1D array (float32)
-        time axis
-    t_max : float
-        maximum time to plot
-    '''
-
-    # get parameters
-    dt = t[1] - t[0]
-    
-    # max time
-    if t_max > t[-1]:
-        t_max = t[-1]
-
-    ## Set data for plot.
-    wvlt_time = wavelet
-    wvlt_freq = np.abs(np.fft.fft(wvlt_time))
-    freqs = np.fft.fftfreq(len(wvlt_time), dt)
-    idx = np.argsort(freqs)
-    idx = idx[int(len(idx) / 2):]
-
-    # Figure
-    fig = plt.figure()
-
-    # subplot1: time domian.
-    ax1 = fig.add_subplot(2, 1, 1)
-    ax1.xaxis.set_label_text('Time (s)', fontsize=12)
-    ax1.yaxis.set_label_text('Norm. Amplitude', fontsize=12)
-    ax1.set_title('Source wavelet', fontsize=12)
-    ax1.axis((0, t[-1], -1.2, 1.2))
-    ax1.plot(t, wvlt_time / abs(wvlt_time).max(), 'b-')
-    ax1.set_xlim(0, t_max)
-
-    # subplot2: frequency domian.
-    ax2 = fig.add_subplot(2, 1, 2)
-    ax2.xaxis.set_label_text('Frequency (Hz)', fontsize=12)
-    ax2.yaxis.set_label_text('Norm. Amplitude', fontsize=12)
-    ax2.set_title('Amplitude spectrum', fontsize=12)
-    ax2.axis((0, 50, 0, 1.2))
-    ax2.fill(freqs[idx], wvlt_freq[idx] / abs(wvlt_freq).max(), 'c')
-    ax2.plot(freqs[idx], wvlt_freq[idx] / abs(wvlt_freq).max(), 'b')
-    fig.tight_layout()
-
-    plt.savefig(os.path.join(fig_path, 'config/wavelet.png'), dpi=300)
-    plt.close()
-    # plt.show()
 
 
 def plot_model(x, z, data, vmin, vmax, filename, title, figaspect = 1, colormap = 'bwr'):
@@ -110,24 +29,24 @@ def plot_model(x, z, data, vmin, vmax, filename, title, figaspect = 1, colormap 
 
     Parameters
     ----------
-    x : 1D array (float32)
-        x axis
-    z : 1D array (float32)
-        z axis
-    data : 2D array (float32)   
-        model data
-    vmin : float
-        minimum value to plot
-    vmax : float
-        maximum value to plot
-    filename : str  
-        path to save the figure
-    title : str
-        title of the figure
-    figaspect : float
-        aspect ratio of the figure
-    colormap : str
-        colormap
+        x : 1D array (float32)
+            x axis
+        z : 1D array (float32)
+            z axis
+        data : 2D array (float32)   
+            model data
+        vmin : float
+            minimum value to plot
+        vmax : float
+            maximum value to plot
+        filename : str  
+            path to save the figure
+        title : str
+            title of the figure
+        figaspect : float
+            aspect ratio of the figure
+        colormap : str
+            colormap
     '''
     
     plotopts = {
@@ -163,16 +82,16 @@ def plot_misfit(path, method, iter, niter_max, src_num):
 
     Parameters
     ----------
-    path : str
-        working path
-    method : str
-        method name in optimization
-    iter : int  
-        number of iterations
-    niter_max : int
-        maximum number of iterations
-    src_num : int
-        number of sources
+        path : str
+            working path
+        method : str
+            method name in optimization
+        iter : int  
+            number of iterations
+        niter_max : int
+            maximum number of iterations
+        src_num : int
+            number of sources
     '''
     
     fig_path = os.path.join(path, 'fwi/figures/')
@@ -249,3 +168,4 @@ def my_seismic_cmap():
                     (1.0, 0.0, 0.0))}
 
     return matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256)
+    

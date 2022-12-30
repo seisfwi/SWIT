@@ -3,35 +3,33 @@
 # SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
 #   A Python package for seismic waveform inversion
-#   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
-#   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-#   Main module
+#   SWIT class defines the job flow control
 #
 ###############################################################################
 
 import sys
 sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/toolbox-dev/')
 
-# import modules
-import sys
 import numpy as np
 
 try:
-    from acquisition import Config, Model, Source, Receiver
-    from solver import Solver
+    from survey import System, Model, Receiver, Source
     from optimizer import Optimizer
     from preprocessor import Preprocessor
+    from solver import Solver
+    from tools import load_model, load_yaml
     from utils import source_wavelet
-    from tools import load_yaml, load_model, Config_object
-    from workflow import FWI, RTM
+    from workflow import FWI, RTM, Configuration
 except:
     raise ImportError('SWIT modules not found.')
 
 
-class SWIT(Config_object):
+class SWIT(Configuration):
     '''
-        SWIT class defines the main class for seismic waveform inversion
+        SWIT class defines the job flow control
 
     parameters:
     ----------
@@ -41,32 +39,33 @@ class SWIT(Config_object):
 
     def __init__(self, config_file):
         
-        # inherit Config_object containing the config parameters
-        Config_object.__init__(self, load_yaml(config_file))
+        # parse the config file by inheriting Configuration class
+        Configuration.__init__(self, load_yaml(config_file))
 
         # check the job type
-        self.check_job()
+        self.check_config()
 
-        # initialize solver
-        self.init_solver()
-
-        if 'FWI' in self.job_type:
-
-            # initialize optimizer
-            self.init_optimizer()
-
-            # initialize preprocessor
-            self.init_preprocessor()
-
-        elif 'RTM' in self.job_type:
-            raise NotImplementedError('RTM is not implemented yet.')
- 
-
-    def check_job(self):
-        ''' check the job type and print the message
+    
+    def check_config(self):
+        ''' check the config file
         '''
-
-        # check the job type and print the message
+        # parameter list
+        par_list  = ['path', 'job_type', 'max_cpu_num', 'mpi_num', 'fig_aspect']
+        par_list += ['dt', 'dx', 'nt', 'nx', 'nz', 'pml', 'vp_file', 'rho_file']
+        par_list += ['rec_comp', 'rec_coord_file']
+        par_lsit += ['amp0', 'f0', 'src_type', 'src_coord_file', 'wavelet_file']
+        par_list += ['vp_init_file', 'rho_init_file', 'misfit_type', 'method', 
+                     'niter_max', 'bound', 'vp_min', 'vp_max', 'grad_smooth_size', 
+                     'update_vpmax', 'grad_mask', 'debug']
+        par_list += ['filter_data', 'filter_high', 'filter_low', 'mute_near_offset', 
+                     'mute_near_distance', 'mute_far_offset']
+        
+        # check the parameters
+        for par in par_list:
+            if par not in self.__dict__:
+                raise ValueError('Parameter {} not found in config file.'.format(par))
+        
+        # check the job type
         job_str = ''
         self.job_type = [job.upper() for job in self.job_type]
         for job in self.job_type:
@@ -74,24 +73,26 @@ class SWIT(Config_object):
                 raise ValueError('Job type {} not supported.'.format(job))
             job_str += job + '  '
 
+        # print the job workflow
         print('*****************************************************')
         print('\n        Seismic Waveform Inversion Toolbox        \n')
-        print('        Job Flow: {}                                  '.format(job_str))
+        print('        Job Workflow: {}                              '.format(job_str))
         print('*****************************************************\n')
+
 
 
     def init_solver(self):
         ''' initialize the solver class
         '''
 
-        # load model files from config file
+        # load model files
         vp  = load_model(self.vp_file,  self.nx, self.nz)  # load vp  model from file
         rho = load_model(self.rho_file, self.nx, self.nz)  # load rho model from file
         
         # load source coordinates
         src_coord = np.load(self.src_coord_file)
 
-        # load source wavelet from file or generate it from the config file
+        # load source wavelet from file or generate it from the system file
         if self.src_type.lower() in ['file']:
             wavelet = np.load(self.wavelet_path)
         else:
@@ -107,13 +108,13 @@ class SWIT(Config_object):
             rec_coord.append(rec_file[key])
 
         # configuration, model, source, receiver are required for all jobs
-        config = Config(self.path, self.mpi_num, cpu_max_num = self.cpu_max_num, fig_aspect = self.fig_aspect)
-        model = Model(self.nx, self.nz, self.dx, self.dt, self.nt, self.pml, vp, rho, acquisition_type = self.acquisition_type)
+        system = System(self.path, self.mpi_num, max_cpu_num = self.max_cpu_num, fig_aspect = self.fig_aspect)
+        model = Model(self.nx, self.nz, self.dx, self.dt, self.nt, self.pml, vp, rho)
         source = Source(src_coord, wavelet, self.f0)
         receiver = Receiver(rec_coord, self.rec_comp)
         
         # initialize solver
-        self.solver = Solver(config, model, source, receiver)
+        self.solver = Solver(system, model, source, receiver)
 
 
     def init_optimizer(self):
@@ -155,18 +156,42 @@ class SWIT(Config_object):
 
 
     def run(self):
-    
+        ''' run the job workflow
+        '''
+
         # Forward simulation
         if 'FORWARD' in self.job_type:
+
+            # initialize solver
+            self.init_solver()
+
+            # run forward simulation
             self.solver.run()
         
         # Full Waveform Inversion
         if 'FWI' in self.job_type:
+
+            # initialize solver
+            self.init_solver()
+
+            # initialize optimizer
+            self.init_optimizer()
+
+            # initialize preprocessor
+            self.init_preprocessor()
+
+            # run FWI
             fwi = FWI(self.solver, self.optimizer, self.preprocessor)
             fwi.run()
         
         # Reverse Time Migration
         if 'RTM' in self.job_type:
+            # initialize solver
+            self.init_solver()
+
+            # initialize preprocessor
+            self.init_preprocessor()
+            
             rtm = RTM(self.solver, self.preprocessor)
             rtm.run()
 
@@ -178,11 +203,8 @@ if __name__ == '__main__':
         print("Usage: SWIT.py config.yaml")
         sys.exit(1)
 
-    # parse config file
-    config_file = sys.argv[1]
-
-    # initilize SWIT with config
-    swit = SWIT(config_file)
+    # initilize SWIT with config file
+    swit = SWIT(sys.argv[1])
     
     # run SWIT workflow
     swit.run()

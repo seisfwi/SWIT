@@ -3,49 +3,47 @@
 # SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
 #   A Python package for seismic waveform inversion
-#   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
-#   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-#   Data preprocessing module
+#   Preprocessor class for data preprocessing
 #
 ###############################################################################
 
-
+import os
 import time
 from multiprocessing import Pool
 
 import numpy as np
-import os
 from scipy.signal import butter, filtfilt
-
 from tools import load_waveform_data, save_float
 
 
 class Preprocessor(object):
-    '''  preprocessor class describes the data preprocessing
+    '''  Preprocessor class for data preprocessing
 
     Parameters
     ----------
-    filter : str
-        Type of the data filter, 'lowpass', 'bandpass', 'highpass' or 'none'
-    filter_low : float
-        Low frequency of the data filter in Hz
-    filter_high : float
-        High frequency of the data filter in Hz
-    mute_late_arrival : bool
-        Whether to mute the late arrivals after the first break
-    mute_late_size : float
-        Time window of the late arrivals to be muted in seconds
-    normalize_data : bool
-        Whether to normalize the trace by its maximum amplitude (trace by trace)
-    mute_near_offset : bool
-        Whether to mute the near offset traces
-    mute_near_distance : float  
-        Distance of the near offset traces to be muted in meters
-    mute_far_offset : bool 
-        Whether to mute the far offset traces
-    mute_far_distance : float
-        Distance of the far offset traces to be muted in meters
+        filter : str
+            Type of the data filter, 'lowpass', 'bandpass', 'highpass' or 'none'
+        filter_low : float
+            Low frequency of the data filter in Hz
+        filter_high : float
+            High frequency of the data filter in Hz
+        mute_late_arrival : bool
+            Whether to mute the late arrivals after the first break
+        mute_late_size : float
+            Time window of the late arrivals to be muted in seconds
+        normalize_data : bool
+            Whether to normalize the trace by its maximum amplitude (trace by trace)
+        mute_near_offset : bool
+            Whether to mute the near offset traces
+        mute_near_distance : float  
+            Distance of the near offset traces to be muted in meters
+        mute_far_offset : bool 
+            Whether to mute the far offset traces
+        mute_far_distance : float
+            Distance of the far offset traces to be muted in meters
     '''
 
     def __init__(self, filter_data = 'bandpass', filter_low = 5.0, filter_high = 10.0, 
@@ -84,42 +82,50 @@ class Preprocessor(object):
         self.__info__()
 
 
-    def __info__(self):
-        ''' Print the information of the preprocessor
-        '''
-        print('\nPreprocessor information:')
-        print('    Filter data       : {}'.format(self.filter_data))
-        print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
-        print('    Highcut frequency : {} Hz'.format(self.filter_high))
-        print('    Mute late arrivals: {}'.format(self.mute_late_arrival))
-        print('    Mute time window  : {} s'.format(self.mute_late_size))
-        print('    Mute near offset  : {}'.format(self.mute_near_offset))
-        print('    Mute near dist    : {} m'.format(self.mute_near_distance))
-        print('    Mute far offset   : {}'.format(self.mute_far_offset))
-        print('    Mute far dist     : {} m'.format(self.mute_far_distance))
-        print('    Data normalization: {}'.format(self.normalize_data))
-
-
     def __check__(self):
 
         # check the data filter
-        if self.filter_data.lower() not in ['lowpass', 'bandpass', 'highpass', 'none']:
-            msg = 'The filter type is Lowpass, Bandpass, Highpass or None'
-            err = 'Not supported filter type: {}'.format(self.filter)
+        filters = ['lowpass', 'bandpass', 'highpass', 'none']
+        if self.filter_data.lower() not in filters:
+            msg = 'Preprocessor: filter must be one of {}'.format(filters)
+            err = 'Preprocessor: not supported filter type: {}'.format(self.filter)
             raise ValueError(msg + '\n' + err)
 
         # check the low and high frequency
         if self.filter_low > self.filter_high:
-            raise ValueError('The low frequency is larger than the high frequency')
+            raise ValueError('Preprocessor: the low frequency should be smaller than the high frequency')
 
         # check the late arrival mute
         if self.mute_late_arrival and self.mute_late_size <= 0:
-            raise ValueError('The late arrival mute window should be larger than 0')
-
+            raise ValueError('Preprocessor: the late arrival mute window should be larger than 0')
 
         # check the data offset mute
         if self.mute_near_offset > self.mute_far_distance:
-            raise ValueError('The short offset distance is larger than the long offset distance')
+            raise ValueError('Preprocessor: the short offset distance is larger than the long offset distance')
+
+
+    def __info__(self):
+        ''' Print the information of the preprocessor
+        '''
+        print('\nPreprocessor information:')
+        print('    Data filter type  : {}   '.format(self.filter_data))
+        print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
+        print('    Highcut frequency : {} Hz'.format(self.filter_high))
+        if self.mute_late_arrival:
+            print('    Mute late arrivals: {} with the time window of {} s'.format(self.mute_late_arrival, self.mute_late_size))
+        else:
+            print('    Mute late arrivals: {}'.format(self.mute_late_arrival))
+
+        if self.mute_near_offset:
+            print('    Mute near offset: {} with the near distance of {} m'.format(self.mute_near_offset, self.mute_near_distance))
+        else:
+            print('    Mute near offset: {}'.format(self.mute_near_offset))
+
+        if self.mute_far_offset:
+            print('    Mute far  offset: {} with the far  distance of {} m'.format(self.mute_far_offset, self.mute_far_distance))
+        else:
+            print('    Mute far  offset: {}'.format(self.mute_far_offset))
+        print('    Data normalization: {} (trace-by-trace)'.format(self.normalize_data))
 
 
     def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, src_coord = None, rec_coord = None):
@@ -127,23 +133,24 @@ class Preprocessor(object):
 
         Parameters
         ----------
-        data_path: str
-            the path of the data directory
-        src_num: int
-            the number of sources
-        mpi_num: int
-            the number of MPI processes
-        nt: int
-            the number of time samples
-        dt: float
-            the time sampling interval in seconds
-        src_coord: 2D array of float
-            the source coordinates in meters
-        rec_coord: lisft of 2D array of float
-            the receiver coordinates in meters
+            data_path: str
+                the path of the data directory
+            src_num: int
+                the number of sources
+            mpi_num: int
+                the number of MPI processes
+            nt: int
+                the number of time samples
+            dt: float
+                the time sampling interval in seconds
+            src_coord: 2D array of float
+                the source coordinates in meters
+            rec_coord: lisft of 2D array of float
+                the receiver coordinates in meters
         '''
 
-        # print('Start preprocessing the data in: {} ...'.format(data_path))
+        # TODO: add the MPI support for the preprocessor
+
         # create a pool of processes
         pool = Pool(mpi_num)
 
@@ -169,7 +176,8 @@ class Preprocessor(object):
 
 
     def process_workflow_it(self, load_path, nt, dt, offset):
-        ''' process the data in the provided directory
+        ''' load the data in the provided directory, then process the data and 
+            finally save the processed data in the same directory
         '''
 
         # load data
@@ -179,7 +187,7 @@ class Preprocessor(object):
         ntrace, nt = trace.shape
 
         if len(offset) != ntrace:
-            raise RuntimeError('offset and trace are not consistant\n')
+            raise RuntimeError('Preprocessor: offset and trace are not consistant\n')
 
         # dafault parameters
         length = 200
@@ -222,13 +230,11 @@ class Preprocessor(object):
         elif self.filter_data.lower() in ['highpass']:
             for i in range(ntrace):
                 trace[i] = highpass_filter(trace[i], self.filter_high, dt, order=4)
-        
-        elif self.filter_data.lower() in ['none']:
+
+        else:
             pass
         
-        else:
-            raise RuntimeError('Not supported filter type: {}\n'.format(self.filter_data))
-        
+
         # normalization
         if self.normalize_data:
             for i in range(ntrace):
@@ -246,13 +252,13 @@ def brutal_picker(trace, threshold=0.001):
 
     Parameters
     ----------
-    trace: 2D array of float
-        the seismic traces
-    
-    Returns
-    -------
-    pick: 1D array of int
-        the index of the first arrival
+        trace: 2D array of float
+            the seismic traces
+        
+        Returns
+        -------
+        pick: 1D array of int
+            the index of the first arrival
     '''
 
     pick = [(abs(trace[i]) > threshold * np.max(abs(trace[i]))).argmax(axis=-1) 
@@ -267,23 +273,23 @@ def custom_mask(itmin, itmax, nt, length, mask, win):
     
     Parameters
     ----------
-    itmin: int
-        the start index of the mask
-    itmax: int
-        the end index of the mask
-    nt: int 
-        the number of time samples
-    length: int
-        the length of the taper
-    mask: 1D array of float
-        the mask to be applied
-    win: 1D array of float
-        the taper
+        itmin: int
+            the start index of the mask
+        itmax: int
+            the end index of the mask
+        nt: int 
+            the number of time samples
+        length: int
+            the length of the taper
+        mask: 1D array of float
+            the mask to be applied
+        win: 1D array of float
+            the taper
 
-    Returns
-    -------
-    mask: 1D array of float
-        the mask to be applied
+        Returns
+        -------
+        mask: 1D array of float
+            the mask to be applied
     '''
 
     if 1 < itmin < itmax < nt:
@@ -305,16 +311,21 @@ def bandpass_filter(data, lowcut, highcut, dt, order=4):
     
     Parameters
     ----------
-    data: 1D array of float
-        the data to be filtered
-    lowcut: float
-        the lowcut frequency
-    highcut: float
-        the highcut frequency
-    dt: float
-        the sampling interval
-    order: int
-        the order of the filter (default: 4)
+        data: 1D array of float
+            the data to be filtered
+        lowcut: float
+            the lowcut frequency
+        highcut: float
+            the highcut frequency
+        dt: float
+            the sampling interval
+        order: int
+            the order of the filter (default: 4)
+
+    Returns
+    -------
+        data_bp: 1D array of float
+            the filtered data
     '''
 
     fs = 1.0 / dt
@@ -332,14 +343,19 @@ def lowpass_filter(data, highcut, dt, order=4):
 
     Parameters
     ----------
-    data: 1D array of float
-        the data to be filtered
-    highcut: float
-        the highcut frequency
-    dt: float
-        the sampling interval
-    order: int
-        the order of the filter (default: 4)
+        data: 1D array of float
+            the data to be filtered
+        highcut: float
+            the highcut frequency
+        dt: float
+            the sampling interval
+        order: int
+            the order of the filter (default: 4)
+
+    Returns
+    -------
+        data_bp: 1D array of float
+            the filtered data
     '''
 
     fs = 1.0 / dt
@@ -349,7 +365,6 @@ def lowpass_filter(data, highcut, dt, order=4):
     data_lp = filtfilt(b, a, data)
 
     return np.asarray(data_lp, dtype=np.float32)
-
 
 
 def highpass_filter(data, lowcut, dt, order=4):
@@ -365,6 +380,11 @@ def highpass_filter(data, lowcut, dt, order=4):
         the sampling interval
     order: int
         the order of the filter (default: 4)
+
+    Returns
+    -------
+        data_bp: 1D array of float
+            the filtered data
     '''
 
     fs = 1.0 / dt
@@ -374,5 +394,3 @@ def highpass_filter(data, lowcut, dt, order=4):
     data_hp = filtfilt(b, a, data)
 
     return np.asarray(data_hp, dtype=np.float32)
-
-

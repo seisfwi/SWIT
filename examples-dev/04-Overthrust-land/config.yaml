@@ -3,7 +3,7 @@ Config:
   job_type: 
       - FORWARD
       - FWI
-  cpu_max_num: 40
+  max_cpu_num: 40
   mpi_num: 24
   fig_aspect: 1.0
 

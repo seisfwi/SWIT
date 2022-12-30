@@ -26,7 +26,7 @@ class Config(object):
             mpi_num: int
                 number of mpi processes
             cpu_max_num: int
-                maximum number of CPUs to use
+                maximum number of CPUs on the PC/cluster
             fig_aspect: float
                 aspect ratio of the figure (default: 1.0)
     '''
@@ -97,8 +97,8 @@ class Model(object):
         self.dt = dt
         self.nt = nt
         self.pml = pml
-        self.rho = rho.copy()
-        self.vp = vp.copy()
+        self.rho = np.copy(rho)
+        self.vp = np.copy(vp)
         self.acquisition_type = acquisition_type
 
         # pml parameters, free surface at the top

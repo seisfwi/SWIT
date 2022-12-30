@@ -19,16 +19,36 @@ import scipy.signal as _signal
 from obspy.io.segy.segy import _read_segy
 
 
+
+class Config_object(object):
+    ''' A class to convert dictionary to object
+    '''
+    def __init__(self, d):
+        for k, v in d.items():
+            for k1, v1 in v.items():
+                setattr(self, k1, v1)
+
+            # if isinstance(k, (list, tuple)):
+            #     setattr(self, k, [Config_object(x) if isinstance(x, dict) else x for x in v])
+            # else:
+            #     setattr(self, k, Config_object(v) if isinstance(v, dict) else v)
+
+
 def load_yaml(filename):
     ''' A function to read YAML file
     '''
-    with open(filename) as f:
-        config = yaml.safe_load(f)
+
+    try:
+        with open(filename) as f:
+            config = yaml.safe_load(f)
+        
+    except FileNotFoundError:
+        raise FileNotFoundError('File not found: {}'.format(filename))
 
     return config
 
 
-def save_yaml(config, filename):
+def save_yaml(filename, config):
     ''' A function to save YAML file
     '''
     with open(filename, 'w') as f:
@@ -48,9 +68,12 @@ def load_float(filename):
     data : 1D array (float32)
         data to be read
     '''
-    fp = open(filename, 'rb')
-    data = np.fromfile(fp, dtype=np.float32)
-    fp.close()
+    try:
+        fp = open(filename, 'rb')
+        data = np.fromfile(fp, dtype=np.float32)
+        fp.close()
+    except FileNotFoundError:
+        raise FileNotFoundError('File not found: {}'.format(filename))
 
     return np.array(data)
 
@@ -75,7 +98,10 @@ def load_su(filename):
     ''' Reads Seismic Unix files. if nt > 32768, this function will not work. 
         Find solution in Seisflows/plugins/writer.py or reader.py
     '''
-    traces = obspy.read(filename, format='SU', byteorder='<')
+    try: 
+        traces = obspy.read(filename, format='SU', byteorder='<')
+    except FileNotFoundError:
+        raise FileNotFoundError('File not found: {}'.format(filename))
 
     return traces
 
@@ -101,7 +127,10 @@ def save_su(filename, trace):
 def load_segy(filename, convert_to_array=False):
     ''' Reads segy files. 
     '''
-    traces = _read_segy(filename)
+    try:
+        traces = _read_segy(filename)
+    except FileNotFoundError:
+        raise FileNotFoundError('File not found: {}'.format(filename))
 
     if convert_to_array:
         traces = segy2array(traces)
@@ -159,7 +188,7 @@ def gauss2(X, Y, mu, sigma, normalize=True):
     return Z
 
 
-def smooth2d(Z, span=10):
+def smooth2d(Z, span = 10):
     ''' Smooths values on 2D rectangular grid
     '''
     import warnings
@@ -236,10 +265,10 @@ def load_model(file, nx, nz):
         model = np.load(file)
     # plain text file
     elif file.endswith('.dat') or file.endswith('.txt'):
-        model = np.fromfile(file, dtype=np.float32)
+        model = np.loadtxt(file, dtype=np.float32)
     # binary file
     elif file.endswith('.bin'):
-        model = np.fromfile(file, dtype=np.float32)
+        model = load_float(file, nx, nz)
     else:
         msg = 'Support model file types: .npy, .dat, .txt, .bin. \n'
         err = 'Unknown model file type: {}'.format(file)
@@ -247,10 +276,10 @@ def load_model(file, nx, nz):
 
     # reshape model
     try:
-        model = model.reshape((nx, nz))
+        model = model.reshape(nx, nz)
     except:
         msg = 'Model file does not match the specified grid size. \n'
-        err = 'Model file: {}, grid size: ({}, {})'.format(file, nx, nz)
+        err = 'Model file: {} \n Grid size: ({}, {}) may be wrong!'.format(file, nx, nz)
         raise ValueError(msg + '\n' + err)
 
     return model

@@ -11,7 +11,6 @@
 ###############################################################################
 
 # import modules
-import datetime
 import os
 import time
 import numpy as np
@@ -21,6 +20,7 @@ from multiprocessing import Pool
 from misfit import calculate_adjoint_misfit_is
 from tools import load_float, smooth2d
 from utils import generate_preconditioner, generate_mask
+from plot import plot_model, plot_misfit
 
 
 class FWI(object):
@@ -64,7 +64,7 @@ class FWI(object):
                 msg = 'FWI workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
                 raise ValueError(msg)
 
-        print('FWI workflow: observed data are all found in: ' + self.solver.config.path + 'data/obs/')
+        print('FWI workflow: find observed data  in {}data/obs/'.format(self.solver.config.path))
         print('FWI workflow: start iteration ...\n')
 
 
@@ -78,18 +78,17 @@ class FWI(object):
                    path + 'fwi/model',
                    path + 'fwi/misfit',
                    path + 'fwi/waveform',
-                   path + 'fwi/figure',]
+                   path + 'fwi/figures',]
 
+        # print message
+        print('\n')
         # clean up the previous results and build directories
         for folder in folders:
             if os.path.exists(folder):
                 os.system('rm -rf ' + folder)
+                print('FWI workflow: clean previous data in {}'.format(path + 'fwi'))
             os.makedirs(folder)
-
-        # print message
-        print('\n')
-        print('FWI worflow: directories for FWI workflow are built.')
-        print('FWI worflow: previous results are cleaned up if any.')
+        print('FWI workflow: build working paths in {}'.format(path + 'fwi'))
 
 
     def prepare_adjoint_misfit(self):
@@ -212,20 +211,22 @@ class FWI(object):
 
         # generate a default mask or use the provided mask
         if self.optimizer.grad_mask is None:
-            mask = generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 12)
+            mask = generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 10)
         else:
             mask = self.optimizer.grad_mask
         grad *= mask
 
+        # TODO: generete the mask only at the beginning of the inversion
         # apply the preconditioning, which is the approximated inverse Hessian
-        grad = grad / generate_preconditioner(for_illum, adj_illum)
+        precond = generate_preconditioner(for_illum, adj_illum)
+        grad = grad / np.power(precond, 1.)
 
         # apply smoothness to the gradient, if smoothness is provided
         if self.optimizer.grad_smooth_size > 0:
-            grad = smooth2d(grad, self.optimizer.grad_smooth_size)
+            grad = smooth2d(grad, span=self.optimizer.grad_smooth_size)
 
         # scale the gradient properly
-        grad *= self.optimizer.update_vpmax / abs(grad).max()
+        grad = grad / abs(grad).max() * self.optimizer.update_vpmax
 
         return grad
 
@@ -253,16 +254,18 @@ class FWI(object):
 
         # keep iterate while convergence not reached or linesearch not failed
         while ((self.optimizer.FLAG != 'CONV') and (self.optimizer.FLAG != 'FAIL')):
-        
+            # TODO:  plot initial model
+            # TODO:  simplicify the code below
             # update model and linesearch using the preconditioned gradient
             grad_preco = np.copy(grad)
+            vp_old = np.copy(vp).flatten()
             vp = self.optimizer.iterate(vp, fcost, grad, grad_preco)
 
             # calculate gradient and misfit from updated model
             if(self.optimizer.FLAG == 'GRAD'):
                 # print the iteration information
-                print('Iteration: {} \t fcost: {:.4e} \t step: {:.4f} \t'.format(
-                    self.optimizer.cpt_iter, fcost, self.optimizer.alpha))
+                print('Iteration: {} \t fcost: {:.4e} \t step: {:7.4f} \t max update: {:7.2f} m/s'.format(
+                    self.optimizer.cpt_iter+1, fcost, self.optimizer.alpha, np.max(np.abs(vp-vp_old))))
 
                 # compute cost and gradient
                 fcost_all_src, fcost, grad = self.calculate_gradient_misfit(vp = vp, rho = rho)
@@ -270,21 +273,68 @@ class FWI(object):
                 # save the iteration history
                 self.save_results(vp, grad, fcost_all_src)
 
-        # print the end information
+                # plot the model, gradient and misfit
+                self.plot_results(vp, grad)
 
+        # print the end information
         hours, rem = divmod(time.time()-start_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        print('FWI workflow is finished.')
-        print('FWI workflow runs for {:0>2}h {:0>2}m {:.2f}s'.format(int(hours), int(minutes), seconds))
-        print('See the convergence history in iterate_{}.log'.format(self.optimizer.method))
+        print('\nFWI workflow: job is finished.')
+        print('FWI workflow: running time is for {:0>2}h {:0>2}m {:.0f}s'.format(int(hours), int(minutes), seconds))
+        print('FWI workflow: see convergence history in iterate_{}.log\n'.format(self.optimizer.method))
 
 
     def save_results(self, vp, grad, fcost_all):
         ''' Save results during FWI iterations
         '''
-        np.save(self.solver.config.path + 'fwi/grad/grad_it_{:04d}.npy'.format(self.optimizer.cpt_iter), grad)
-        np.save(self.solver.config.path + 'fwi/model/vp_it_{:04d}.npy'.format(self.optimizer.cpt_iter), vp)
-        np.save(self.solver.config.path + 'fwi/misfit/fcost_all_it_{:04d}.npy'.format(self.optimizer.cpt_iter), fcost_all)
+        np.save(self.solver.config.path + 'fwi/grad/grad_it_{:04d}.npy'.format(self.optimizer.cpt_iter+1), grad)
+        np.save(self.solver.config.path + 'fwi/model/vp_it_{:04d}.npy'.format(self.optimizer.cpt_iter+1), vp)
+        np.save(self.solver.config.path + 'fwi/misfit/fcost_all_it_{:04d}.npy'.format(self.optimizer.cpt_iter+1), fcost_all)
+
+
+    def plot_results(self, vp, grad):
+        ''' Plot results during FWI iterations
+        '''
+        # plot model
+        plot_model(self.solver.model.x, 
+            self.solver.model.z,
+            vp.reshape(self.solver.model.nx, self.solver.model.nz).T, 
+            self.optimizer.vp_min, 
+            self.optimizer.vp_max,
+            os.path.join(self.solver.config.path, 'fwi/figures/vp_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
+            'vp', 
+            figaspect = 1, 
+            colormap = 'jet')
+
+        # plot gradient
+        plot_model(self.solver.model.x, 
+            self.solver.model.z,
+            grad.reshape(self.solver.model.nx, self.solver.model.nz).T, 
+            -self.optimizer.update_vpmax, 
+            self.optimizer.update_vpmax,
+            os.path.join(self.solver.config.path, 'fwi/figures/grad_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
+            'grad', 
+            figaspect = 1, 
+            colormap = 'seismic')
+
+        # plot gradient mask
+        if self.optimizer.grad_mask is not None and self.optimizer.cpt_iter == 0:
+            plot_model(self.solver.model.x, 
+                self.solver.model.z,
+                self.optimizer.grad_mask.reshape(self.solver.model.nx, self.solver.model.nz).T, 
+                0, 
+                1,
+                os.path.join(self.solver.config.path, 'fwi/figures/grad_mask.png'), 
+                'grad mask', 
+                figaspect = 1, 
+                colormap = 'gray')
+
+        # plot_missfit
+        plot_misfit(self.solver.config.path, 
+            self.optimizer.method, 
+            self.optimizer.cpt_iter+1, 
+            self.optimizer.niter_max, 
+            self.solver.source.num)
 
 
 class RTM(object):

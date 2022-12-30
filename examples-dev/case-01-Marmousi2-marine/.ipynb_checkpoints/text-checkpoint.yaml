@@ -1,0 +1,4 @@
+config:
+  job:
+      - forward
+      - fwi

@@ -86,10 +86,10 @@ def generate_preconditioner(for_illum, adj_illum, epsilon = 0.0001):
             Preconditioner
     '''
 
-    # set proper smoothing size, 40 grids in default
-    if min(for_illum.shape) > 40:
-        smooth_size = 40
-    # if the grid number is less than 40, use half of the grid number
+    # set proper smoothing size, 20 grids in default
+    if min(for_illum.shape) > 20:
+        smooth_size = 20
+    # if the grid number is less than 20, use half of the grid number
     else:
         smooth_size = int(min(for_illum.shape)/2)
 

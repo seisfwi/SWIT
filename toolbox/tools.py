@@ -34,7 +34,6 @@ class NumpyEncoder(json.JSONEncoder):
 class Struct:
     ''' Json Decoder. 
     '''
-
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -253,7 +252,7 @@ def gauss2(X, Y, mu, sigma, normalize=True):
     return Z
 
 
-def smooth2d(Z, span=10):
+def smooth2d(Z, span = 10):
     ''' Smooths values on 2D rectangular grid
     '''
     import warnings

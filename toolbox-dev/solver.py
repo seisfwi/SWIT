@@ -16,6 +16,7 @@ import numpy as np
 from scipy import integrate
 
 from tools import save_float
+from plot import plot_geometry, plot_wavelet, plot_model
 
 
 class Solver(object):
@@ -47,6 +48,25 @@ class Solver(object):
 
         # print solver information
         self.__info__()
+
+        # plot geometry
+        self.plot_solver()
+
+
+    def plot_solver(self):
+        ''' Plot solver geometry
+        '''
+        # plot geometry
+        plot_geometry(self.config.path, self.source.coord, self.receiver.coord)
+
+        # plot wavelet
+        plot_wavelet(self.config.path, self.source.wavelet[0], self.model.t)
+
+        # plot vp model
+        plot_model(self.model.x, self.model.z, self.model.vp.T, 
+                   self.model.vp.min(), self.model.vp.max(), 
+                   os.path.join(self.config.path, 'config/vp_model.png'), 
+                   'vp', figaspect = 1, colormap = 'jet')
 
 
     def run(self, simu_type = 'forward', simu_tag = 'obs', data_format = 'bin', save_snap = False, save_boundary = False):
@@ -128,11 +148,6 @@ class Solver(object):
                 Note: the adjoint source wavelet should be saved in the folder 
                 "config/wavelet" before running adjoint/gradient solver
         '''
-
-        # create configfile directory
-        if not os.path.exists(self.config.path + 'config'):
-            os.system('mkdir -p %s' % (self.config.path + 'config'))
-            os.system('mkdir -p %s' % (self.config.path + 'config/wavelet'))
 
         # save source wavelet files: src1.bin, src2.bin, ...
         for isrc in range(self.source.num):
@@ -216,7 +231,6 @@ class Solver(object):
 
         # check the receiver location
         for rec_coord in self.receiver.coord:
-
             if (rec_coord[:, 0].min() < self.model.x.min() or 
                 rec_coord[:, 0].max() > self.model.x.max() or
                 rec_coord[:, 1].min() < self.model.z.min() or 
@@ -225,8 +239,13 @@ class Solver(object):
 
         # check the mpi number and the source number
         if self.config.mpi_num > self.source.num:
-            print('Warning: mpi number is larger than source number, reset to source number.')
+            print('Warning: mpi number is larger than source number, reset to source number')
             self.config.mpi_num = self.source.num
+
+        # check the configfile directory and create it if not exist
+        if not os.path.exists(self.config.path + 'config'):
+            os.system('mkdir -p %s' % (self.config.path + 'config'))
+            os.system('mkdir -p %s' % (self.config.path + 'config/wavelet'))
 
 
     def __info__(self):
@@ -236,10 +255,8 @@ class Solver(object):
         print('\nSolver information:')
         print('    Recording time    : nt = {}, dt = {} ms, total time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
         print('    Model size        : nx = {}, nz = {}, dx = {} m'.format(self.model.nx, self.model.nz, self.model.dx))
-        print('    Model length      : 0 ~ {:4} km'.format(self.model.x[-1]/1000))
-        print('    Model depth       : 0 ~ {:4} km'.format(self.model.z[-1]/1000))
-        print('    Model vp range    : {} ~ {} m/s'.format(self.model.vp.min(), self.model.vp.max()))
-        print('    Recording time    : nt = {}, dt = {} ms, total time = {} s'.format(self.model.nt, self.model.dt * 1000, self.model.t[-1]))
-        print('    Source number     : {}, locating from {} to {} m.'.format(self.source.num, self.source.coord[0,0], self.source.coord[-1,0]))
-        print('    Receiver type     : {}'.format(self.receiver.comp))
-        print('    MPI task info     : {} sources run in parallel'.format(self.config.mpi_num))
+        print('    Model range       : x = 0 ~ {:.2f} km,  z = 0 ~ {:.2f} km'.format(self.model.x[-1]/1000, self.model.z[-1]/1000))
+        print('    Model vp range    : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
+        print('    Source number     : {}, locating from {} to {} km.'.format(self.source.num, self.source.coord[0,0]/1000, self.source.coord[-1,0]/1000))
+        print('    Receiver comp     : {}'.format(self.receiver.comp))
+        print('    MPI info          : {} sources run in parallel'.format(self.config.mpi_num))

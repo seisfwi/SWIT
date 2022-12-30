@@ -1,0 +1,56 @@
+Config:
+  path: /scr2/haipeng/SWIT-1.1/01_fwi/
+  job_type: 
+      - FORWARD
+      - FWI
+  cpu_max_num: 40
+  mpi_num: 24
+  fig_aspect: 1.0
+
+Model:
+  dt: 0.0015
+  dx: 20
+  nt: 3001
+  nx: 501
+  nz: 171
+  pml: 40
+  acquisition_type: land
+  vp_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/vp_true.npy
+  rho_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/rho_true.npy
+
+Receiver:
+  rec_comp: p
+  rec_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/rec_coord.npz
+
+Source:
+  amp0: 1.0
+  f0: 5.0
+  src_type: ricker
+  src_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/src_coord.npy
+  wavelet_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/wavelets.npy
+
+Optimizer:
+  vp_init_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/vp_init.npy
+  rho_init_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/rho_init.npy
+  misfit_type: waveform
+  method: CG
+  niter_max: 20
+  bound: true
+  vp_min: 1000
+  vp_max: 6200
+  grad_smooth_size: 0
+  update_vpmax: 50
+  grad_mask: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/case-03-Overthrust-marine/acquisition/grad_mask.npy
+  debug: false
+
+Preprocessor:
+  filter_data: none
+  filter_high: 10.0
+  filter_low: 5.0
+  mute_near_offset: false
+  mute_near_distance: 500
+  mute_far_offset: false
+  mute_far_distance: 8000
+  mute_late_arrival: false
+  mute_late_size: 0.25
+  normalize_data: false

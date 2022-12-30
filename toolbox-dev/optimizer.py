@@ -56,8 +56,8 @@ class Optimizer(Optimization):
         '''
         # set up the lower and upper bounds
         if bound:
-            lb = np.ones_like(vp_init) * vp_min
-            ub = np.ones_like(vp_init) * vp_max
+            lb = vp_min * np.ones_like(vp_init).flatten()
+            ub = vp_max * np.ones_like(vp_init).flatten()
         else:
             lb = None
             ub = None
@@ -130,7 +130,12 @@ class Optimizer(Optimization):
         if self.bound:
             if self.vp_max <= self.vp_min:
                 raise ValueError('The maximum velocity should be larger than the minimum velocity')
-  
+            if self.vp_max < self.vp_init.max() or self.vp_min > self.vp_init.min():
+                msg  = '\nThe range of initial model is {:.2f} ~ {:.2f} m/s\n'.format(self.vp_init.min(), self.vp_init.max())
+                msg += 'The range of bound constraint is {:.2f} ~ {:.2f} m/s\n'.format(self.vp_min, self.vp_max)
+                err = 'The bound constraint should be larger than the range of initial model\n'
+                raise ValueError(msg + err)
+
         
     def __info__(self):
         ''' print information about the optimizer
@@ -141,8 +146,7 @@ class Optimizer(Optimization):
         print('    Inversion method  : {}'.format(self.method))
         print('    Maximum iter      : {}'.format(self.niter_max))
         print('    Maximum update    : {} m/s'.format(self.update_vpmax))
-        print('    Maximum vp bound  : {:.2f} m/s'.format(self.vp_max))
-        print('    Minimum vp bound  : {:.2f} m/s'.format(self.vp_min))
+        print('    Bound constraint  : {:.2f} ~ {:.2f} m/s'.format(self.vp_min, self.vp_max))
         print('    Initial vp model  : {:.2f} ~ {:.2f} m/s'.format(self.vp_init.min(), self.vp_init.max()))
         print('    Gradient smooth   : {} grids Gaussian smooth'.format(self.grad_smooth_size))
         if self.grad_mask is not None:

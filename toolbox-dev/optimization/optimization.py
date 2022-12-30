@@ -15,6 +15,8 @@
 #   Métivier, L., & Brossier, R. (2016). The SEISCOPE optimization toolbox: A large-scale 
 #   nonlinear optimization library based on reverse communication. Geophysics, 81(2), F1-F15.
 # 
+#   Note that some of the codes and default parameters are modified to fit the SWIT package.
+#
 ###############################################################################
 
 import numpy as np
@@ -40,24 +42,24 @@ class Optimization(object):
         '''
 
         self.niter_max = niter_max
-        self.conv  = conv
+        self.conv = conv
         self.method= method
         self.bound = bound
-        self.lb    = lb
-        self.ub    = ub
+        self.lb = lb
+        self.ub = ub
         self.debug = debug
 
         # Default parameters
-        self.threshold = 100.            #### Tolerance on bound constraints satisfaction
+        self.threshold = 100.           # Tolerance on bound constraints satisfaction
         self.FLAG = 'INIT'
 
         # Initialize linesearch parameters by default
-        self.m1 = 0.0 #1e-4             # Wolfe conditions parameter 1, 0.0 for no Wolfe conditions due to the scale of the misfit
-        self.m2 = 0.9                   # Wolfe conditions parameter 2 (Nocedal value)
-        self.mult_factor = 10           # Bracketting parameter (Gilbert value)
-        self.nls_max = 20               # max number of linesearch
-        self.cpt_ls = 0
-        self.first_ls = True
+        self.m1 = 0.0                   # Wolfe conditions parameter 1, 0.0 for no Wolfe conditions due to the scale of the misfit
+        self.m2 = 0.95                  # Wolfe conditions parameter 2
+        self.mult_factor = 5            # bracketting parameter
+        self.nls_max = 10               # max number of linesearch
+        self.cpt_ls = 0                 # linesearch counter
+        self.first_ls = True            # first linesearch flag
         self.alpha = 1.                 # first value for the linesearch steplength
 
         # Quasi-Newton l-BFGS method
@@ -74,9 +76,9 @@ class Optimization(object):
         '''
 
         # Flatten the input arrays to 1D arrays
-        x = x.flatten()
-        grad = grad.flatten()
-        grad_preco = grad_preco.flatten()
+        x = x.flatten().copy()
+        grad = grad.flatten().copy()
+        grad_preco = grad_preco.flatten().copy()
 
         # Preconditioned Steepest Descent: PSTD
         if self.method == 'SD':
@@ -127,7 +129,7 @@ class Optimization(object):
         
         # call the linesearch process
         else:
-            x = self.linesearch(x,fcost,grad)
+            x = self.linesearch(x, fcost, grad)
 
             if(self.task == 'NEW_STEP'):
                 self.cpt_iter += 1
@@ -142,17 +144,17 @@ class Optimization(object):
                 else:
                     self.FLAG = 'NSTE'
                     self.grad = grad
-                    self.descent = -1.*grad_preco
+                    self.descent = -1. * grad_preco
                     self.print_info(fcost)
 
             # if the linesearch needs a new gradient then ask the user to provide it
             elif(self.task == 'NEW_GRAD'):
-                self.FLAG='GRAD'
+                self.FLAG = 'GRAD'
                 self.nfwd_pb = self.nfwd_pb+1
             
             # if the linesearch has failed, inform the user
             elif(self.task == 'FAILURE!'):
-                self.FLAG='FAIL'
+                self.FLAG = 'FAIL'
                 self.print_info(fcost)
         return x
 
@@ -164,7 +166,7 @@ class Optimization(object):
         # set counters
         self.cpt_iter = 0
         self.f0 = fcost
-        self.nfwd_pb = 0  
+        self.nfwd_pb = 0
 
         # linesearch parameters
         self.fk = fcost
@@ -191,12 +193,12 @@ class Optimization(object):
         # initialize the linesearch process
         if(self.FLAG == 'INIT'):
 
-            self.init_PNLCG(x,fcost,grad,grad_preco)
+            self.init_PNLCG(x, fcost, grad, grad_preco)
             x = self.linesearch(x, fcost, grad)
 
             self.print_info(fcost)
             self.FLAG = 'GRAD'
-            self.nfwd_pb = self.nfwd_pb+1
+            self.nfwd_pb += 1
 
             # Store current gradient before the user compute the new one
             self.grad_prev[:] = grad[:]
@@ -211,7 +213,7 @@ class Optimization(object):
                 # test for convergence
                 if(self.std_test_conv(fcost)):
                     self.FLAG = 'CONV'
-                    self.grad = grad
+                    self.grad[:] = grad[:]
                     self.print_info(fcost)
                 
                 # if a NEW_STEP is taken, compute a new descent direction using 
@@ -219,7 +221,7 @@ class Optimization(object):
                 else:
                     self.FLAG = 'NSTE'
                     self.descent_PNLCG(grad, grad_preco)                    
-                    self.grad = grad
+                    self.grad[:] = grad[:]
                     self.print_info(fcost)
 
             # if the linesearch needs a new gradient then ask the user to provide it
@@ -228,15 +230,16 @@ class Optimization(object):
                 self.nfwd_pb += 1
                 
                 # Store current gradient before the user compute the new one
-                self.grad_prev = grad
+                self.grad_prev[:] = grad[:]
 
             # if the linesearch has failed, inform the user
             elif(self.task == 'FAILURE!'):
-                self.FLAG='FAIL'
-                self.grad = grad
+                self.FLAG ='FAIL'
+                self.grad[:] = grad[:]
                 self.print_info(fcost)
 
         return x
+
 
     def init_PNLCG(self, x, fcost, grad, grad_preco):
         '''  Initilize linesearch parameters
@@ -261,7 +264,7 @@ class Optimization(object):
         self.grad[:] = grad[:]
             
         # first descent direction
-        self.descent[:] = -1.*grad_preco[:]
+        self.descent[:] = -1. * grad_preco[:]
 
 
     def descent_PNLCG(self, grad, grad_preco):
@@ -269,24 +272,37 @@ class Optimization(object):
         '''
 
         # Storing old descent direction
-        self.descent_prev = self.descent
+        self.descent_prev[:] = self.descent[:]
         
-        # Computation of beta
-        gkpgk = scalL2(grad, grad_preco)
-        skpk  = scalL2(grad - self.grad_prev, self.descent_prev)
+        # The original PNLCG method (Dai and Yuan, 1999) in the SEISCOPE optimization toolbox
+        # # Computation of beta (Dai and Yuan, 1999)
+        # gkpgk = scalL2(grad, grad_preco)
+        # skpk  = scalL2(grad - self.grad_prev, self.descent_prev)
+        # if skpk != 0.:
+        #     beta = gkpgk / skpk
+        # else:
+        #     beta = 0.
+
+        # # Safeguard (may be useful in some cases)
+        # if((beta >= 1e5) or (beta <= -1e5)):
+        #     beta = 0.
+
+        # Computation of beta (Polak and Ribière 1969), modified by Haipeng Li
+        gkpgk = scalL2(grad, grad - self.grad_prev)
+        skpk  = scalL2(self.grad_prev, self.grad_prev)
         if skpk != 0.:
             beta = gkpgk / skpk
         else:
             beta = 0.
 
-        # Safeguard (may be useful in some cases)
-        if((beta >= 1e5) or (beta <= -1e5)):
+        # Safeguard for beta (may be useful in some cases, empirical values)
+        if beta > 2 or beta < 0:
+            # print('Optimization: reset to descent direction in NLCG due to illegal beta = {:.2f}'.format(beta))
             beta = 0.
-        
+            
         # Computation of the descent direction
-        self.descent = -1. * grad_preco + beta * self.descent_prev
+        self.descent[:] = -1. * grad_preco[:] + beta * self.descent_prev[:]
         
-
 
     #--------------------------------------------------------------------#
     #                Quasi-Newton l-BFGS method: LBFGS                   # 
@@ -310,7 +326,7 @@ class Optimization(object):
                 # test for convergence
                 if(self.std_test_conv(fcost)):
                     self.FLAG = 'CONV'
-                    self.grad = grad
+                    self.grad[:] = grad[:]
                     self.print_info(fcost)
                 else:
                     self.FLAG = 'NSTE'
@@ -327,7 +343,7 @@ class Optimization(object):
                     self.save_LBFGS(x, grad)
                     
                     # print info on current iteration
-                    self.grad = grad
+                    self.grad[:] = grad[:]
                     self.print_info(fcost)
                     
             elif(self.task == 'NEW_GRAD'):
@@ -339,9 +355,10 @@ class Optimization(object):
                 # if the linesearch has failed, inform the user       #
                 self.FLAG='FAIL'
                 # print info on current iteration
-                self.grad=grad
+                self.grad[:] = grad[:]
                 self.print_info(fcost)
         return x
+
 
     def init_LBFGS(self, x, fcost, grad):
         '''  Initilize linesearch parameters
@@ -357,7 +374,7 @@ class Optimization(object):
         self.cpt_lbfgs = 1
     
         # initialize linesearch parameters
-        self.fk=fcost
+        self.fk = fcost
 
         # memory allocations
         self.xk = np.zeros_like(x)
@@ -368,7 +385,7 @@ class Optimization(object):
         self.grad[:] = grad[:]
 
         # first descent direction
-        self.descent = -1. * grad
+        self.descent[:] = -1. * grad[:]
         
         # LBFGS save
         self.save_LBFGS(x, grad)
@@ -380,17 +397,18 @@ class Optimization(object):
         
         if(self.cpt_lbfgs <= self.l):
             # if the number of stored pairs does not exceed the maximum value, then save x and grad
-            self.sk[:, self.cpt_lbfgs-1] = x
-            self.yk[:, self.cpt_lbfgs-1] = grad
+            self.sk[:, self.cpt_lbfgs-1] = x[:]
+            self.yk[:, self.cpt_lbfgs-1] = grad[:]
         else:
             # otherwise, erase the oldest pair and save the new one (shift)                         
             for i in range (self.l-1):
                 self.sk[:, i] = self.sk[:, i+1]
                 self.yk[:, i] = self.yk[:, i+1]
         
-            self.sk[:, self.l-1] = x
-            self.yk[:, self.l-1] = grad
+            self.sk[:, self.l-1] = x[:]
+            self.yk[:, self.l-1] = grad[:]
         
+
     def update_LBFGS(self, x, grad):
         ''' update values for LBFGS
         '''
@@ -398,14 +416,14 @@ class Optimization(object):
         if(self.cpt_lbfgs <= self.l):
             # if the number of stored pairs does not exceed the maximum value, 
             # then compute a new pair sk yk and update the counter cpt_lbfgs
-            ii = self.cpt_lbfgs-1
+            ii = self.cpt_lbfgs - 1
             self.sk[:, ii] = x    - self.sk[:, ii]
             self.yk[:, ii] = grad - self.yk[:, ii]
             self.cpt_lbfgs += 1
         else:
             # otherwise, simply update the lth pair
-            self.sk[:,self.l-1] = x    - self.sk[:,self.l-1]
-            self.yk[:,self.l-1] = grad - self.yk[:,self.l-1]
+            self.sk[:,self.l-1] = x[:]    - self.sk[:,self.l-1]
+            self.yk[:,self.l-1] = grad[:] - self.yk[:,self.l-1]
 
 
     def descent_LBFGS(self, grad):
@@ -413,37 +431,37 @@ class Optimization(object):
         '''
         
         n = np.size(grad)
-        borne_i = self.cpt_lbfgs-1
+        borne_i = self.cpt_lbfgs - 1
 
         # Safeguard
         norml2_sk = normL2(self.sk[:,borne_i-1])
         norml2_yk = normL2(self.yk[:,borne_i-1])
-        if( (norml2_sk==0.) or (norml2_yk==0.)):
+        if( (norml2_sk == 0.) or (norml2_yk == 0.)):
             self.descent = -1. * grad
         else:
             # First phase of the recursion loop
             alpha = np.zeros(self.cpt_lbfgs)
             rho   = np.zeros(self.cpt_lbfgs)
             q     = np.zeros(n)
-            q     = grad
+            q[:]  = grad[:]
 
             for i in range(borne_i):
-                ii = borne_i-i-1
-                rho[ii]   = 1. / scalL2(self.yk[:, ii], self.sk[:,ii])
+                ii = borne_i - i - 1
+                rho[ii] = 1. / scalL2(self.yk[:, ii], self.sk[:,ii])
                 alpha[ii] = rho[ii] * scalL2(self.sk[:,ii], q)
-                q = q - alpha[ii] * self.yk[:,ii]
+                q[:] = q[:] - alpha[ii] * self.yk[:,ii]
         
             gamma_num = scalL2(self.sk[:,borne_i-1], self.yk[:,borne_i-1])
             gamma_den = normL2(self.yk[:,borne_i-1])
 
             # Scaling by gamma
             gamma = gamma_num / (gamma_den * gamma_den)
-            self.descent = gamma * q
+            self.descent[:] = gamma * q[:]
 
             # Second phase of the recursion loop
             for i in range (borne_i):
                 beta = rho[i] * scalL2(self.yk[:,i], self.descent)
-                self.descent += (alpha[i] - beta) * self.sk[:, i]
+                self.descent[:] += (alpha[i] - beta) * self.sk[:, i]
 
             self.descent *= -1.
 
@@ -455,15 +473,15 @@ class Optimization(object):
         ''' Quasi-Newton preconditioned l-BFGS method
         '''
 
-        if(self.FLAG=='INIT'):
+        if(self.FLAG == 'INIT'):
             # initialize the linesearch process
             self.init_PLBFGS(x, fcost, grad, grad_preco)
             x = self.linesearch(x, fcost, grad)
             self.print_info(fcost)
-            self.FLAG='GRAD'
+            self.FLAG = 'GRAD'
             self.nfwd_pb += 1
 
-        elif(self.FLAG=='PREC'):
+        elif(self.FLAG == 'PREC'):
             # if self.FLAG is PREC, we return from a call to the user preconditioner,
             # we have to finish the computation of the descent direction
             self.descent2_PLBFGS()
@@ -486,8 +504,8 @@ class Optimization(object):
         else:
             # else call the linesearch process
             x = self.linesearch(x, fcost, grad)
-            if(self.task=='NEW_STEP'): 
-                # LBFGS update        
+            if(self.task == 'NEW_STEP'): 
+                # LBFGS update
                 self.update_LBFGS(x, grad)
                 # Start the computation of the new descent direction
                 self.descent1_PLBFGS(grad)
@@ -498,7 +516,7 @@ class Optimization(object):
                 self.FLAG = 'GRAD'
                 self.nfwd_pb += 1
             elif(self.task == 'FAILURE!'):
-                # if the linesearch has failed, inform the user       #
+                # if the linesearch has failed, inform the user
                 self.FLAG = 'FAIL'
                 # print info on current iteration
                 self.grad[:] = grad[:]
@@ -532,7 +550,7 @@ class Optimization(object):
         self.grad[:] = grad[:]
         
         # first descent direction
-        self.descent = -1. * grad_preco
+        self.descent[:] = -1. * grad_preco[:]
         self.save_LBFGS(x, grad)
 
 
@@ -579,13 +597,13 @@ class Optimization(object):
             # if FLAG is INIT, call the dedicated initialization def to allocate data structure self
             self.init_TRN( x, fcost, grad)
             self.print_info_TRN(fcost)
-            self.comm='DESC'
-            self.CG_phase='INIT'
-            self.nfwd_pb=self.nfwd_pb+1
-            self.conv_CG=False
-            self.FLAG='NONE'
+            self.comm = 'DESC'
+            self.CG_phase = 'INIT'
+            self.nfwd_pb = self.nfwd_pb+1
+            self.conv_CG = False
+            self.FLAG = 'NONE'
 
-        if(self.comm=='DESC'):
+        if(self.comm == 'DESC'):
             # if self.comm is DES, the selfizer is computing a descent direction through the conjugate gradient
             self.descent_TRN(grad)
             
@@ -624,12 +642,12 @@ class Optimization(object):
 
             elif(self.task == 'NEW_GRAD'): # STILL SEARCHING THE STEP 
                 # if self.task is 'NEW_GRAD, the linesearch process is continuing, the gradient at the current point is required
-                self.FLAG='GRAD'
+                self.FLAG = 'GRAD'
                 self.nfwd_pb += 1
 
-            elif(self.task=='FAILURE!'):
+            elif(self.task =='FAILURE!'):
                 # if self.task is 'FAILURE, the linesearch process has failed, the iterations are stopped
-                self.FLAG='FAIL'
+                self.FLAG = 'FAIL'
                 self.print_info_TRN(fcost)
 
         return x
@@ -675,14 +693,14 @@ class Optimization(object):
         if(self.CG_phase=='INIT'):
             # if self.CG_phase is INIT, initialize the conjugate gradient process
             self.residual[:] = grad[:]
-            self.d[:]=-1.*self.residual[:]
-            self.Hd[:]=0.
-            self.descent[:]=0.
-            self.qk_CG=0.
-            self.hessian_term=0.
+            self.d[:] = -1.*self.residual[:]
+            self.Hd[:] = 0.
+            self.descent[:] = 0.
+            self.qk_CG = 0.
+            self.hessian_term = 0.
             self.norm_residual = normL2(self.residual)
-            self.conv_CG=False
-            self.cpt_iter_CG=0
+            self.conv_CG = False
+            self.cpt_iter_CG = 0
             self.print_info_TRN(0.0)
             self.CG_phase='IRUN'
         else:
@@ -690,7 +708,7 @@ class Optimization(object):
             dHd = scalL2(self.d, self.Hd)
             if(dHd < 0.):
                 # if dHd < 0, detection of a negative eigenvalue of the Hessian operator, stop the process
-                self.conv_CG= True
+                self.conv_CG = True
                 print('Negative curvature')
                 if(self.cpt_iter_CG == 0):
                     # if this is the first iteration, :return the opposite of the gradient as descent direction
@@ -707,7 +725,7 @@ class Optimization(object):
                         mgrad[:] = -1.*grad[:]
                         self.norm_residual = normL2(self.residual)
                         alpha = (self.norm_residual**2) / dHd
-                        self.qkm1_CG = self.qk_CG
+                        self.qkm1_CG[:] = self.qk_CG[:]
                         grad_term = scalL2(self.descent,mgrad)
                         self.hessian_term = self.hessian_term+(alpha**2)*dHd
                         self.qk_CG = -grad_term + 0.5*self.hessian_term
@@ -737,12 +755,12 @@ class Optimization(object):
                 #-----------------------------------------------------#        
                 if(self.debug):
                     mgrad = np.zeros_like(grad)
-                    mgrad[:]=-1.*grad[:]
-                    self.qkm1_CG=self.qk_CG
+                    mgrad[:] = -1.*grad[:]
+                    self.qkm1_CG = self.qk_CG
                     grad_term = scalL2(self.descent,mgrad)
                     descent_scal_Hd = scalL2(self.descent_prev,self.Hd)
-                    self.hessian_term=self.hessian_term+(alpha**2)*dHd+2.*alpha*descent_scal_Hd
-                    self.qk_CG=-grad_term+0.5*self.hessian_term
+                    self.hessian_term = self.hessian_term + (alpha**2) * dHd + 2. * alpha * descent_scal_Hd
+                    self.qk_CG = -grad_term + 0.5*self.hessian_term
                 
                 # Check if the Eisenstat stopping critertion is satisfied
                 self.conv_CG=( (self.norm_residual<=(self.eta*self.norm_grad)) or 
@@ -758,9 +776,9 @@ class Optimization(object):
     
         # Computation of the forcing term self.eta following the formula
         eta_save = self.eta
-        self.eisenvect[:]=grad[:]-self.residual[:]
+        self.eisenvect[:] = grad[:] - self.residual[:]
         norm_eisenvect = normL2(self.eisenvect)
-        self.eta=norm_eisenvect/self.norm_grad_m1
+        self.eta = norm_eisenvect / self.norm_grad_m1
         
         # Additional safeguard if self.eta is too large
         eta_save_power = eta_save**((1.+np.sqrt(5.))/2.)
@@ -781,24 +799,24 @@ class Optimization(object):
         if(self.FLAG=='INIT'):
             # if FLAG is INIT, call the dedicated initialization def to allocate data structure self
 
-            self.init_PTRN(x,fcost,grad)
+            self.init_PTRN(x, fcost, grad)
             self.print_info_PTRN(fcost)
-            self.comm='DES1'
-            self.CG_phase='INIT'
-            self.nfwd_pb=self.nfwd_pb+1
-            self.conv_CG=False
-            self.FLAG='NONE'
+            self.comm = 'DES1'
+            self.CG_phase = 'INIT'
+            self.nfwd_pb = self.nfwd_pb+1
+            self.conv_CG = False
+            self.FLAG = 'NONE'
         
         if(self.comm == 'DES1'):
             # if self.comm is DES1, the selfizer starts the computation of a descent direction through the conjugate gradient
             if(self.CG_phase=='INIT'):
                 # if self.CG_phase is INIT, initialization of the conjugate gradient process
                 self.descent_PTRN0(grad, grad_preco)
-                self.CG_phase='IRUN'
-                self.comm='DES1'
-                self.FLAG='HESS'
-                self.nhess+=1
-            elif(self.CG_phase=='IRUN'):
+                self.CG_phase = 'IRUN'
+                self.comm = 'DES1'
+                self.FLAG = 'HESS'
+                self.nhess += 1
+            elif(self.CG_phase == 'IRUN'):
                 # if self.CG_phase is IRUN, iterate the conjugate gradient process (first part)
                 
                 self.descent_PTRN1(grad)
@@ -808,30 +826,30 @@ class Optimization(object):
                     # (detection of a negative curvature), go to next     #
                     # phase: linesearch in the descent direction          #
                     #-----------------------------------------------------#
-                    self.comm='NSTE'
-                    self.CG_phase='INIT'        
-                    self.FLAG='NONE'                   
+                    self.comm = 'NSTE'
+                    self.CG_phase = 'INIT'        
+                    self.FLAG = 'NONE'                   
                 else:
                     # if the conjugate gradient has not converged prematurly,: ask the user to apply the preconditioner
-                    self.FLAG='PREC'
-                    self.comm='DES2'
+                    self.FLAG = 'PREC'
+                    self.comm = 'DES2'
                     
-        elif(self.comm=='DES2'):
+        elif(self.comm == 'DES2'):
             # if self.comm is DES2, the selfizer finish the current iteration of the conjugate gradient process
             self.descent_PTRN2(grad)
 
             if(self.conv_CG):
                 # if the conjugate gradient has converged go to next phase: linesearch in the descent direction
-                self.comm='NSTE'
-                self.CG_phase='INIT'        
-                self.FLAG='NONE'                
+                self.comm = 'NSTE'
+                self.CG_phase = 'INIT'        
+                self.FLAG = 'NONE'                
             else:
                 # else start a new iteration of conjugate gradient and ask the user to compute a Hessian-vector product
-                self.comm='DES1'
-                self.FLAG='HESS'
-                self.nhess=self.nhess+1
+                self.comm = 'DES1'
+                self.FLAG = 'HESS'
+                self.nhess = self.nhess + 1
 
-        elif(self.comm=='NSTE'):
+        elif(self.comm == 'NSTE'):
             # if self.comm is NSTE, a descent direction has been computed, and a linesearch must be performed in this direction
             x = self.linesearch(x, fcost, grad)
 
@@ -846,22 +864,22 @@ class Optimization(object):
                 self.print_info_PTRN(fcost)        
                 # Test for convergence
                 if(self.std_test_conv(fcost)):
-                    self.FLAG='CONV'
+                    self.FLAG = 'CONV'
                     self.print_info_PTRN(fcost)
                 else:
-                    self.FLAG='NSTE'
+                    self.FLAG = 'NSTE'
                     # Flag for the computation of the new descent direction
-                    self.comm='DES1'
+                    self.comm = 'DES1'
                     # Update forcing term self.eta following the Eisenstat and Walker formula
                     self.forcing_term_TRN(grad)
                     
-            elif(self.task=='NEW_GRAD'): 
+            elif(self.task == 'NEW_GRAD'): 
                 # if self.task is 'NEW_GRAD, the linesearch process is continuing, the gradient at the current point is required
-                self.FLAG='GRAD'         
+                self.FLAG = 'GRAD'         
                 self.nfwd_pb += 1
-            elif(self.task=='FAILURE!'):        
+            elif(self.task == 'FAILURE!'):        
                 # if self.task is 'FAILURE, the linesearch process has failed, the iterations are stopped
-                self.FLAG='FAIL'
+                self.FLAG = 'FAIL'
                 self.print_info_PTRN(fcost)
 
         return x
@@ -871,7 +889,7 @@ class Optimization(object):
         '''
         
         # set counters
-        self.cpt_iter=0                    
+        self.cpt_iter=0
         self.f0=fcost   
         self.nfwd_pb=0    
         self.nhess=0
@@ -906,16 +924,16 @@ class Optimization(object):
         '''
     
         # Initialization of the conjugate gradient process
-        self.residual[:]=grad[:]
-        self.residual_preco[:]=grad_preco[:]
-        self.d[:]=-1.*self.residual_preco[:]
-        self.Hd[:]=0.
-        self.descent[:]=0.
-        self.qk_CG=0.
-        self.hessian_term=0.
+        self.residual[:] = grad[:]
+        self.residual_preco[:] = grad_preco[:]
+        self.d[:] = -1. * self.residual_preco[:]
+        self.Hd[:] = 0.
+        self.descent[:] = 0.
+        self.qk_CG = 0.
+        self.hessian_term = 0.
         self.norm_residual = normL2(self.residual)
-        self.conv_CG=False
-        self.cpt_iter_CG=0
+        self.conv_CG = False
+        self.cpt_iter_CG = 0
         self.print_info_PTRN(0.0)
 
     def descent_PTRN1(self, grad):
@@ -928,7 +946,7 @@ class Optimization(object):
             # if dHd < 0, detection of a negative eigenvalue of the Hessian operator, stop the process
             self.conv_CG = True
             print('Negative curvature')
-            if(self.cpt_iter_CG==0):
+            if(self.cpt_iter_CG == 0):
                 #-----------------------------------------------------#
                 # if this is the first iteration,:return the          #
                 # opposite of the preconditioned gradient as descent  #
@@ -943,22 +961,22 @@ class Optimization(object):
                 #-----------------------------------------------------#
                 if(self.debug):
                     self.res_scal_respreco = scalL2(self.residual,self.residual_preco)
-                    self.alpha_CG=self.res_scal_respreco/self.dHd
-                    self.qkm1_CG=self.qk_CG
+                    self.alpha_CG = self.res_scal_respreco / self.dHd
+                    self.qkm1_CG = self.qk_CG
                     mgrad = np.zeros_like(grad)
-                    mgrad[:]=-1.*grad[:]
+                    mgrad[:] = -1. * grad[:]
                     grad_term = scalL2(self.descent,mgrad)
-                    self.hessian_term=self.hessian_term+(self.alpha_CG**2)*self.dHd
-                    self.qk_CG=-grad_term+0.5*self.hessian_term
+                    self.hessian_term = self.hessian_term + (self.alpha_CG**2) * self.dHd
+                    self.qk_CG = -grad_term + 0.5 * self.hessian_term
         else:
             # if dHd > 0,: start one conjugate gradient iteration
 
             # Update descent direction
             self.res_scal_respreco = scalL2(self.residual,self.residual_preco)
-            self.alpha_CG=self.res_scal_respreco/self.dHd
-            self.descent_prev[:]=self.descent[:]
-            self.descent[:]=self.descent[:]+self.alpha_CG*self.d[:]
-            self.residual[:]=self.residual[:]+self.alpha_CG*self.Hd[:]        
+            self.alpha_CG = self.res_scal_respreco / self.dHd
+            self.descent_prev[:] = self.descent[:]
+            self.descent[:] = self.descent[:] + self.alpha_CG * self.d[:]
+            self.residual[:] = self.residual[:] + self.alpha_CG * self.Hd[:]
             
             # STOP HERE and wait for preconditioning
         
@@ -969,10 +987,10 @@ class Optimization(object):
         
         # continue the current conjugate gradient iteration
         # Update CG direction
-        res_scal_respreco_prev=self.res_scal_respreco
-        self.res_scal_respreco = scalL2(self.residual,self.residual_preco)
-        beta=(self.res_scal_respreco)/(res_scal_respreco_prev)
-        self.d[:]=-1.*self.residual_preco[:]+beta*self.d[:]
+        res_scal_respreco_prev = self.res_scal_respreco
+        self.res_scal_respreco = scalL2(self.residual, self.residual_preco)
+        beta = (self.res_scal_respreco) / (res_scal_respreco_prev)
+        self.d[:] = -1. * self.residual_preco[:] + beta * self.d[:]
         
         # Update iteration counter 
         self.cpt_iter_CG += 1
@@ -984,13 +1002,13 @@ class Optimization(object):
         # throughout the CG iterations )                      #
         #-----------------------------------------------------#  
         if(self.debug):
-            self.qkm1_CG=self.qk_CG
+            self.qkm1_CG = self.qk_CG
             mgrad = np.zeros_like(grad)
             mgrad[:]=-1.*grad[:]
             grad_term = scalL2(self.descent,mgrad)
             descent_scal_Hd = scalL2(self.descent_prev,self.Hd)
-            self.hessian_term=self.hessian_term+(self.alpha_CG**2)*self.dHd+2.*self.alpha_CG*descent_scal_Hd
-            self.qk_CG=-grad_term+0.5*self.hessian_term
+            self.hessian_term = self.hessian_term+(self.alpha_CG**2) * self.dHd + 2. * self.alpha_CG * descent_scal_Hd
+            self.qk_CG = -grad_term + 0.5 * self.hessian_term
 
         # Check if the Eisenstat stopping critertion is satisfied
         self.norm_residual = normL2(self.residual)
@@ -1017,8 +1035,8 @@ class Optimization(object):
             self.alpha_R = 0.
             self.task = 'NEW_GRAD'
             self.first_ls = False
-            self.xk = np.copy(x)
-            x = self.xk + self.alpha * self.descent
+            self.xk[:] = x[:]
+            x[:] = self.xk[:] + self.alpha * self.descent[:]
 
             # If bounds activated, project x into the feasible range
             if(self.bound == 1):
@@ -1033,7 +1051,7 @@ class Optimization(object):
             self.first_ls = True
             
             # Compute new x in the descent direction
-            x = self.xk + self.alpha * self.descent
+            x[:] = self.xk[:] + self.alpha * self.descent[:]
             
             # If bounds activated, project x into the feasible range
             if(self.bound == 1):
@@ -1047,25 +1065,25 @@ class Optimization(object):
             # If not initialization step and number of linesearch iteration ok
             # then perform one linesearch iteration                     
             
-            self.q = scalL2(grad,self.descent)
+            self.q = scalL2(grad, self.descent)
 
-            if( (fcost <= (self.fk+(self.m1*self.alpha*self.q0))) and (self.q >= (self.m2*self.q0))):
+            if (fcost <= (self.fk+(self.m1*self.alpha*self.q0))) and (self.q >= (self.m2*self.q0)):
                 #--------------------------------------------------------------------#
                 # First test if the Wolfe conditions are satisfied with              #     
                 # current steplength, if this is the case, linesearch                # 
                 # ends here with success                                             #
                 #--------------------------------------------------------------------#
-                self.task='NEW_STEP'
-                self.first_ls=True
+                self.task = 'NEW_STEP'
+                self.first_ls = True
                 if(self.debug):
                     print('fcost :', fcost)
-                    print('optimize.f0 :', self.f0)
-                    print('optimize.fk :', self.fk)
+                    print('optimize.f0    :', self.f0)
+                    print('optimize.fk    :', self.fk)
                     print('optimize.alpha :', self.alpha)
-                    print('optimize.q :', self.q)
-                    print('optimize.q0 :', self.q0)
-                    print('m1 :', self.m1)
-                    print('cpt_ls is : ', self.cpt_ls)
+                    print('optimize.q     :', self.q)
+                    print('optimize.q0    :', self.q0)
+                    print('m1             :', self.m1)
+                    print('cpt_ls is      : ', self.cpt_ls)
 
             elif (fcost > (self.fk + (self.m1 * self.alpha * self.q0))):
                 #--------------------------------------------------------------------#
@@ -1074,15 +1092,15 @@ class Optimization(object):
                 #--------------------------------------------------------------------#
                 if(self.debug):
                     print('failure 1')
-                    print('fcost :', fcost)
-                    print('optimize.fk :', self.fk)
+                    print('fcost          :', fcost)
+                    print('optimize.fk    :', self.fk)
                     print('optimize.alpha :', self.alpha)
-                    print('optimize.q0 :', self.q0)
-                    print('m1 :', self.m1)
-                    print('cpt_ls is : ', self.cpt_ls)
+                    print('optimize.q0    :', self.q0)
+                    print('m1             :', self.m1)
+                    print('cpt_ls is      : ', self.cpt_ls)
                 
                 self.alpha_R = self.alpha
-                new_alpha = (self.alpha_L+self.alpha_R)/2.
+                new_alpha = (self.alpha_L+self.alpha_R) / 2.
                 self.alpha = new_alpha
                 self.task = 'NEW_GRAD'
                 self.cpt_ls = self.cpt_ls+1
@@ -1095,14 +1113,14 @@ class Optimization(object):
                 #--------------------------------------------------------------------#
                 if(self.debug):
                     print('failure 2')
-                    print('fcost :', fcost)
-                    print('optimize.fk :', self.fk)
+                    print('fcost          :', fcost)
+                    print('optimize.fk    :', self.fk)
                     print('optimize.alpha :', self.alpha)
-                    print('optimize.q0 :', self.q0)
-                    print('optimize.q :', self.q)
-                    print('m1 :', self.m1)
-                    print('m2 :', self.m2)
-                    print('cpt_ls is : ', self.cpt_ls)
+                    print('optimize.q0    :', self.q0)
+                    print('optimize.q     :', self.q)
+                    print('m1             :', self.m1)
+                    print('m2             :', self.m2)
+                    print('cpt_ls is      : ', self.cpt_ls)
 
                 self.alpha_L = self.alpha
 
@@ -1116,11 +1134,11 @@ class Optimization(object):
                 self.cpt_ls = self.cpt_ls + 1
             
             # Compute new x in the descent direction
-            x = self.xk + self.alpha * self.descent
+            x[:] = self.xk[:] + self.alpha * self.descent[:]
 
             # If bounds activated, project x into the feasible range
             if(self.bound == 1):
-                x = self.project(self,x)
+                x = self.project(x)
 
         return x
 
@@ -1133,7 +1151,7 @@ class Optimization(object):
         n = np.size(x)
         for i in range(n):
             if(x[i] > self.ub[i]):
-                x[i] = self.ub(i) - self.threshold
+                x[i] = self.ub[i] - self.threshold
 
             if(x[i] < self.lb[i]):
                 x[i] = self.lb[i] + self.threshold

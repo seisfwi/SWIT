@@ -35,7 +35,7 @@ class FWI(object):
     '''
 
     def __init__(self, solver, optimizer, preprocessor):
-        ''' Initialize FWI workflow
+        ''' Initialize FWI Workflow
         '''
         # basic parameters
         self.solver = solver
@@ -47,10 +47,14 @@ class FWI(object):
 
         # check the existence of obs data
         self.__check_obs_data()
+
+        # plot the initial model and gradient mask
+        self.__plot_initial_model()
+
         
 
     def run(self):
-        ''' Run FWI workflow
+        ''' Run FWI Workflow
         '''
 
         # start the timer
@@ -66,7 +70,7 @@ class FWI(object):
 
         # compute cost and gradient for the initial model
         vp  = self.optimizer.vp_init
-        rho = self.optimizer.rho_init # rho is not updated in FWI workflow
+        rho = self.optimizer.rho_init # rho is not updated in FWI Workflow
         fcost, fcost_all, grad_preco = self.objective_function(vp = vp, rho = rho)
 
         # iterate until convergence or linesearch failure
@@ -106,7 +110,7 @@ class FWI(object):
         '''
         
         if vp is None and rho is None:
-            msg = 'FWI workflow ERROR: no model provided for gradient calculation'
+            msg = 'FWI Workflow ERROR: no model provided for gradient calculation'
             raise ValueError(msg)
 
         # reset model to solver
@@ -224,8 +228,8 @@ class FWI(object):
         # print the end information
         hours, rem = divmod(time.time()-start_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        print('\nFWI workflow: finished in {:0>2}h {:0>2}m {:.0f}s'.format(int(hours), int(minutes), seconds))
-        print('FWI workflow: see convergence history in iterate_{}.log\n'.format(self.optimizer.method))
+        print('\nFWI Workflow: finished in {:0>2}h {:0>2}m {:.0f}s'.format(int(hours), int(minutes), seconds))
+        print('FWI Workflow: see convergence history in iterate_{}.log\n'.format(self.optimizer.method))
 
 
     def save_results(self, vp, grad, fcost_all):
@@ -248,7 +252,7 @@ class FWI(object):
             self.optimizer.vp_min, 
             self.optimizer.vp_max,
             os.path.join(self.solver.system.path, 'fwi/figures/vp_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
-            'vp', 
+            'Vp-{:04d}'.format(self.optimizer.cpt_iter+1), 
             figaspect = 1, 
             colormap = 'jet')
 
@@ -259,21 +263,9 @@ class FWI(object):
             -self.optimizer.update_vpmax, 
             self.optimizer.update_vpmax,
             os.path.join(self.solver.system.path, 'fwi/figures/grad_it_{:04d}.png'.format(self.optimizer.cpt_iter+1)), 
-            'grad', 
+            'Gradient-{:04d}'.format(self.optimizer.cpt_iter+1), 
             figaspect = 1, 
             colormap = 'seismic')
-
-        # plot gradient mask on first iteration
-        if self.optimizer.cpt_iter == 0:
-            plot_model(self.solver.model.x, 
-                self.solver.model.z,
-                self.optimizer.grad_mask.reshape(self.solver.model.nx, self.solver.model.nz).T, 
-                0, 
-                1,
-                os.path.join(self.solver.system.path, 'fwi/figures/grad_mask.png'), 
-                'grad mask', 
-                figaspect = 1, 
-                colormap = 'gray')
 
         # plot_misfit
         plot_misfit(self.solver.system.path, 
@@ -282,12 +274,12 @@ class FWI(object):
             self.optimizer.niter_max, 
             self.solver.source.num)
 
-        # plot waveform comparison
-        isrc = 1
-        plot_waveform_comparison(self.solver.model.t, self.solver.model.offset[isrc],
-                                 self.solver.system.path, 
-                                 isrc = isrc, 
-                                 iter = self.optimizer.cpt_iter + 1)
+        # plot waveform comparison (every 4 sources)
+        for isrc in range(0, self.solver.source.num-1, 4):
+            plot_waveform_comparison(self.solver.model.t, self.solver.model.offset[isrc],
+                                    self.solver.system.path, 
+                                    isrc = isrc+1, 
+                                    iter = self.optimizer.cpt_iter + 1)
 
 
     def __check_obs_data(self):
@@ -300,19 +292,21 @@ class FWI(object):
             if (not os.path.exists(sg_file + '.segy') and 
                 not os.path.exists(sg_file + '.su') and 
                 not os.path.exists(sg_file + '.bin')) :
-                msg = 'FWI workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
+                msg = 'FWI Workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
                 raise ValueError(msg)
 
-        print('FWI workflow: find  obs data in {}data/obs/'.format(self.solver.system.path))
-        print('FWI workflow: start iteration ...\n')
+        print('FWI Workflow: find  obs data in {}data/obs/'.format(self.solver.system.path))
+        print('FWI Workflow: start iteration ...\n')
 
 
     def __build_dir(self):
-        ''' Build directories for FWI workflow and clean up the previous results if any
+        ''' Build directories for FWI Workflow and clean up the previous results if any
         '''
+
 
         # print the working path
         path = self.solver.system.path
+        print('FWI Workflow: working path in   {}'.format(path + 'fwi'))
 
         # build required directories and clean up the previous results if any
         folders = [path + 'fwi', 
@@ -325,8 +319,35 @@ class FWI(object):
         for folder in folders:
             if os.path.exists(folder):
                 os.system('rm -rf ' + folder)
-                print('FWI workflow: clean old data in {}'.format(path + 'fwi'))
+                print('FWI Workflow: clean old data in {}'.format(path + 'fwi'))
             os.makedirs(folder)
+
+
+    def __plot_initial_model(self):
+        ''' Plot initial model and gradient mask
+        '''
+
+        # plot initial model
+        plot_model(self.solver.model.x, 
+            self.solver.model.z,
+            self.optimizer.vp_init.reshape(self.solver.model.nx, self.solver.model.nz).T, 
+            self.optimizer.vp_min, 
+            self.optimizer.vp_max,
+            os.path.join(self.solver.system.path, 'fwi/figures/vp_it_0000.png'), 
+            'Vp-init', 
+            figaspect = 1, 
+            colormap = 'jet')
+
+        # plot gradient mask on
+        plot_model(self.solver.model.x, 
+            self.solver.model.z,
+            self.optimizer.grad_mask.reshape(self.solver.model.nx, self.solver.model.nz).T, 
+            0, 
+            1,
+            os.path.join(self.solver.system.path, 'fwi/figures/grad_mask.png'), 
+            'Gradient mask', 
+            figaspect = 1, 
+            colormap = 'gray')
 
 
 class RTM(object):
@@ -367,7 +388,7 @@ class RTM(object):
         for folder in folders:
             if os.path.exists(folder):
                 os.system('rm -rf ' + folder)
-                print('RTM workflow: clean old data in {}'.format(path + 'rtm'))
+                print('RTM Workflow: clean old data in {}'.format(path + 'rtm'))
             os.makedirs(folder)
 
     
@@ -375,21 +396,22 @@ class RTM(object):
         ''' Check the existence of observed data
         '''
 
+        print('\nRTM Workflow: initialization finished')
         for isrc in range(self.solver.source.num):
             sg_file = self.solver.system.path + 'data/obs/src' + str(isrc+1) + '/sg'
             
             if (not os.path.exists(sg_file + '.segy') and 
                 not os.path.exists(sg_file + '.su') and 
                 not os.path.exists(sg_file + '.bin')) :
-                msg = 'RTM workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
+                msg = 'RTM Workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
                 raise ValueError(msg)
 
-        print('RTM workflow: find  obs data in {}data/obs/'.format(self.solver.system.path))
-        print('RTM workflow: start RTM ...\n')
+        print('RTM Workflow: find  obs data in {}data/obs/'.format(self.solver.system.path))
+        print('RTM Workflow: start RTM ...\n')
 
 
     def run(self, vp = None, rho = None):
-        ''' Run RTM workflow
+        ''' Run RTM Workflow
 
         Parameters
         ----------
@@ -402,7 +424,7 @@ class RTM(object):
         '''
 
         if vp is None and rho is None:
-            print('RTM workflow: no model is provided for RTM, use the true model')
+            print('RTM Workflow: no model is provided for RTM, use the true model')
 
         # start the timer
         start_time = time.time()
@@ -461,7 +483,9 @@ class RTM(object):
     def plot_results(self, image):
         ''' Plot results during FWI iterations
         '''
-        scale = np.max(np.abs(image)) * 0.01
+
+        # calculate the scale
+        scale = np.max(np.abs(image)) * 0.2
 
         # plot model
         plot_model(self.solver.model.x, 
@@ -481,7 +505,7 @@ class RTM(object):
         # print the end information
         hours, rem = divmod(time.time()-start_time, 3600)
         minutes, seconds = divmod(rem, 60)
-        print('RTM workflow: finished in {:0>2}h {:0>2}m {:.0f}s\n'.format(int(hours), int(minutes), seconds))
+        print('RTM Workflow: finished in {:0>2}h {:0>2}m {:.0f}s\n'.format(int(hours), int(minutes), seconds))
 
 
 class Configuration(object):

@@ -151,13 +151,32 @@ subroutine staggered42_modeling_is(is, par, coord, s, c, den, fs, nx_pml, nz_pml
       enddo
     endif
 
-    ! Output pressure seismogram
-    do ig=1,coord%ng(is)
-      igx = npml + int(coord%xg(is,ig)/par%dx)+1
-      igz = npml + int(coord%zg(is,ig)/par%dx)+1
-      if (igz == fs(igx)) igz = igz + 1
-      csg(it,ig) = p(igz,igx)
-    enddo
+    ! Output seismogram at receivers based on the data type
+    if (par%data_comp(1:1) == 'p') then
+      do ig=1,coord%ng(is)
+        igx = npml + int(coord%xg(is,ig)/par%dx)+1
+        igz = npml + int(coord%zg(is,ig)/par%dx)+1
+        if (igz == fs(igx)) igz = igz + 1
+        csg(it,ig) = p(igz,igx)
+      enddo
+    elseif (par%data_comp(1:2) == 'vx') then
+      do ig=1,coord%ng(is)
+        igx = npml + int(coord%xg(is,ig)/par%dx)+1
+        igz = npml + int(coord%zg(is,ig)/par%dx)+1
+        if (igz == fs(igx)) igz = igz + 1
+        csg(it,ig) = u(igz,igx)
+      enddo
+    elseif (par%data_comp(1:2) == 'vz') then
+      do ig=1,coord%ng(is)
+        igx = npml + int(coord%xg(is,ig)/par%dx)+1
+        igz = npml + int(coord%zg(is,ig)/par%dx)+1
+        if (igz == fs(igx)) igz = igz + 1
+        csg(it,ig) = w(igz,igx)
+      enddo
+    else
+      write(*,*) 'Error: data comp not recognized'
+      stop
+    endif
 
     ! Store wavefield snapshots
     if (mod(it, 10) == 0 .and. store_snap) then
@@ -441,24 +460,38 @@ subroutine staggered42_back_it(is, it, par, coord, s, c, den, fs, nx_pml, nz_pml
     beta = par%dt
   
     ! Geophone is shifted downward 1 node if it is on the free surface.
-    ! if (par%data(1:8) == 'pressure') then
-    if (igz .gt. fs(igx)) then
-      p(igz,igx) = p(igz,igx) + beta*s(it,ig)
+
+    ! Add adjoint source to pressure field
+    if (par%data_comp(1:1) == 'p') then
+      if (igz .gt. fs(igx)) then
+        p(igz,igx) = p(igz,igx) + beta*s(it,ig)
+      else
+        p(fs(igx)+1,igx) = p(fs(igx)+1,igx) + beta*s(it,ig)
+      endif
+    ! Add adjoint source to horizontal velocity field
+    else if (par%data_comp(1:2) == 'vx') then
+      if (igz .gt. fs(igx)) then
+        u(igz,igx) = u(igz,igx) - beta*s(it,ig)
+      else
+        u(fs(igx)+1,igx) = u(fs(igx)+1,igx) - beta*s(it,ig)
+      endif 
+    ! Add adjoint source to vertical velocity field  
+    else if (par%data_comp(1:2) == 'vz') then
+      if (igz .gt. fs(igx)) then
+        w(igz,igx) = w(igz,igx) - beta*s(it,ig)
+      else
+        w(fs(igx)+1,igx) = w(fs(igx)+1,igx) - beta*s(it,ig)
+      endif
     else
-      p(fs(igx)+1,igx) = p(fs(igx)+1,igx) + beta*s(it,ig)
+      write(*,*) 'Error: data comp not recognized'
+      stop
+
     endif
-    ! else
-    !   if (igz .gt. fs(igx)) then
-    !     w(igz,igx) = w(igz,igx) + beta*s(it,ig)
-    !   else
-    !     w(fs(igx)+1,igx) = w(fs(igx)+1,igx) + beta*s(it,ig)
-    !   endif
-    ! endif
+  
   enddo
   
   ! Free surface
   do ix=1,nx_pml
-  !  p(fs(ix),ix) = 0.0
     p(fs(ix)-1,ix) = -p(fs(ix)+1,ix)
   enddo
   

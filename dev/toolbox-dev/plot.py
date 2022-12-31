@@ -48,8 +48,8 @@ def plot_waveform_comparison(t, offset, path, isrc = 1, iter = 1, scale = None, 
     syn, _ = load_waveform_data(syn_path, len(t))
 
     # set plot options
-    scale = np.max(np.abs(obs)) * 0.005
-    fig_aspect = 0.5 * len(t) / len(offset)
+    scale = np.max(np.abs(obs)) * 0.01 if scale is None else scale
+    fig_aspect = 0.2 * len(t) / len(offset)
     opts = {
         'vmin': -scale,
         'vmax': scale,
@@ -57,8 +57,8 @@ def plot_waveform_comparison(t, offset, path, isrc = 1, iter = 1, scale = None, 
         'cmap': 'gray'
     }
 
-    fig = plt.figure(figsize=[16,18])
-    title = ['obs', 'syn', 'obs-syn']
+    fig = plt.figure(figsize=[16, 10])
+    title = ['OBS', 'SYN', 'OBS-SYN']
     for i in range(1, 4):
 
         # set data
@@ -73,10 +73,10 @@ def plot_waveform_comparison(t, offset, path, isrc = 1, iter = 1, scale = None, 
         ax = fig.add_subplot(1, 3, i)
         im = ax.imshow(data.T, **opts)
         ax.grid(visible=True,  axis='y')
-        ax.xaxis.set_label_text('Offset (km)')
+        ax.xaxis.set_label_text('Offset (km)', fontsize=14)
         if i == 1:
-            ax.yaxis.set_label_text('Time (s)')
-        ax.set_title(title[i-1])
+            ax.yaxis.set_label_text('Time (s)', fontsize=14)
+        ax.set_title(title[i-1], fontsize=14)
         ax.set_aspect(fig_aspect)
     
     fig_name = os.path.join(path, 'fwi/waveform/comparison_src{}_it{}.png'.format(isrc+1, iter))

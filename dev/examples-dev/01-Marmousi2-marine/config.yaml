@@ -1,12 +1,12 @@
 System:
-  path: /scr2/haipeng/SWIT-1.1/01_fwi/
-  job_type: 
+  job_workflow: 
       - FORWARD
       - FWI
-  max_cpu_num: 40
+  path: /scr2/haipeng/SWIT-1.1/01_fwi/
   mpi_num: 21
+  max_cpu_num: 40
   fig_aspect: 1.0
-
+  
 Model:
   dt: 0.002
   dx: 25
@@ -14,23 +14,24 @@ Model:
   nx: 481
   nz: 141
   pml: 40
-  vp_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/vp_true.npy
-  rho_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/rho_true.npy
-
+  vp_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/vp_true.npy
+  rho_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rho_true.npy
+  
 Receiver:
   rec_comp: p
-  rec_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/rec_coord.npz
+  rec_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rec_coord.npz
 
 Source:
   amp0: 1.0
   f0: 5.0
   src_type: ricker
-  src_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/src_coord.npy
-  wavelet_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/wavelets.npy
+  src_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/src_coord.npy
+  wavelet_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/wavelets.npy
 
 Optimizer:
-  vp_init_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/vp_init.npy
-  rho_init_file: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/rho_init.npy
+  vp_init_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/vp_init.npy
+  rho_init_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rho_init.npy
+  grad_mask_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/grad_mask.npy
   misfit_type: waveform
   method: CG
   niter_max: 20
@@ -39,7 +40,6 @@ Optimizer:
   vp_max: 5000
   grad_smooth_size: 0
   update_vpmax: 50
-  grad_mask: /homes/sep/haipeng/develop/SWIT-1.0/examples-dev/01-Marmousi2-marine/acquisition/grad_mask.npy
   debug: false
 
 Preprocessor:

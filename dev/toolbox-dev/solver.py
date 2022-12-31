@@ -159,18 +159,18 @@ class Solver(Survey):
                 before running adjoint or gradient job
         '''
 
-        # step 1: save source wavelet files (src1.bin, ...)
+        # save source wavelet files (src1.bin, ...)
         # the source wavelet is integrated to count for the derivative effect of 1st order FD
         for isrc in range(self.source.num):
             src = integrate.cumtrapz(self.source.wavelet[isrc,:], axis=-1, initial=0)
             src_path = os.path.join(self.system.path, 'config/wavelet/src{}.bin'.format(isrc+1))
             save_float(src_path, src)
 
-        # step 2: save P-wave velocity and density files (vp.bin, rho.bin)
+        # save P-wave velocity and density files (vp.bin, rho.bin)
         save_float(os.path.join(self.system.path, 'config/vp.bin'),  self.model.vp)
         save_float(os.path.join(self.system.path, 'config/rho.bin'), self.model.rho)
 
-        # step 3: write geometry file (geometry.config)
+        # save geometry file (geometry.config)
         fp = open(os.path.join(self.system.path + 'config/geometry.config'), "w")
         for isrc in range(self.source.num):
             for irec in range(len(self.receiver.coord[isrc])):
@@ -181,7 +181,7 @@ class Solver(Survey):
                     self.receiver.coord[isrc][irec, 0], self.receiver.coord[isrc][irec, 1], 1))
         fp.close()
 
-        # step 4: write solver system file (solver.config)
+        # save solver system file (solver.config)
         parpath = os.path.join(self.system.path, 'config/solver.config')
         fp = open(parpath, "w")
         fp.write('######################################### \n')
@@ -194,6 +194,7 @@ class Solver(Survey):
         fp.write('COORD_FILE=%s\n'      % (self.system.path + 'config/geometry.config'))
         fp.write('SOURCE_FILE=%s\n'     % (self.system.path + 'config/wavelet/src'))
         fp.write('DATA_OUT=%s\n'        % (self.system.path + 'data/{}/src'.format(simu_tag)))
+        fp.write('DATA_COMP=%s\n'       % (self.receiver.comp.lower()))
         fp.write('VEL_IN=%s\n'          % (self.system.path + 'config/vp.bin'))
         fp.write('DENSITYFILE=%s\n'     % (self.system.path + 'config/rho.bin'))
         fp.write('FILEFORMAT=%s\n'      % data_format)
@@ -205,7 +206,7 @@ class Solver(Survey):
         fp.write('DT_WORK=%f\n'         % self.model.dt)
         fp.write('FREESURFACE=1\n')                              # free surface is always on
         fp.write('STORE_SNAP=%d\n'      % save_snap)             # save snapshot or not
-        fp.write('STORE_STEP=%d\n'      % self.model.save_snap)  # save snapshot every 10 time steps (default)
+        fp.write('STORE_STEP=%d\n'      % self.model.save_step)  # save snapshot every 10 time steps (default)
         fp.write('STORE_BOUNDAARY=%d\n' % save_boundary)         # save boundary wavefield for reconstruction
         fp.close()
 
@@ -215,8 +216,8 @@ class Solver(Survey):
         '''
 
         print('\nSolver information:')
-        print('    Model parameters  : nx = {}, nz = {}, dx = {} m, nt = {}, dt = {:.2f} ms'.format(self.model.nx, self.model.nz, self.model.dx,  self.model.nt, self.model.dt*1000))
-        print('    Model dimension   : x = 0 ~ {:.2f} km,  z = 0 ~ {:.2f} km, t = 0 ~ {:.2f} s'.format(self.model.x[-1]/1000, self.model.z[-1]/1000, self.model.t[-1]))
+        print('    Model dimension   : nx = {}, nz = {}, dx = {} m, x = 0 ~ {:.2f} km,  z = 0 ~ {:.2f} km'.format(self.model.nx, self.model.nz, self.model.dx, self.model.x[-1]/1000, self.model.z[-1]/1000))
+        print('    Time  dimension   : nt = {}, dt = {:.2f} ms, t = 0 ~ {:.2f} s'.format(self.model.nt, self.model.dt*1000, self.model.t[-1]))
         print('    P-wave velocity   : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
-        print('    Survey details    : source number is {}, receiver component is {}'.format(self.source.num, self.receiver.comp))
+        print('    Data acquisition  : {} sources, {}-component receivers'.format(self.source.num, self.receiver.comp))
         print('    MPI information   : {} tasks run in parallel'.format(self.system.mpi_num))

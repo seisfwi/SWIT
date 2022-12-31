@@ -21,7 +21,7 @@ try:
     from preprocessor import Preprocessor
     from solver import Solver
     from tools import load_model, load_yaml
-    from utils import source_wavelet
+    from utils import source_wavelet, generate_mask
     from workflow import FWI, RTM, Configuration
 except:
     raise ImportError('SWIT modules not found.')
@@ -50,13 +50,13 @@ class SWIT(Configuration):
         ''' check the config file
         '''
         # parameter list
-        par_list  = ['path', 'job_type', 'max_cpu_num', 'mpi_num', 'fig_aspect']
+        par_list  = ['path', 'job_workflow', 'max_cpu_num', 'mpi_num', 'fig_aspect']
         par_list += ['dt', 'dx', 'nt', 'nx', 'nz', 'pml', 'vp_file', 'rho_file']
         par_list += ['rec_comp', 'rec_coord_file']
         par_list += ['amp0', 'f0', 'src_type', 'src_coord_file', 'wavelet_file']
-        par_list += ['vp_init_file', 'rho_init_file', 'misfit_type', 'method', 
+        par_list += ['vp_init_file', 'rho_init_file', 'grad_mask_file', 'misfit_type', 'method', 
                      'niter_max', 'bound', 'vp_min', 'vp_max', 'grad_smooth_size', 
-                     'update_vpmax', 'grad_mask', 'debug']
+                     'update_vpmax', 'debug']
         par_list += ['filter_data', 'filter_high', 'filter_low', 'mute_near_offset', 
                      'mute_near_distance', 'mute_far_offset']
         
@@ -67,8 +67,8 @@ class SWIT(Configuration):
         
         # check the job type
         job_str = ''
-        self.job_type = [job.upper() for job in self.job_type]
-        for job in self.job_type:
+        self.job_workflow = [job.upper() for job in self.job_workflow]
+        for job in self.job_workflow:
             if job not in ['FORWARD', 'FWI', 'RTM']:
                 raise ValueError('Job type {} not supported.'.format(job))
             job_str += job + ' '
@@ -76,8 +76,8 @@ class SWIT(Configuration):
         # print the job workflow
         print('****************************************************************')
         print('          SEISMIC WAVEFORM INVERSION TOOLBOX (V-1.1)          \n')
-        print('  Job workflow: {}                                              '.format(job_str))
-        print('  Job workpath: {}                                              '.format(self.path))
+        print('    Job workflow: {}                                            '.format(job_str))
+        print('    Job workpath: {}                                            '.format(self.path))
         print('****************************************************************\n')
 
 
@@ -85,9 +85,9 @@ class SWIT(Configuration):
         ''' initialize the solver class
         '''
 
-        # load model files
-        vp  = load_model(self.vp_file,  self.nx, self.nz)  # load vp  model from file
-        rho = load_model(self.rho_file, self.nx, self.nz)  # load rho model from file
+        # load model files (vp, rho)
+        vp  = load_model(self.vp_file,  self.nx, self.nz)
+        rho = load_model(self.rho_file, self.nx, self.nz)
         
         # load source coordinates
         src_coord = np.load(self.src_coord_file)
@@ -125,11 +125,13 @@ class SWIT(Configuration):
         vp_init = load_model(self.vp_init_file, self.nx, self.nz)
         rho_init = load_model(self.rho_init_file, self.nx, self.nz)
      
-        # load gradient mask if a path to mask is specified, otherwise set to None
-        if self.grad_mask is None or len(self.grad_mask) == 0:
-            grad_mask = None
+        # load gradient mask if a path to mask is specified, otherwise set to default
+        if self.grad_mask_file is None or len(self.grad_mask_file) == 0:
+            print('FWI Wokflow: No gradient mask is specified, use default mask.')
+            nx, nz = vp_init.shape
+            grad_mask = generate_mask(nx, nz, threshold = 0.05, mask_size = 10)
         else:
-            grad_mask = load_model(self.grad_mask, self.nx, self.nz)
+            grad_mask = load_model(self.grad_mask_file, self.nx, self.nz)
 
         # initialize optimizer
         self.optimizer = Optimizer(vp_init = vp_init, rho_init = rho_init, 
@@ -163,18 +165,18 @@ class SWIT(Configuration):
         self.init_solver()
 
         # Forward Modeling
-        if 'FORWARD' in self.job_type:
+        if 'FORWARD' in self.job_workflow:
             self.solver.run()
 
         # Full Waveform Inversion
-        if 'FWI' in self.job_type:
+        if 'FWI' in self.job_workflow:
             self.init_optimizer()
             self.init_preprocessor()
             fwi = FWI(self.solver, self.optimizer, self.preprocessor)
             fwi.run()
         
         # Reverse Time Migration
-        if 'RTM' in self.job_type:
+        if 'RTM' in self.job_workflow:
             self.init_preprocessor()
 
             # load velocity and density model for RTM
@@ -189,7 +191,11 @@ if __name__ == '__main__':
     
     # check if all required parameters are given
     if len(sys.argv) != 2:
-        print("Usage: SWIT.py config.yaml")
+        print('****************************************************************')
+        print('          SEISMIC WAVEFORM INVERSION TOOLBOX (V-1.1)          ')
+        print('****************************************************************')
+
+        print("Usage:\n    python SWIT.py config.yaml\n")
         sys.exit(1)
 
     # initilize SWIT with config file

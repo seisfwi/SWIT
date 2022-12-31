@@ -1,6 +1,6 @@
 Config:
   path: /scr2/haipeng/SWIT-1.1/01_fwi/
-  job_type: fwi
+  job_workflow: fwi
   max_cpu_num: 48
   mpi_num: 40
   fig_aspect: 1.0

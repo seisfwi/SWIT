@@ -1,6 +1,6 @@
 System:
   path: /scr2/haipeng/SWIT-1.1/01_fwi/
-  job_type: 
+  job_workflow: 
       - FORWARD
       - RTM
   max_cpu_num: 40

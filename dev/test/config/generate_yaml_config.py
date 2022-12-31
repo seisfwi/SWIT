@@ -23,7 +23,7 @@ system = {}
 
 # system parameters
 system['Config'] = {}
-system['Config']['job_type'] = 'forward'                               # 'forward', 'FWI', 'RTM'
+system['Config']['job_workflow'] = 'forward'                               # 'forward', 'FWI', 'RTM'
 system['Config']['path'] = '/scr2/haipeng/SWIT-1.1/01_fwi/'            # Working path
 system['Config']['mpi_num'] = 40                                       # Number of MPI processes
 system['Config']['max_cpu_num'] = 48                                   # Maximum number of CPUs to use

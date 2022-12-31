@@ -1,9 +1,9 @@
 # TODOs for SWIT (release v1.1.0)
 
 ## Main tasks
-- Add topography to the forward modeling
+- Add topography to the forward modeling （FAILED）
     - test the forward modeling with topography and its adjoint
-- Add options of receiver components
+- Add options of receiver components (Solved)
     - vx, vz, p
     - test the adjoint modeling with different receiver components
 - Add Multiscale workflow

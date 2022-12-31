@@ -17,7 +17,7 @@ module datatype
 type param
   integer            :: nx, nz, nt, free_surface, npml, store_snap, store_step, store_boundary
   real               :: dx, dt, f, vmin, vmax, xmin, xmax
-  character(len=200) :: coordfile, data_out, velfile, densityfile, fileformat, sourcefile, data, sourcetype
+  character(len=200) :: coordfile, data_out, data_comp, velfile, densityfile, fileformat, sourcefile, sourcetype
                         
 end type param
 

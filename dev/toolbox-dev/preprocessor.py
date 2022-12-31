@@ -107,7 +107,7 @@ class Preprocessor(object):
     def __info__(self):
         ''' Print the information of the preprocessor
         '''
-        print('\nPreprocessor information:')
+        print('Preprocessor information:')
         print('    Data filter type  : {}   '.format(self.filter_data))
         if self.filter_data.lower() == 'bandpass':
             print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
@@ -132,7 +132,6 @@ class Preprocessor(object):
         else:
             print('    Mute far offset   : {}'.format(self.mute_far_offset))
         print('    Normalize trace   : {}'.format(self.normalize_data))
-        print('\n')
 
 
     def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, offset = None):

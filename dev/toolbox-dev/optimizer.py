@@ -13,7 +13,7 @@
 
 import numpy as np
 from optimization.optimization import Optimization
-from utils import generate_mask
+
 
 class Optimizer(Optimization):
     ''' Optimizer class describes the optimization algorithm
@@ -42,7 +42,7 @@ class Optimizer(Optimization):
             size of the Gaussian filter to smooth the gradient, 0 for no smoothing
         grad_mask : 2D array (float32)
             mask the gradient to avoid the update in certain regions denoted by 0, 
-            1 for no mask (optional)
+            1 for no mask
         debug : bool
             whether to output the debug information
     '''
@@ -85,8 +85,16 @@ class Optimizer(Optimization):
         '''
 
         # check the initial model
-        if self.vp_init is None or self.rho_init is None:
-            raise ValueError('Optimizer: the initial vp and rho model should be provided')
+        if self.vp_init is None or self.rho_init is None or self.grad_mask is None:
+            raise ValueError('Optimizer: the initial vp and rho models and gradient mask should be provided')
+
+        # check the dimension of the initial models and gradient mask
+        if self.vp_init.shape != self.rho_init.shape or self.vp_init.shape != self.grad_mask.shape:
+            msg  = 'Optimizer: the shape of the initial vp model is {}\n'.format(self.vp_init.shape)
+            msg += 'Optimizer: the shape of the initial rho model is {}\n'.format(self.rho_init.shape)
+            err = 'Optimizer: the shape of the gradient mask is {}\n'.format(self.grad_mask.shape)
+            err += 'Optimizer: the shape of the initial vp and rho models and gradient mask should be the same'
+            raise ValueError(msg + err)
 
         # check the type of misfit function
         misfits = ['waveform', 'envelope', 'crosscorrelation', 'globalcorrelation']
@@ -113,14 +121,7 @@ class Optimizer(Optimization):
         # check the smooth radius of the gradient
         if self.grad_smooth_size < 0:
             raise ValueError('Optimizer: the smooth size of the gradient should be no less than 0')
-
-        # check the mask of the gradient if provided by the user or generate a default one otherwise
-        if self.grad_mask is not None and self.grad_mask.shape != self.vp_init.shape:
-            raise ValueError('Optimizer: the shape of the mask should be the same as the velocity model')
-        else:
-            nx, nz = self.vp_init.shape
-            self.grad_mask = generate_mask(nx, nz, threshold = 0.05, mask_size = 10)
-
+     
         # check the bound constraint
         if self.bound:
             if self.vp_max <= self.vp_min:
@@ -138,7 +139,7 @@ class Optimizer(Optimization):
         ''' print information about the optimizer
         '''
 
-        print('\nOptimizer information:')
+        print('Optimizer information:')
         print('    Misfit function   : {}'.format(self.misfit_type))
         print('    Inversion method  : {}'.format(self.method))
         print('    Maximum iter      : {}'.format(self.niter_max))

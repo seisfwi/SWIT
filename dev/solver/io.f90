@@ -74,10 +74,10 @@ if (rank == 0) then
   call readParFile(parfile, 'COORD_FILE',       par%coordfile,          'n/a')
   call readParFile(parfile, 'SOURCE_FILE',      par%sourcefile ,        'n/a')
   call readParFile(parfile, 'DATA_OUT',         par%data_out,           'src')
+  call readParFile(parfile, 'DATA_COMP',        par%data_comp,          'p')
   call readParFile(parfile, 'VEL_IN',           par%velfile,            'n/a')
   call readParFile(parfile, 'DENSITYFILE',      par%densityfile,        'n/a')
   call readParFile(parfile, 'FILEFORMAT',       par%fileformat,         'su')
-  call readParFile(parfile, 'DATA',             par%data,               'pressure')
   call readParFile(parfile, 'SOURCETYPE',       par%sourcetype,         'normal')
   ! Required Integer parameters
   call readParFile(parfile, 'NX',               par%nx,                 -1)
@@ -98,14 +98,13 @@ if (rank == 0) then
   call readParFile(parfile, 'XMAX',             par%xmax,  real(par%nx-1)*par%dx)
 endif
 
-call MPI_BCAST(par%sourcefile,100,  MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+call MPI_BCAST(par%sourcefile,100,   MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%data_out,100,     MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+call MPI_BCAST(par%data_comp,100,    MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%velfile,100,      MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%densityfile,100,  MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%fileformat,100,   MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
-call MPI_BCAST(par%data,100,         MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%sourcetype,100,   MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
-
 call MPI_BCAST(par%nx,1,             MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%nz,1,             MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 call MPI_BCAST(par%nt,1,             MPI_INTEGER,0,MPI_COMM_WORLD,ierr)

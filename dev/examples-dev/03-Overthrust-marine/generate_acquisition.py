@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/toolbox-dev/')
+sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/dev/toolbox-dev/')
 
 import os
 import numpy as np
@@ -7,14 +7,15 @@ from utils import source_wavelet
 from tools import smooth2d
 
 ## create acquisition folder
-os.makedirs('acquisition', exist_ok=True)
+if not os.path.exists('acquisition'):
+    os.makedirs('acquisition', exist_ok=True)
 
 ## set model size
 nx = 501
 nz = 171
-dx = 20
-nt = 3001
-dt = 0.0015
+dx = 25
+nt = 4001
+dt = 0.002
 x_beg = 0.
 x_end = (nx-1) * dx
 
@@ -31,30 +32,29 @@ rho_init = np.power(vp_init, 0.25) * 310               # density models, (Gardne
 grad_mask = np.ones((nx, nz))
 grad_mask[vp_true == 1500.0] = 0.0
 
-
 ## set source coordinates
 src_num = 21
 src_coord = np.zeros((src_num, 2))
 src_coord[:,0] = np.linspace( x_beg, x_end, src_num)   # linearly distributed sources
 src_coord[:,1] = np.linspace(    dx,    dx, src_num)   # sources are buried at first grid depth
 
-## source wavelet
+## set source wavelet
 amp0 = 1.
 f0   = 5.
 wavelet = np.zeros((src_num, nt))
 for i in range(src_num):
     wavelet[i,:] = source_wavelet(amp0, nt, dt, f0, 'ricker')
     # one can load their own wavelet here, 
-    # e.g., wavelet[i,:] = np.load('wavelet.npy')
+    # e.g., wavelet[i,:] = np.loadtxt('wavelet_src1.dat')
     # the time axis should be the same as in the forward modeling
 
-## set receiver coordinates. rec_coord is a list of receiver coordinates so that they can be different for different sources
+## set receiver coordinates. rec_coord is a list of receiver coordinates for each source 
 rec_coord = []
 for i in range(src_num):
     rec_xz = np.zeros((nx, 2))
     rec_xz[:,0] = np.linspace(x_beg, x_end, nx)  # linearly distributed receivers
     rec_xz[:,1] = np.linspace(   dx,    dx, nx)  # receivers are buried at first grid depth
-    rec_coord.append(rec_xz)
+    rec_coord.append(rec_xz)                     # receivers can be different for different sources
 
 ## save acquisition files
 np.save('./acquisition/vp_true.npy',       vp_true)
@@ -66,4 +66,20 @@ np.save('./acquisition/src_coord.npy',   src_coord)
 np.save('./acquisition/wavelets.npy',      wavelet)
 np.savez('./acquisition/rec_coord.npz', *rec_coord) # save receiver list using **np.savez**
 
-print('Successfully save acquisition files!')
+
+## check if the files are saved successfully
+files = ['./acquisition/vp_true.npy', './acquisition/rho_true.npy', 
+         './acquisition/vp_init.npy', './acquisition/rho_init.npy', 
+         './acquisition/grad_mask.npy', './acquisition/src_coord.npy', 
+         './acquisition/wavelets.npy', './acquisition/rec_coord.npz']
+
+for file in files:
+    if not os.path.exists(file):
+        print('Failed to save acquisition files!')
+    else:
+        print('Successfully save: {}'.format(file))
+
+print('Successfully save acquisition files!\n')
+print('You can now run the SWIT workflow:\n')
+print('    $ python ../../toolbox-dev/SWIT.py config.yaml\n')
+print('Tips: add ../../toolbox-dev/SWIT.py to environment PATH for convenience.\n')

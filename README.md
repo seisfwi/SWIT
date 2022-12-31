@@ -1,4 +1,4 @@
-<img src="./doc/Logo.png" style="zoom:18%;" />
+<img src="./doc/Logo.png" style="zoom:20%;" />
 
 **S**eismic **W**aveform **I**nversion **T**oolbox (**SWIT-1.0**) is a 2-D acoustic Full-waveform Inversion (FWI) package implemented in Fortran and Python. It includes efficient and accurate forward and adjoint wavefield modeling solvers. The simulated waveforms and the calculated gradients have been well verified. Two different nonlinear inversion optimizations schemes, i.e., the nonlinear conjugate gradient (NLCG) method and the quasi-Newton method (L-BFGS) are implemented in accompany with an efficient line search strategy. Various misfit functions, including the L-2 waveform (Tarantola, 1984), the cross-correlation  (Luo & Schuster, 1991), and the normalized global-correlation coefficient (Choi & Alkhalifah, 2012) are provided. More misfit functions can be easily implemented by users themselves. To facilitate the usage of this FWI package, a dedicated Graphic User Interface (GUI) is provided with numerous pre-defined parameters that may be suitable for many inversion scenarios. One may also run an FWI project through Python scripts provided in the [examples](https://github.com/Haipeng-ustc/SWIT-1.0/tree/main/examples).
 
@@ -135,8 +135,7 @@ We have also performed the FWI on the field data. Contact the author for more de
 
 ## Citations
 
-If you find SWIT useful, please cite the following reference:
-
+If you use SWIT-1.0 in your research, please cite the following papers:
 1. Li, H., Li, J., Liu, B., & Huang, X. (2021). Application of full-waveform tomography on deep seismic profiling data set for tectonic fault characterization. In First International Meeting for Applied Geoscience & Energy Expanded Abstracts (pp. 657–661). https://doi.org/10.1190/segam2021-3583190.1
 2. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423
 

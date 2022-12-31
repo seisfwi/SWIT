@@ -17,7 +17,7 @@ from multiprocessing import Pool
 import numpy as np
 from misfit import calculate_adjoint_misfit_is
 from plot import plot_misfit, plot_model, plot_waveform_comparison
-from tools import smooth2d
+from tools import load_waveform_data, smooth2d, save_float
 from utils import preconditioner
 
 
@@ -333,25 +333,155 @@ class RTM(object):
     ''' Reverse time migration (RTM) class
     '''
 
-    def __init__(self, solver, processor):
+    def __init__(self, solver, preprocessor):
         ''' Initialize RTM class
 
         Parameters
         ----------
         solver : Solver object
             solver object
-        processor : Processor object
-            processor object
+        preprocessor : Preprocessor object
+            preprocessor object
         '''
+
         self.solver = solver
-        self.processor = processor
+        self.preprocessor = preprocessor
+
+        # build directories
+        self.__build_dir()
+
+        # check the existence of obs data
+        self.__check_obs_data()
     
-    
-    def run(self):
-        ''' Run RTM workflow
+
+    def __build_dir(self):
+        ''' Build directories for RTM workflow and clean up the previous results if any
         '''
+
+        # print the working path
+        path = self.solver.system.path
+
+        # build required directories and clean up the previous results if any
+        folders = [path + 'rtm', ]
+
+        for folder in folders:
+            if os.path.exists(folder):
+                os.system('rm -rf ' + folder)
+                print('RTM workflow: clean old data in {}'.format(path + 'rtm'))
+            os.makedirs(folder)
+
+    
+    def __check_obs_data(self):
+        ''' Check the existence of observed data
+        '''
+
+        for isrc in range(self.solver.source.num):
+            sg_file = self.solver.system.path + 'data/obs/src' + str(isrc+1) + '/sg'
+            
+            if (not os.path.exists(sg_file + '.segy') and 
+                not os.path.exists(sg_file + '.su') and 
+                not os.path.exists(sg_file + '.bin')) :
+                msg = 'RTM workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
+                raise ValueError(msg)
+
+        print('RTM workflow: find  obs data in {}data/obs/'.format(self.solver.system.path))
+        print('RTM workflow: start RTM ...\n')
+
+
+    def run(self, vp = None, rho = None):
+        ''' Run RTM workflow
+
+        Parameters
+        ----------
+            vp : 2D array
+                velocity model used for RTM
+            rho : 2D array
+                density model used for RTM
+
+        Notes: in performing RTM, a smooth model is preferred.
+        '''
+
+        if vp is None and rho is None:
+            print('RTM workflow: no model is provided for RTM, use the true model')
+
+        # start the timer
+        start_time = time.time()
+
+        # preprocess the obs data
+        self.preprocessor.run(data_path = self.solver.system.path + 'data/obs/', 
+                            src_num = self.solver.source.num, 
+                            mpi_num = self.solver.system.mpi_num, 
+                            nt = self.solver.model.nt, 
+                            dt = self.solver.model.dt,  
+                            offset = self.solver.model.offset)
+
+        # reset model to solver
+        self.solver.set_model(vp = vp, rho = rho)
+
+        # model the syn data (save boundary for wavefield reconstruction)
+        self.solver.run(simu_type = 'forward', simu_tag = 'syn', save_boundary = True)
+
+        # preprocess the syn data
+        self.preprocessor.run(data_path = self.solver.system.path + 'data/syn/', 
+                            src_num = self.solver.source.num, 
+                            mpi_num = self.solver.system.mpi_num, 
+                            nt = self.solver.model.nt, 
+                            dt = self.solver.model.dt,  
+                            offset = self.solver.model.offset)
         
-        raise NotImplementedError
+        # prepare adjoint source for RTM
+        for isrc in range(self.solver.source.num):
+            obs_path = os.path.join(self.solver.system.path, 'data/obs/src{}/sg_processed'.format(isrc+1))
+            adj_path = os.path.join(self.solver.system.path, 'config/wavelet/src{}_adj.bin'.format(isrc+1))
+            obs_data, _ = load_waveform_data(obs_path, self.solver.model.nt)
+            save_float(adj_path, obs_data)
+
+        # calculate the image via adjoint modeling
+        image, for_illum, adj_illum = self.solver.run(simu_type = 'gradient', simu_tag = 'syn')
+
+        # save results
+        self.save_results(image, for_illum, adj_illum)
+
+        # plot the results
+        self.plot_results(image)
+
+        # print end information
+        self.print_end_info(start_time)
+
+
+    def save_results(self, image, for_illum, adj_illum):
+        ''' Save results during FWI iterations
+        '''
+
+        np.save(self.solver.system.path + 'rtm/image.npy', image)
+        np.save(self.solver.system.path + 'rtm/for_illum.npy', for_illum)
+        np.save(self.solver.system.path + 'rtm/adj_illum.npy', adj_illum)
+
+
+    def plot_results(self, image):
+        ''' Plot results during FWI iterations
+        '''
+        scale = np.max(np.abs(image)) * 0.01
+
+        # plot model
+        plot_model(self.solver.model.x, 
+            self.solver.model.z,
+            image.reshape(self.solver.model.nx, self.solver.model.nz).T, 
+            -scale, 
+             scale,
+            os.path.join(self.solver.system.path, 'rtm/image.png'), 
+            'RTM', 
+            figaspect = 1, 
+            colormap = 'gray')
+
+
+    def print_end_info(self, start_time):
+        ''' Print end information
+        '''
+        # print the end information
+        hours, rem = divmod(time.time()-start_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        print('RTM workflow: finished in {:0>2}h {:0>2}m {:.0f}s\n'.format(int(hours), int(minutes), seconds))
 
 
 class Configuration(object):
@@ -361,3 +491,6 @@ class Configuration(object):
         for _, value in dict.items():
             for k, v in value.items():
                 setattr(self, k, v)
+
+
+

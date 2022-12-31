@@ -13,7 +13,6 @@
 import sys
 sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/toolbox-dev/')
 
-import time
 import numpy as np
 
 try:
@@ -122,9 +121,9 @@ class SWIT(Configuration):
         ''' initialize the optimizer class
         '''
 
-        # load initial model files
-        vp_init = load_model(self.vp_init_file, self.nx, self.nz)            # load initial vp model from file
-        rho_init = load_model(self.rho_init_file, self.nx, self.nz)          # load initial rho model from file
+        # load initial model files for FWI (vp and rho)
+        vp_init = load_model(self.vp_init_file, self.nx, self.nz)
+        rho_init = load_model(self.rho_init_file, self.nx, self.nz)
      
         # load gradient mask if a path to mask is specified, otherwise set to None
         if self.grad_mask is None or len(self.grad_mask) == 0:
@@ -177,8 +176,13 @@ class SWIT(Configuration):
         # Reverse Time Migration
         if 'RTM' in self.job_type:
             self.init_preprocessor()
+
+            # load velocity and density model for RTM
+            vp_rtm  = load_model(self.vp_init_file, self.nx, self.nz)
+            rho_rtm = load_model(self.rho_init_file, self.nx, self.nz)
+    
             rtm = RTM(self.solver, self.preprocessor)
-            rtm.run()
+            rtm.run(vp = vp_rtm, rho = rho_rtm)
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ By Haipeng Li @ University of Science and Technology of China,  haipengl@mail.us
 
 Since Sep., 2022, I moved to Stanford University, haipeng@standford.edu
 
-**Note**: solver, toolbox-dev and examples-dev are under development now. Please use the stable version in release v1.0.0.
+**Note: solver, toolbox-dev and examples-dev are under development now. Please use the stable version in release v1.0.0. **
 
 <img src="./doc/GUI.png" style="zoom:50%;" />
 

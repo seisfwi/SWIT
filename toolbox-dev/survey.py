@@ -42,8 +42,11 @@ class System(object):
         self.mpi_num = mpi_num
         self.max_cpu_num = max_cpu_num
         self.fig_aspect = fig_aspect
+        
+        # check the parameters
+        self.__check__()
 
-
+ 
     def __check__(self):
         ''' check the config parameters
         '''
@@ -53,7 +56,6 @@ class System(object):
 
         # check the existence of the working path
         if not os.path.exists(self.path):
-            print('Survey: working path {} does not exist, creating it now.'.format(self.path))
             os.makedirs(self.path)
 
         # check the number of mpi processes
@@ -116,10 +118,12 @@ class Model(object):
         self.save_snap = 0
         self.save_step = 10
 
+        # check the parameters
+        self.__check__()
+
 
     def __check__(self):
-        '''
-            check the model parameters
+        ''' check the model parameters
         '''
 
         # check the dimensions of models
@@ -156,6 +160,9 @@ class Source(object):
         # number of sources
         self.num = len(self.coord)
 
+        # check the parameters
+        self.__check__()
+
 
     def __check__(self):
         ''' check the source parameters
@@ -189,9 +196,12 @@ class Receiver(object):
         self.coord = coord
         self.comp = comp
 
+        # check the parameters
+        self.__check__()
+
+
     def __check__(self):
-        '''
-            check the receiver parameters
+        ''' check the receiver parameters
         '''
         # check coordinates of receivers
         if not isinstance(self.coord, list):
@@ -233,29 +243,18 @@ class Survey(object):
         # check the parameters
         self.__check__()
 
+        # set the derived parameters
+        self.__set_derived_parameters__()
+
         # plot the survey
         self.plot_geometry()
-        self.plot_wavelet(isrc = 1, t_max = 1.0 )
+        self.plot_wavelet(isrc = 1, t_max = 1.0)
         self.plot_model()
 
 
     def __check__(self):
-        ''' check the parameters
+        ''' check the the overall consistency of the parameters
         '''
-
-        # check the system parameters
-        self.system.__check__()
-
-        # check the model parameters
-        self.model.__check__()
-
-        # check the source parameters
-        self.source.__check__()
-
-        # check the receiver parameters
-        self.receiver.__check__()
-
-        # check the overall consistency of the parameters
 
         # check the stability condition (4-th order FD): dt <= sqrt(3/8) * dx / vmax
         dt0 = np.sqrt(3.0/8.0) * self.model.dx / np.max(self.model.vp)
@@ -297,9 +296,18 @@ class Survey(object):
 
         # check the configfile directory and create it if not exist
         if not os.path.exists(self.system.path + 'system'):
-            print('Survey: working path {} does not exist, creating it now.'.format(self.system.path))
             os.system('mkdir -p %s' % (self.system.path + 'config'))
             os.system('mkdir -p %s' % (self.system.path + 'config/wavelet'))
+
+
+    def __set_derived_parameters__(self):
+        ''' Set the derived parameters
+        '''
+
+        # set the offset
+        self.model.offset = []
+        for i in range(self.source.num):
+            self.model.offset.append(self.receiver.coord[i][:,0] - self.source.coord[i,0])
 
 
     def plot_geometry(self):
@@ -318,7 +326,7 @@ class Survey(object):
 
         plt.xlabel('Distance (m)', fontsize=12)
         plt.ylabel('Shot number', fontsize=12)
-        plt.title('2D Acquisition, %d sources\n' % (self.source.num), fontsize = 14)
+        plt.title('Survey Geometry, %d sources\n' % (self.source.num), fontsize = 14)
 
         plt.savefig(os.path.join(self.system.path, 'config/survey_geometry.png'), dpi=300)
         plt.close()
@@ -351,7 +359,7 @@ class Survey(object):
 
         # perform fft to get the frequency domain wavelet
         wvlt_freq = np.abs(np.fft.fft(wvlt_time))
-        freqs = np.fft.fftfreq(len(wvlt_time), self.dt)
+        freqs = np.fft.fftfreq(len(wvlt_time), self.model.dt)
         idx = np.argsort(freqs)
         idx = idx[int(len(idx) / 2):]
 

@@ -109,26 +109,33 @@ class Preprocessor(object):
         '''
         print('\nPreprocessor information:')
         print('    Data filter type  : {}   '.format(self.filter_data))
-        print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
-        print('    Highcut frequency : {} Hz'.format(self.filter_high))
+        if self.filter_data.lower() == 'bandpass':
+            print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
+            print('    Highcut frequency : {} Hz'.format(self.filter_high))
+        elif self.filter_data.lower() == 'lowpass':
+            print('    Highcut frequency : {} Hz'.format(self.filter_low))
+        elif self.filter_data.lower() == 'highpass':
+            print('    Lowcut frequency  : {} Hz'.format(self.filter_high))
+
         if self.mute_late_arrival:
             print('    Mute late arrivals: {} with the time window of {} s'.format(self.mute_late_arrival, self.mute_late_size))
         else:
             print('    Mute late arrivals: {}'.format(self.mute_late_arrival))
 
         if self.mute_near_offset:
-            print('    Mute near offset: {} with the near distance of {} m'.format(self.mute_near_offset, self.mute_near_distance))
+            print('    Mute near offset  : {} with the near distance of {} m'.format(self.mute_near_offset, self.mute_near_distance))
         else:
-            print('    Mute near offset: {}'.format(self.mute_near_offset))
+            print('    Mute near offset  : {}'.format(self.mute_near_offset))
 
         if self.mute_far_offset:
-            print('    Mute far  offset: {} with the far  distance of {} m'.format(self.mute_far_offset, self.mute_far_distance))
+            print('    Mute far offset   : {} with the far  distance of {} m'.format(self.mute_far_offset, self.mute_far_distance))
         else:
-            print('    Mute far  offset: {}'.format(self.mute_far_offset))
-        print('    Data normalization: {} (trace-by-trace)'.format(self.normalize_data))
+            print('    Mute far offset   : {}'.format(self.mute_far_offset))
+        print('    Normalize trace   : {}'.format(self.normalize_data))
+        print('\n')
 
 
-    def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, src_coord = None, rec_coord = None):
+    def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, offset = None):
         ''' run the preprocessor to process the data in the provided directory
 
         Parameters
@@ -143,10 +150,8 @@ class Preprocessor(object):
                 the number of time samples
             dt: float
                 the time sampling interval in seconds
-            src_coord: 2D array of float
-                the source coordinates in meters
-            rec_coord: lisft of 2D array of float
-                the receiver coordinates in meters
+            offset: lisft of 1D array of float
+                the offset of the sources and receivers
         '''
 
         # TODO: add the MPI support for the preprocessor
@@ -158,12 +163,9 @@ class Preprocessor(object):
         for isrc in range(src_num):
             # get the directory of the data
             load_path = os.path.join(data_path, 'src{}/sg'.format(isrc+1))
-            
-            # get the offset
-            offset = src_coord[isrc, 0] - rec_coord[isrc][:, 0]
-            
+
             # process the data
-            pool.apply_async(self.process_workflow_it, (load_path, nt, dt, offset,) )
+            pool.apply_async(self.process_workflow_it, (load_path, nt, dt, offset[isrc],) )
             
             # wait for a while
             time.sleep(0.01)

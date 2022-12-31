@@ -3,19 +3,16 @@
 # SWIT v1.1: Seismic Waveform Inversion Toolbox
 #
 #   A Python package for seismic waveform inversion
-#   Developed by Haipeng Li at USTC, updated on 2022-12-21 at Stanford
-#   haipengl@mail.ustc.edu.cn, haipeng@stanford.edu
+#   By Haipeng Li at USTC & Stanford
+#   Email: haipengl@mail.ustc.edu.cn, haipeng@stanford.edu 
 #
-#   Setup module
+#   Setup script for installing SWIT
 #
 ###############################################################################
-
 
 import os
 import sys
 import subprocess
-import setuptools
-
 
 from setuptools import setup
 from setuptools.command.install import install

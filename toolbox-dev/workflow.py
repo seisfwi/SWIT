@@ -16,7 +16,7 @@ from multiprocessing import Pool
 
 import numpy as np
 from misfit import calculate_adjoint_misfit_is
-from plot import plot_misfit, plot_model
+from plot import plot_misfit, plot_model, plot_waveform_comparison
 from tools import smooth2d
 from utils import preconditioner
 
@@ -62,8 +62,7 @@ class FWI(object):
                             mpi_num = self.solver.system.mpi_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
-                            src_coord = self.solver.source.coord, 
-                            rec_coord = self.solver.receiver.coord)
+                            offset = self.solver.model.offset)
 
         # compute cost and gradient for the initial model
         vp  = self.optimizer.vp_init
@@ -122,8 +121,7 @@ class FWI(object):
                             mpi_num = self.solver.system.mpi_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
-                            src_coord = self.solver.source.coord, 
-                            rec_coord = self.solver.receiver.coord)
+                            offset = self.solver.model.offset)
         
         # calculate adjoint source and calculate misfit
         fcost, fcost_all = self.calculate_adjoint_misfit()
@@ -285,7 +283,11 @@ class FWI(object):
             self.solver.source.num)
 
         # plot waveform comparison
-        
+        isrc = 1
+        plot_waveform_comparison(self.solver.model.t, self.solver.model.offset[isrc],
+                                 self.solver.system.path, 
+                                 isrc = isrc, 
+                                 iter = self.optimizer.cpt_iter + 1)
 
 
     def __check_obs_data(self):
@@ -301,7 +303,7 @@ class FWI(object):
                 msg = 'FWI workflow ERROR: observed data are not found: {}.segy (.su or .bin)'.format(sg_file)
                 raise ValueError(msg)
 
-        print('FWI workflow: find observed data  in {}data/obs/'.format(self.solver.system.path))
+        print('FWI workflow: find  obs data in {}data/obs/'.format(self.solver.system.path))
         print('FWI workflow: start iteration ...\n')
 
 
@@ -311,7 +313,6 @@ class FWI(object):
 
         # print the working path
         path = self.solver.system.path
-        print('\nFWI workflow: the working path is in {}'.format(path + 'fwi'))
 
         # build required directories and clean up the previous results if any
         folders = [path + 'fwi', 
@@ -324,7 +325,7 @@ class FWI(object):
         for folder in folders:
             if os.path.exists(folder):
                 os.system('rm -rf ' + folder)
-                print('FWI workflow: clean previous data in {}'.format(path + 'fwi'))
+                print('FWI workflow: clean old data in {}'.format(path + 'fwi'))
             os.makedirs(folder)
 
 

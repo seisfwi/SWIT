@@ -111,16 +111,18 @@ class Solver(Survey):
 
         # read gradient and wavefield illumination for gradient simulation
         if simu_type == 'gradient':
-            gradient  = np.zeros_like(self.model.vp)
-            for_illum = np.zeros_like(self.model.vp)
-            adj_illum = np.zeros_like(self.model.vp)
+            nx = self.model.nx
+            nz = self.model.nz
+            gradient  = np.zeros((nx, nz))
+            for_illum = np.zeros((nx, nz))
+            adj_illum = np.zeros((nx, nz))
 
             # read gradient from binary files and sum over all sources
-            for isrc in range(self.model.num):
-                data_path  = os.path.join(self.solver.system.path, 'data/syn/src{}/'.format(isrc+1))
-                gradient  += load_float(data_path + 'vp_gradient.bin').reshape_like(self.model.vp)
-                for_illum += load_float(data_path + 'forward_illumination.bin').reshape_like(self.model.vp)
-                adj_illum += load_float(data_path + 'adjoint_illumination.bin').reshape_like(self.model.vp)
+            for isrc in range(self.source.num):
+                data_path  = os.path.join(self.system.path, 'data/syn/src{}/'.format(isrc+1))
+                gradient  += load_float(data_path + 'vp_gradient.bin').reshape(nx, nz)
+                for_illum += load_float(data_path + 'forward_illumination.bin').reshape(nx, nz)
+                adj_illum += load_float(data_path + 'adjoint_illumination.bin').reshape(nx, nz)
 
             # return
             return gradient, for_illum, adj_illum
@@ -213,9 +215,8 @@ class Solver(Survey):
         '''
 
         print('\nSolver information:')
-        print('    Model dimension   : nx = {}, nz = {}, dx = {} m, nt = {}, dt = {:.2f} ms'.format(self.model.nx, self.model.nz, self.model.dx,  self.model.nt, self.model.dt*1000))
+        print('    Model parameters  : nx = {}, nz = {}, dx = {} m, nt = {}, dt = {:.2f} ms'.format(self.model.nx, self.model.nz, self.model.dx,  self.model.nt, self.model.dt*1000))
         print('    Model dimension   : x = 0 ~ {:.2f} km,  z = 0 ~ {:.2f} km, t = 0 ~ {:.2f} s'.format(self.model.x[-1]/1000, self.model.z[-1]/1000, self.model.t[-1]))
-        print('    Model vp range    : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
-        print('    Source            : total number is {}, ranging from {} to {} km.'.format(self.source.num, self.source.coord[0,0]/1000, self.source.coord[-1,0]/1000))
-        print('    Receiver comp     : {}'.format(self.receiver.comp))
-        print('    MPI info          : {} tasks run in parallel'.format(self.system.mpi_num))
+        print('    P-wave velocity   : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
+        print('    Survey details    : source number is {}, receiver component is {}'.format(self.source.num, self.receiver.comp))
+        print('    MPI information   : {} tasks run in parallel'.format(self.system.mpi_num))

@@ -15,13 +15,74 @@ import os
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from tools import load_waveform_data
 
 
-def plot_waveform_comparison(path, method, iter, niter_max, src_num):
+def plot_waveform_comparison(t, offset, path, isrc = 1, iter = 1, scale = None, cmap = None, fig_aspect = None):
     ''' Plot waveform comparison
-    '''
-    pass
 
+    Parameters
+    ----------
+        t : array
+            time array
+        offset : array
+            offset array
+        isrc : int
+            source index
+        path : str
+            data directory
+        iter : int
+            iteration number
+        scale : float
+            colorbar scale
+        cmap : str
+            colormap
+        fig_aspect : float
+            figure aspect ratio (width/height)
+    '''
+
+    # load data
+    obs_path = os.path.join(path, 'data/obs/src{}/sg'.format(isrc+1))
+    syn_path = os.path.join(path, 'data/syn/src{}/sg'.format(isrc+1))
+    obs, _ = load_waveform_data(obs_path, len(t))
+    syn, _ = load_waveform_data(syn_path, len(t))
+
+    # set plot options
+    scale = np.max(np.abs(obs)) * 0.005
+    fig_aspect = 0.5 * len(t) / len(offset)
+    opts = {
+        'vmin': -scale,
+        'vmax': scale,
+        'extent': (offset[0]/1000, offset[-1]/1000, t[-1], t[0]),
+        'cmap': 'gray'
+    }
+
+    fig = plt.figure(figsize=[16,18])
+    title = ['obs', 'syn', 'obs-syn']
+    for i in range(1, 4):
+
+        # set data
+        if i == 1:
+            data = obs
+        elif i == 2:
+            data = syn
+        else:
+            data = obs - syn
+
+        # plot data
+        ax = fig.add_subplot(1, 3, i)
+        im = ax.imshow(data.T, **opts)
+        ax.grid(visible=True,  axis='y')
+        ax.xaxis.set_label_text('Offset (km)')
+        if i == 1:
+            ax.yaxis.set_label_text('Time (s)')
+        ax.set_title(title[i-1])
+        ax.set_aspect(fig_aspect)
+    
+    fig_name = os.path.join(path, 'fwi/waveform/comparison_src{}_it{}.png'.format(isrc+1, iter))
+    plt.savefig(fig_name, dpi=300)
+    plt.close()
+    # plt.show()
 
 
 def plot_model(x, z, data, vmin, vmax, filename, title, figaspect = 1, colormap = 'bwr'):
@@ -115,7 +176,7 @@ def plot_misfit(path, method, iter, niter_max, src_num):
     plt.xticks(x)
     plt.legend([str(isrc+1) for isrc in range(src_num)], loc = 'center left', bbox_to_anchor=(1, 0.5))
     plt.title("Misfit history of all sources")
-    plt.savefig(fig_path + 'misfit_history_all_source.png', dpi=300)
+    plt.savefig(fig_path + 'misfit_history_all.png', dpi=300)
     # plt.show()
 
     # plot misfit in curve
@@ -168,4 +229,3 @@ def my_seismic_cmap():
                     (1.0, 0.0, 0.0))}
 
     return matplotlib.colors.LinearSegmentedColormap('my_colormap',cdict,256)
-    

@@ -13,6 +13,7 @@
 import sys
 sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/toolbox-dev/')
 
+import time
 import numpy as np
 
 try:
@@ -53,7 +54,7 @@ class SWIT(Configuration):
         par_list  = ['path', 'job_type', 'max_cpu_num', 'mpi_num', 'fig_aspect']
         par_list += ['dt', 'dx', 'nt', 'nx', 'nz', 'pml', 'vp_file', 'rho_file']
         par_list += ['rec_comp', 'rec_coord_file']
-        par_lsit += ['amp0', 'f0', 'src_type', 'src_coord_file', 'wavelet_file']
+        par_list += ['amp0', 'f0', 'src_type', 'src_coord_file', 'wavelet_file']
         par_list += ['vp_init_file', 'rho_init_file', 'misfit_type', 'method', 
                      'niter_max', 'bound', 'vp_min', 'vp_max', 'grad_smooth_size', 
                      'update_vpmax', 'grad_mask', 'debug']
@@ -63,7 +64,7 @@ class SWIT(Configuration):
         # check the parameters
         for par in par_list:
             if par not in self.__dict__:
-                raise ValueError('Parameter {} not found in config file.'.format(par))
+                raise ValueError('Parameter [{}] is not found in config file.'.format(par))
         
         # check the job type
         job_str = ''
@@ -71,14 +72,14 @@ class SWIT(Configuration):
         for job in self.job_type:
             if job not in ['FORWARD', 'FWI', 'RTM']:
                 raise ValueError('Job type {} not supported.'.format(job))
-            job_str += job + '  '
+            job_str += job + ' '
 
         # print the job workflow
-        print('*****************************************************')
-        print('\n        Seismic Waveform Inversion Toolbox        \n')
-        print('        Job Workflow: {}                              '.format(job_str))
-        print('*****************************************************\n')
-
+        print('****************************************************************')
+        print('          SEISMIC WAVEFORM INVERSION TOOLBOX (V-1.1)          \n')
+        print('  Job workflow: {}                                              '.format(job_str))
+        print('  Job workpath: {}                                              '.format(self.path))
+        print('****************************************************************\n')
 
 
     def init_solver(self):
@@ -159,39 +160,23 @@ class SWIT(Configuration):
         ''' run the job workflow
         '''
 
-        # Forward simulation
+        # solver is required for all jobs
+        self.init_solver()
+
+        # Forward Modeling
         if 'FORWARD' in self.job_type:
-
-            # initialize solver
-            self.init_solver()
-
-            # run forward simulation
             self.solver.run()
-        
+
         # Full Waveform Inversion
         if 'FWI' in self.job_type:
-
-            # initialize solver
-            self.init_solver()
-
-            # initialize optimizer
             self.init_optimizer()
-
-            # initialize preprocessor
             self.init_preprocessor()
-
-            # run FWI
             fwi = FWI(self.solver, self.optimizer, self.preprocessor)
             fwi.run()
         
         # Reverse Time Migration
         if 'RTM' in self.job_type:
-            # initialize solver
-            self.init_solver()
-
-            # initialize preprocessor
             self.init_preprocessor()
-            
             rtm = RTM(self.solver, self.preprocessor)
             rtm.run()
 

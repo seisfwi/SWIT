@@ -1,17 +1,14 @@
 <img src="./doc/Logo.png" style="zoom:18%;" />
 
-**S**eismic **W**aveform **I**nversion **T**oolbox (**SWIT-V1.0**) is a 2-D acoustic Full-waveform Inversion (FWI) package implemented in Fortran and Python. It includes efficient and accurate forward and adjoint wavefield modeling solvers. The simulated waveforms and the calculated gradients have been well verified. Two different nonlinear inversion optimizations schemes, i.e., the nonlinear conjugate gradient (NLCG) method and the quasi-Newton method (L-BFGS) are implemented in accompany with an efficient line search strategy. Various misfit functions, including the L-2 waveform (Tarantola, 1984), the cross-correlation  (Luo & Schuster, 1991), and the normalized global-correlation coefficient (Choi & Alkhalifah, 2012) are provided. More misfit functions can be easily implemented by users themselves. To facilitate the usage of this FWI package, a dedicated Graphic User Interface (GUI) is provided with numerous pre-defined parameters that may be suitable for many inversion scenarios. One may also run an FWI project through Python scripts provided in the [examples](https://github.com/Haipeng-ustc/SWIT-1.0/tree/main/examples). Please also find our tutorial on FWI here:  [Video](http://seismo.training.ustc.edu.cn/index.php/video), [Slides-Part1](http://seismo.training.ustc.edu.cn/public/%E6%9D%8E%E4%BF%8A%E4%BC%A6%E8%80%81%E5%B8%88%E8%AF%BE%E4%BB%B6.pdf), [Slides-Part2](http://seismo.training.ustc.edu.cn/public/SWIT%E7%A8%8B%E5%BA%8F%E4%BB%8B%E7%BB%8D.pdf).
-
-
-
-
-
-<img src="./doc/GUI.png" style="zoom:50%;" />
+**S**eismic **W**aveform **I**nversion **T**oolbox (**SWIT-1.0**) is a 2-D acoustic Full-waveform Inversion (FWI) package implemented in Fortran and Python. It includes efficient and accurate forward and adjoint wavefield modeling solvers. The simulated waveforms and the calculated gradients have been well verified. Two different nonlinear inversion optimizations schemes, i.e., the nonlinear conjugate gradient (NLCG) method and the quasi-Newton method (L-BFGS) are implemented in accompany with an efficient line search strategy. Various misfit functions, including the L-2 waveform (Tarantola, 1984), the cross-correlation  (Luo & Schuster, 1991), and the normalized global-correlation coefficient (Choi & Alkhalifah, 2012) are provided. More misfit functions can be easily implemented by users themselves. To facilitate the usage of this FWI package, a dedicated Graphic User Interface (GUI) is provided with numerous pre-defined parameters that may be suitable for many inversion scenarios. One may also run an FWI project through Python scripts provided in the [examples](https://github.com/Haipeng-ustc/SWIT-1.0/tree/main/examples).
 
 By Haipeng Li @ University of Science and Technology of China,  haipengl@mail.ustc.edu.cn
 
-Since Sep., 2022, I have moved to Stanford University, haipeng@standford.edu
+Since Sep., 2022, I moved to Stanford University, haipeng@standford.edu
 
+**Note**: solver, toolbox-dev and examples-dev are under development now. Please use the stable version in release v1.0.0.
+
+<img src="./doc/GUI.png" style="zoom:50%;" />
 
 
 ## Installation 

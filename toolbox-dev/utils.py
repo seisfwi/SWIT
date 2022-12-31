@@ -105,7 +105,7 @@ def preconditioner(for_illum, adj_illum, epsilon = 0.0001):
     return precond
 
 
-def generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 20):
+def generate_mask(nx, nz, threshold = 0.05, mask_size = 20):
     ''' Generate mask
 
     Parameters:
@@ -114,8 +114,6 @@ def generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 20):
             Number of grids in x direction
         nz: int
             Number of grids in z direction
-        acquisition_type: str
-            Type of the mask, 'land' or 'marine'
         threshold: float
             Threshold of the mask for tapering in the land case, 0.05 in default
         mask_size: int
@@ -125,35 +123,25 @@ def generate_mask(nx, nz, acquisition_type, threshold = 0.05, mask_size = 20):
     --------
         mask: 2D array
             Mask
+    
+    Notes: user should provided a mask (0/1) for marine case to mute the water column
     '''
 
-    # generate a must mask for marine case, mask_size is the number of grids of water
-    if acquisition_type.lower() in ['marine']:
-        mask = np.ones((nx, nz))
-        for ix in range(nx):
-            mask[ix, :mask_size] = 0.0
-
     # generate a damping mask for land case to suppress the strong gradients around the source
-    elif acquisition_type.lower() in ['land']:
-       
-        mask = np.zeros((nx, nz))
-        
-        # gaussian window
-        H = scipy.signal.hamming(mask_size*2)[mask_size:]
-        for ix in range(nx):
-            mask[ix, :mask_size] = H
-
-        # smooth the mask
-        mask = smooth2d(mask, span=mask_size//2)
-
-        # scale the mask to 0-1
-        mask /= mask.max()
-        mask *= (1 - threshold)
-        mask = - mask + 1
-        mask = mask * mask      # taper^2 is better than taper^1
-    else:
-        msg = 'Support mask types: land, marine. \n'
-        err = 'Unknown mask type: {}'.format(acquisition_type)
-        raise ValueError(msg + '\n' + err)
+    mask = np.zeros((nx, nz))
     
+    # gaussian window
+    H = scipy.signal.hamming(mask_size*2)[mask_size:]
+    for ix in range(nx):
+        mask[ix, :mask_size] = H
+
+    # smooth the mask
+    mask = smooth2d(mask, span=mask_size//2)
+
+    # scale the mask to 0-1
+    mask /= mask.max()
+    mask *= (1 - threshold)
+    mask = - mask + 1
+    mask = mask * mask      # taper^2 is better than taper^1
+
     return mask

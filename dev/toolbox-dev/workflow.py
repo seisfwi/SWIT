@@ -235,7 +235,6 @@ class FWI(object):
     def save_results(self, vp, grad, fcost_all):
         ''' Save results during FWI iterations
         '''
-
         iter = self.optimizer.cpt_iter+1
         np.save(self.solver.system.path + 'fwi/grad/grad_it_{:04d}.npy'.format(iter), grad)
         np.save(self.solver.system.path + 'fwi/model/vp_it_{:04d}.npy'.format(iter), vp)
@@ -306,7 +305,7 @@ class FWI(object):
 
         # print the working path
         path = self.solver.system.path
-        print('FWI Workflow: working path in   {}'.format(path + 'fwi'))
+        print('\nFWI Workflow: working path   in {}'.format(path + 'fwi'))
 
         # build required directories and clean up the previous results if any
         folders = [path + 'fwi', 

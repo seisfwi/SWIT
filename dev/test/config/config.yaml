@@ -42,7 +42,7 @@ Optimizer:
   debug: false
 
 Preprocessor:
-  filter_data: none
+  filer: none
   filter_high: 10.0
   filter_low: 5.0
   mute_near_offset: true

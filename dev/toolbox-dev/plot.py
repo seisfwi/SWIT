@@ -42,10 +42,10 @@ def plot_waveform_comparison(t, offset, path, isrc = 1, iter = 1, scale = None, 
     '''
 
     # load data
-    obs_path = os.path.join(path, 'data/obs/src{}/sg'.format(isrc+1))
-    syn_path = os.path.join(path, 'data/syn/src{}/sg'.format(isrc+1))
-    obs, _ = load_waveform_data(obs_path, len(t))
-    syn, _ = load_waveform_data(syn_path, len(t))
+    obs_path = os.path.join(path, 'data/obs/src{}/sg_processed'.format(isrc+1))
+    syn_path = os.path.join(path, 'data/syn/src{}/sg_processed'.format(isrc+1))
+    obs, _   = load_waveform_data(obs_path, len(t))
+    syn, _   = load_waveform_data(syn_path, len(t))
 
     # set plot options
     scale = np.max(np.abs(obs)) * 0.01 if scale is None else scale
@@ -79,6 +79,7 @@ def plot_waveform_comparison(t, offset, path, isrc = 1, iter = 1, scale = None, 
         ax.set_title(title[i-1], fontsize=14)
         ax.set_aspect(fig_aspect)
     
+    # save figure
     fig_name = os.path.join(path, 'fwi/waveform/comparison_src{}_it{}.png'.format(isrc+1, iter))
     plt.savefig(fig_name, dpi=300)
     plt.close()

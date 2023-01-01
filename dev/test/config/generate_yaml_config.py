@@ -56,7 +56,7 @@ system['Receiver']['comp'] = 'p'   # 'vx', 'vz', 'p'
 
 # preprocessor parameters
 system['Preprocessor'] = {}
-system['Preprocessor']['filter_data'] = 'none'
+system['Preprocessor']['filer'] = 'none'
 system['Preprocessor']['filter_low'] = 5.0
 system['Preprocessor']['filter_high'] = 10.0
 system['Preprocessor']['mute_late_arrival'] = True

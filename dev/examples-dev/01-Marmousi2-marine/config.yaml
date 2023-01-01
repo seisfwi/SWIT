@@ -1,6 +1,6 @@
 System:
   job_workflow: 
-      - FORWARD
+      # - FORWARD
       - FWI
   path: /scr2/haipeng/SWIT-1.1/01_fwi/
   mpi_num: 21
@@ -24,7 +24,7 @@ Receiver:
 Source:
   amp0: 1.0
   f0: 5.0
-  src_type: ricker
+  src_type: file
   src_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/src_coord.npy
   wavelet_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/wavelets.npy
 
@@ -38,18 +38,18 @@ Optimizer:
   bound: true
   vp_min: 1000
   vp_max: 5000
-  grad_smooth_size: 0
+  grad_smooth_size: 5
   update_vpmax: 50
   debug: false
 
 Preprocessor:
-  filter_data: none
+  filer: none
   filter_high: 10.0
   filter_low: 5.0
   mute_near_offset: false
   mute_near_distance: 500
-  mute_far_offset: false
+  mute_far_offset: true
   mute_far_distance: 8000
-  mute_late_arrival: false
+  mute_late_arrival: true
   mute_late_size: 0.25
-  normalize_data: false
+  normalize_data: true

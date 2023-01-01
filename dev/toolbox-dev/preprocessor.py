@@ -46,7 +46,7 @@ class Preprocessor(object):
             Distance of the far offset traces to be muted in meters
     '''
 
-    def __init__(self, filter_data = 'bandpass', filter_low = 5.0, filter_high = 10.0, 
+    def __init__(self, filer = 'bandpass', filter_low = 5.0, filter_high = 10.0, 
                  mute_late_arrival = False, mute_late_size = 0.5, 
                  normalize_data = False,
                  mute_near_offset = False, mute_near_distance = 500, 
@@ -55,7 +55,7 @@ class Preprocessor(object):
         '''
 
         # data filter
-        self.filter_data = filter_data
+        self.filer = filer
         self.filter_low = filter_low
         self.filter_high = filter_high
 
@@ -85,8 +85,11 @@ class Preprocessor(object):
     def __check__(self):
 
         # check the data filter
+        if self.filer is False:
+            self.filer = 'none'
+
         filters = ['lowpass', 'bandpass', 'highpass', 'none']
-        if self.filter_data.lower() not in filters:
+        if self.filer.lower() not in filters:
             msg = 'Preprocessor: filter must be one of {}'.format(filters)
             err = 'Preprocessor: not supported filter type: {}'.format(self.filter)
             raise ValueError(msg + '\n' + err)
@@ -108,30 +111,33 @@ class Preprocessor(object):
         ''' Print the information of the preprocessor
         '''
         print('Preprocessor information:')
-        print('    Data filter type  : {}   '.format(self.filter_data))
-        if self.filter_data.lower() == 'bandpass':
+        print('    Data filter type  : {}   '.format(self.filer))
+        if self.filer.lower() == 'bandpass':
             print('    Lowcut frequency  : {} Hz'.format(self.filter_low))
             print('    Highcut frequency : {} Hz'.format(self.filter_high))
-        elif self.filter_data.lower() == 'lowpass':
+        elif self.filer.lower() == 'lowpass':
             print('    Highcut frequency : {} Hz'.format(self.filter_low))
-        elif self.filter_data.lower() == 'highpass':
+        elif self.filer.lower() == 'highpass':
             print('    Lowcut frequency  : {} Hz'.format(self.filter_high))
 
         if self.mute_late_arrival:
-            print('    Mute late arrivals: {} with the time window of {} s'.format(self.mute_late_arrival, self.mute_late_size))
+            print('    Mute late arrivals: {}, mute with the {} s time window'.format(self.mute_late_arrival, self.mute_late_size))
         else:
             print('    Mute late arrivals: {}'.format(self.mute_late_arrival))
 
         if self.mute_near_offset:
-            print('    Mute near offset  : {} with the near distance of {} m'.format(self.mute_near_offset, self.mute_near_distance))
+            print('    Mute near offset  : {}, mute near-offset traces within {} m'.format(self.mute_near_offset, self.mute_near_distance))
         else:
             print('    Mute near offset  : {}'.format(self.mute_near_offset))
 
         if self.mute_far_offset:
-            print('    Mute far offset   : {} with the far  distance of {} m'.format(self.mute_far_offset, self.mute_far_distance))
+            print('    Mute far offset   : {}, mute far-offset traces exceed {} m'.format(self.mute_far_offset, self.mute_far_distance))
         else:
             print('    Mute far offset   : {}'.format(self.mute_far_offset))
-        print('    Normalize trace   : {}'.format(self.normalize_data))
+        if self.normalize_data:
+            print('    Normalize trace   : {}, trace-by-trace by its maximum amplitude'.format(self.normalize_data))
+        else:
+            print('    Normalize trace   : {}'.format(self.normalize_data))
 
 
     def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, offset = None):
@@ -203,6 +209,8 @@ class Preprocessor(object):
         
         # pick the first arrival and mute late arrival
         if self.mute_late_arrival:
+            
+            raise NotImplementedError('Preprocessor: mute late arrival is not correctly implemented yet')
 
             # calculate the first break in grid size
             pick = brutal_picker(trace) + np.ceil(self.mute_late_size/dt)
@@ -213,22 +221,22 @@ class Preprocessor(object):
 
             # construct the taper
             taper = np.ones(nt)
-            win = np.sin(np.linspace(0, np.pi, 2*length)) [0:length]
+            win = np.sin(np.linspace(0, np.pi, 2*length))[0:length]
             
             # mute late arrivals
             for i in range(ntrace):
                 trace[i,:] *= (1.0 - custom_mask(itmin[i], itmax[i], nt, length, taper, win))
 
         # scipy filtering
-        if self.filter_data.lower() in ['bandpass']:
+        if self.filer.lower() in ['bandpass']:
             for i in range(ntrace):
                 trace[i] = bandpass_filter(trace[i], self.filter_low, self.filter_high, dt, order=4)
         
-        elif self.filter_data.lower() in ['lowpass']:
+        elif self.filer.lower() in ['lowpass']:
             for i in range(ntrace):
                 trace[i] = lowpass_filter(trace[i], self.filter_low, dt, order=4)
         
-        elif self.filter_data.lower() in ['highpass']:
+        elif self.filer.lower() in ['highpass']:
             for i in range(ntrace):
                 trace[i] = highpass_filter(trace[i], self.filter_high, dt, order=4)
 
@@ -248,7 +256,7 @@ class Preprocessor(object):
         save_float(load_path + '_processed.bin', trace.flatten())
 
 
-def brutal_picker(trace, threshold=0.001):
+def brutal_picker(trace, threshold = 0.001):
     ''' pick the first arrival based on the amplitude of the trace 
 
     Parameters

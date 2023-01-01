@@ -60,8 +60,8 @@ class System(object):
 
         # check the number of mpi processes
         if self.mpi_num > self.max_cpu_num:
-            msg  = 'Survey Warning: number of mpi processes {} exceeds the number of CPUs\n'.format(self.mpi_num)
-            msg += 'Survey Warning: number of mpi processes is reset to {}.'.format(self.max_cpu_num)
+            msg  = 'System Warning: number of mpi processes {} exceeds the number of CPUs\n'.format(self.mpi_num)
+            msg += 'System Warning: number of mpi processes is reset to {}.'.format(self.max_cpu_num)
             print(msg)
             self.mpi_num = self.max_cpu_num
     
@@ -140,11 +140,11 @@ class Model(object):
 
         # check the dimensions of models
         if np.shape(self.vp) != np.shape(self.rho) != (self.nx, self.nz):
-            raise ValueError('Survey Error: the dimensions of vp/rho are not consistant \with nx = {}, nz = {}'.format(self.nx, self.nz))
+            raise ValueError('Model Error: the dimensions of vp/rho are not consistant \with nx = {}, nz = {}'.format(self.nx, self.nz))
        
         # check the pml width
         if self.pml < 20:
-            print('Survey Warning: the width of pml boundary is recommended to be larger than 20 grid points')
+            print('Model Warning: the width of pml boundary is recommended to be larger than 20 grid points')
 
         # # check the topography
         # if len(self.topo) != self.nx:
@@ -189,11 +189,11 @@ class Source(object):
 
         # check coordinates of sources
         if self.coord.shape != (self.num, 2):
-            raise ValueError('Survey: the source coordinates must be 2D array with dimensions of [src_num, 2]')
+            raise ValueError('Source Error: the source coordinates must be 2D array with dimensions of [src_num, 2]')
 
         # check the wavelet
         if self.wavelet.shape[0] != self.num:
-            raise ValueError('Survey: the number of source wavelets must be the same as the number of sources')
+            raise ValueError('Source Error: the number of source wavelets must be the same as the number of sources')
 
 
 class Receiver(object):
@@ -224,11 +224,11 @@ class Receiver(object):
         '''
         # check coordinates of receivers
         if not isinstance(self.coord, list):
-            raise ValueError('Survey: receiver coordinates must be a list of the length of the source number, with a 2D array for each element')
+            raise ValueError('Receiver Error: receiver coordinates must be a list of the length of the source number, with a 2D array for each element')
 
         # check the components of receivers
         if self.comp.lower() not in ['vx', 'vz', 'p']:
-            msg = 'Survey: receiver component must be vx, vz or p'
+            msg = 'Receiver Error: receiver component must be vx, vz or p'
             err = 'Unsupport receiver component: {}'.format(self.comp) 
             raise ValueError(msg + '\n' + err)
 
@@ -278,8 +278,7 @@ class Survey(object):
         # check the stability condition (4-th order FD): dt <= sqrt(3/8) * dx / vmax
         dt0 = np.sqrt(3.0/8.0) * self.model.dx / np.max(self.model.vp)
         if dt0 <= self.model.dt:
-            raise ValueError('Survey Error: the stability condition of 4-th order FD method \
-            is not satisfied: dt = %.4f s > dt_required = %.4f s'.format(self.model.dt, dt0))
+            raise ValueError('Survey Error: the stability condition of solver is not satisfied: dt = {:.4f} s > dt_required = {:.4f} s'.format(self.model.dt, dt0))
 
         # check the numerical dispersion condition: dx <= vmin/(10*f0)
         dx0 = np.min(self.model.vp) / self.source.f0 / 10.
@@ -324,7 +323,7 @@ class Survey(object):
 
         # check the mpi number and the source number
         if self.system.mpi_num > self.source.num:
-            print('Survey Warning: number of mpi processes is larger than source number, reset to source number')
+            print('Survey Warning: number of mpi processes {} exceeds the number of sources {}, reset to source number')
             self.system.mpi_num = self.source.num
 
         # check the configfile directory and create it if not exist

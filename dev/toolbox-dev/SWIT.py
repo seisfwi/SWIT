@@ -57,7 +57,7 @@ class SWIT(Configuration):
         par_list += ['vp_init_file', 'rho_init_file', 'grad_mask_file', 'misfit_type', 'method', 
                      'niter_max', 'bound', 'vp_min', 'vp_max', 'grad_smooth_size', 
                      'update_vpmax', 'debug']
-        par_list += ['filter_data', 'filter_high', 'filter_low', 'mute_near_offset', 
+        par_list += ['filer', 'filter_high', 'filter_low', 'mute_near_offset', 
                      'mute_near_distance', 'mute_far_offset']
         
         # check the parameters
@@ -94,7 +94,7 @@ class SWIT(Configuration):
 
         # load source wavelet from file or generate it from the system file
         if self.src_type.lower() in ['file']:
-            wavelet = np.load(self.wavelet_path)
+            wavelet = np.load(self.wavelet_file)
         else:
             src_num = src_coord.shape[0]            
             wavelet  = np.zeros((src_num, self.nt))                          # Source wavelet
@@ -145,7 +145,7 @@ class SWIT(Configuration):
         '''
 
         ## optimizer
-        self.preprocessor = Preprocessor(filter_data = self.filter_data, 
+        self.preprocessor = Preprocessor(filer = self.filer, 
                                          filter_low = self.filter_low, 
                                          filter_high = self.filter_high, 
                                          mute_late_arrival = self.mute_late_arrival, 

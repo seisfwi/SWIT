@@ -14,9 +14,10 @@ import os
 
 import numpy as np
 import obspy
-import scipy.signal as _signal
+# import scipy.signal as _signal
 import yaml
 from obspy.io.segy.segy import _read_segy
+from scipy.ndimage import gaussian_filter
 
 
 def load_yaml(filename):
@@ -191,48 +192,51 @@ def su2array(su_data):
     return data, dt
 
 
-def smooth2d(Z, span = 10):
-    ''' Smooths values on 2D rectangular grid
+def smooth2d(data, span = 10):
+    ''' Smooths values on 1D/2D/3D rectangular grid
 
     Parameters
     ----------
-        Z : 2D array
+        data : 2D array
             data to be smoothed
         span : int
             smoothing span
 
     Returns
     -------
-        Z : 2D array
+        data : 2D array
             smoothed data
     '''
-    import warnings
-    warnings.filterwarnings('ignore')
-
-    Z = np.copy(Z)
-
-    x = np.linspace(-2.*span, 2.*span, 2*span + 1)
-    y = np.linspace(-2.*span, 2.*span, 2*span + 1)
-    (X, Y) = np.meshgrid(x, y)
-    mu = np.array([0., 0.])
-    sigma = np.diag([span, span])**2.
-
-    # evaluate Gaussian over points of X,Y
-    D = sigma[0, 0]*sigma[1, 1] - sigma[0, 1]*sigma[1, 0]
-    B = np.linalg.inv(sigma)
-    X = X - mu[0]
-    Y = Y - mu[1]
-    F = B[0, 0]*X**2. + B[0, 1]*X*Y + B[1, 0]*X*Y + B[1, 1]*Y**2.
-    F = np.exp(-0.5*F)
-    F *= (2.*np.pi*np.sqrt(D))**(-1.)
     
-    F = F/np.sum(F)
-    W = np.ones(Z.shape)
-    Z = _signal.convolve2d(Z, F, 'same')
-    W = _signal.convolve2d(W, F, 'same')
-    Z = Z/W
+    return gaussian_filter(data, sigma=span//2)
 
-    return Z
+    # import warnings
+    # warnings.filterwarnings('ignore')
+
+    # Z = np.copy(Z)
+
+    # x = np.linspace(-2.*span, 2.*span, 2*span + 1)
+    # y = np.linspace(-2.*span, 2.*span, 2*span + 1)
+    # (X, Y) = np.meshgrid(x, y)
+    # mu = np.array([0., 0.])
+    # sigma = np.diag([span, span])**2.
+
+    # # evaluate Gaussian over points of X,Y
+    # D = sigma[0, 0]*sigma[1, 1] - sigma[0, 1]*sigma[1, 0]
+    # B = np.linalg.inv(sigma)
+    # X = X - mu[0]
+    # Y = Y - mu[1]
+    # F = B[0, 0]*X**2. + B[0, 1]*X*Y + B[1, 0]*X*Y + B[1, 1]*Y**2.
+    # F = np.exp(-0.5*F)
+    # F *= (2.*np.pi*np.sqrt(D))**(-1.)
+    
+    # F = F/np.sum(F)
+    # W = np.ones(Z.shape)
+    # Z = _signal.convolve2d(Z, F, 'same')
+    # W = _signal.convolve2d(W, F, 'same')
+    # Z = Z/W
+
+    # return Z
 
 
 def smooth1d(x, window_len = 11, window = 'hanning'):

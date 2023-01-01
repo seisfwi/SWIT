@@ -144,7 +144,10 @@ class Optimizer(Optimization):
         print('    Inversion method  : {}'.format(self.method))
         print('    Maximum iter      : {}'.format(self.niter_max))
         print('    Maximum update    : {} m/s'.format(self.update_vpmax))
-        print('    Bound constraint  : {:.2f} ~ {:.2f} m/s'.format(self.vp_min, self.vp_max))
+        if self.bound:
+            print('    Bound constraint  : {:.2f} ~ {:.2f} m/s'.format(self.vp_min, self.vp_max))
+        else: 
+            print('    Bound constraint  : {}'.format(self.bound))
         print('    Initial vp model  : {:.2f} ~ {:.2f} m/s'.format(self.vp_init.min(), self.vp_init.max()))
         print('    Gradient smooth   : {} grids Gaussian smooth'.format(self.grad_smooth_size))
         if self.grad_mask is not None:

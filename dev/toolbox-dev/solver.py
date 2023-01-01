@@ -217,7 +217,7 @@ class Solver(Survey):
 
         print('\nSolver information:')
         print('    Model dimension   : nx = {}, nz = {}, dx = {} m, x = 0 ~ {:.2f} km,  z = 0 ~ {:.2f} km'.format(self.model.nx, self.model.nz, self.model.dx, self.model.x[-1]/1000, self.model.z[-1]/1000))
-        print('    Time  dimension   : nt = {}, dt = {:.2f} ms, t = 0 ~ {:.2f} s'.format(self.model.nt, self.model.dt*1000, self.model.t[-1]))
-        print('    P-wave velocity   : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
+        print('    Data  dimension   : nt = {}, dt = {:.2f} ms, t = 0 ~ {:.2f} s'.format(self.model.nt, self.model.dt*1000, self.model.t[-1]))
         print('    Data acquisition  : {} sources, {}-component receivers'.format(self.source.num, self.receiver.comp))
+        print('    P-wave velocity   : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
         print('    MPI information   : {} tasks run in parallel'.format(self.system.mpi_num))

@@ -3,8 +3,8 @@
 **********************************************************************
      Convergence criterion  :   1.00e-06
      Niter_max              :         20
-     Initial cost is        :   1.31e+03
-     Initial norm_grad is   :   2.64e+03
+     Initial cost is        :   1.04e-03
+     Initial norm_grad is   :   3.13e+03
 **********************************************************************
    Niter      fk         ||gk||       fk/f0        alpha        nls      ngrad    
-     0     1.31e+03     2.64e+03     1.00e+00     1.00e+00        0        0
+     0     1.04e-03     3.13e+03     1.00e+00     1.00e+00        0        0

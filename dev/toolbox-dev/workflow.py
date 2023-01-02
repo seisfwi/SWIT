@@ -16,7 +16,7 @@ from multiprocessing import Pool
 
 import numpy as np
 from misfit import calculate_adjoint_misfit_is
-from plot import plot_misfit, plot_model, plot_waveform_comparison
+from plot import plot_misfit, plot_model, plot_wavelet, plot_waveform_comparison
 from tools import load_waveform_data, smooth2d, save_float
 from utils import preconditioner
 
@@ -73,6 +73,10 @@ class FWI(object):
         rho = self.optimizer.rho_init # rho is not updated in FWI Workflow
         fcost, fcost_all, grad_preco = self.objective_function(vp = vp, rho = rho)
 
+        #  perform the source inversion using the initial model
+        self.source_inversion(tag = 'init')
+
+
         # iterate until convergence or linesearch failure
         while ((self.optimizer.FLAG != 'CONV') and (self.optimizer.FLAG != 'FAIL')):
 
@@ -93,6 +97,9 @@ class FWI(object):
 
                 # plot the model, gradient and misfit
                 self.plot_results(vp, grad_preco)
+
+        # perform the source inversion using the final model
+        self.source_inversion(tag = 'FWI')
 
         # print the end information
         self.print_end_info(start_time)
@@ -209,6 +216,68 @@ class FWI(object):
         grad = grad / abs(grad).max() * self.optimizer.update_vpmax
 
         return grad
+
+
+    def source_inversion(self, tag = 'init', inv_offset = 10000):
+        ''' Perform the source inversion using the obs and syn data
+
+        Parameters
+        ----------
+            tag : str
+                tag for the source inversion
+            inv_offset : int
+                offset for selecting the source inversion data
+        '''
+        
+        # initialize the wavelet
+        wavelet_inverted = np.zeros_like(self.solver.source.wavelet)
+
+        # perform the source inversion for each source
+        for isrc in range(self.solver.source.num):
+            # get the path of obs and syn data
+            obs_path = os.path.join(self.solver.system.path, 'data/obs/src{}/sg_processed'.format(isrc+1))
+            syn_path = os.path.join(self.solver.system.path, 'data/syn/src{}/sg_processed'.format(isrc+1))
+
+            # load obs and syn data
+            obs, _ = load_waveform_data(obs_path, self.solver.model.nt)
+            syn, _ = load_waveform_data(syn_path, self.solver.model.nt)
+
+            # select the data for source inversion based on the offset
+            rec = np.argwhere(abs(self.solver.model.offset[isrc]) < inv_offset)
+            n1 = int(rec[ 0])
+            n2 = int(rec[-1])
+            obs = obs[n1:n2, :].T
+            syn = syn[n1:n2, :].T
+
+            # perform the fourier transform
+            Do = np.fft.fft(obs, axis=0)  # frequency domain
+            Dm = np.fft.fft(syn, axis=0)  # frequency domain
+        
+            src = np.squeeze(self.solver.source.wavelet[isrc, :])
+            S = np.fft.fft(np.squeeze(src), axis=0) # frequency domain
+
+            # check if the trace is zero
+            if abs(np.sum(Dm * np.conj(Dm))) == 0:
+                raise ValueError("FWI Workflow: no trace for source inversion, check for the reason.")
+            
+            # perform the source inversion
+            A = np.sum(np.conj(Dm)*Do, axis=1) / np.sum(Dm * np.conj(Dm), axis=1)
+            temp = np.real(np.fft.ifft(A*S[:]))
+            wavelet_inverted[isrc, :] = temp / np.max(abs(temp))
+        
+        # save the inverted wavelet
+        np.save(os.path.join(self.solver.system.path, 'fwi/model/wavelet_{}.npy'.format(tag)), wavelet_inverted)
+        
+        # plot the inverted wavelet
+        plot_wavelet(self.solver.source.coord[:,0], 
+            self.solver.model.t,
+            wavelet_inverted.T, 
+            -np.max(abs(wavelet_inverted)), 
+            np.max(abs(wavelet_inverted)),
+            os.path.join(self.solver.system.path, 'fwi/figures/wavelet_{}.png'.format(tag)), 
+            'Inverted wavelet', 
+            figaspect = 1, 
+            colormap = 'seismic')
 
 
     def print_iterate_info(self, fcost, vp, vp_pre):

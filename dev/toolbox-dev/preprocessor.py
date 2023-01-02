@@ -186,7 +186,9 @@ class Preprocessor(object):
         ''' load the data in the provided directory, then process the data and 
             finally save the processed data in the same directory
         '''
-
+        # dafault parameters
+        length = 50
+    
         # load data
         trace, _ = load_waveform_data(load_path, nt)
 
@@ -196,9 +198,6 @@ class Preprocessor(object):
         if len(offset) != ntrace:
             raise RuntimeError('Preprocessor: offset and trace are not consistant\n')
 
-        # dafault parameters
-        length = 200
-    
         # mute short traces
         if self.mute_near_offset:
             trace[abs(offset) < self.mute_near_distance,:] = 0.
@@ -210,22 +209,22 @@ class Preprocessor(object):
         # pick the first arrival and mute late arrival
         if self.mute_late_arrival:
             
-            raise NotImplementedError('Preprocessor: mute late arrival is not correctly implemented yet')
-
             # calculate the first break in grid size
-            pick = brutal_picker(trace) + np.ceil(self.mute_late_size/dt)
+            pick = brutal_picker(trace)
+
+            # calculate the mute window
+            window_size = np.ceil(self.mute_late_size/dt)
             
             # safeguard window
-            itmin = (pick  - length/2).astype(int)
-            itmax = (itmin + length  ).astype(int)
+            itmin = (pick + window_size         ).astype(int)
+            itmax = (pick + window_size + length).astype(int)
 
             # construct the taper
-            taper = np.ones(nt)
-            win = np.sin(np.linspace(0, np.pi, 2*length))[0:length]
+            win = 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, length))
             
             # mute late arrivals
             for i in range(ntrace):
-                trace[i,:] *= (1.0 - custom_mask(itmin[i], itmax[i], nt, length, taper, win))
+                trace[i,:] *= (1.0 - custom_mask(itmin[i], itmax[i], nt, length, win))
 
         # scipy filtering
         if self.filer.lower() in ['bandpass']:
@@ -256,7 +255,7 @@ class Preprocessor(object):
         save_float(load_path + '_processed.bin', trace.flatten())
 
 
-def brutal_picker(trace, threshold = 0.001):
+def brutal_picker(trace, threshold = 0.01):
     ''' pick the first arrival based on the amplitude of the trace 
 
     Parameters
@@ -276,7 +275,7 @@ def brutal_picker(trace, threshold = 0.001):
     return np.array(pick)
 
 
-def custom_mask(itmin, itmax, nt, length, mask, win):
+def custom_mask(itmin, itmax, nt, length, win):
     ''' Constructs tapered mask that can be applied to trace to
         mute early or late arrivals.
     
@@ -290,8 +289,6 @@ def custom_mask(itmin, itmax, nt, length, mask, win):
             the number of time samples
         length: int
             the length of the taper
-        mask: 1D array of float
-            the mask to be applied
         win: 1D array of float
             the taper
 
@@ -300,6 +297,9 @@ def custom_mask(itmin, itmax, nt, length, mask, win):
         mask: 1D array of float
             the mask to be applied
     '''
+    
+    # initialize the mask
+    mask = np.ones(nt)
 
     if 1 < itmin < itmax < nt:
         mask[0:itmin] = 0.

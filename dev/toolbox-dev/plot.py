@@ -139,6 +139,61 @@ def plot_model(x, z, data, vmin, vmax, filename, title, figaspect = 1, colormap 
     # plt.show()
 
 
+
+def plot_wavelet(srcx, t, data, vmin, vmax, filename, title, figaspect = 1, colormap = 'bwr'):
+    ''' Plot wavelet
+
+    Parameters
+    ----------
+        srcx : 1D array (float32)
+            source x axis
+        t : 1D array (float32)
+            time axis
+        data : 2D array (float32)   
+            model data
+        vmin : float
+            minimum value to plot
+        vmax : float
+            maximum value to plot
+        filename : str  
+            path to save the figure
+        title : str
+            title of the figure
+        figaspect : float
+            aspect ratio of the figure
+        colormap : str
+            colormap
+    '''
+    
+    plotopts = {
+        'vmin': vmin,
+        'vmax': vmax,
+    }
+
+    plotopts['extent'] = (srcx[0]/1000, srcx[-1]/1000, t[-1], t[0])
+    xlabel = 'Distance (km)'
+    ylabel = 'Time (s)'
+
+    # colormap
+    if colormap in ['my_seismic_cmap']:
+        plotopts['cmap'] = my_seismic_cmap()
+    else:
+        plotopts['cmap'] = colormap
+
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(111)
+    im = ax.imshow(data, **plotopts)
+    fig.colorbar(im, shrink=0.5, extend='both')
+    ax.xaxis.set_label_text(xlabel)
+    ax.yaxis.set_label_text(ylabel)
+    ax.set_title(title)
+    ax.set_aspect(figaspect)
+    plt.savefig(filename, dpi=300)
+    plt.close()
+    # plt.show()
+
+
+
 def plot_misfit(path, method, iter, niter_max, src_num):
     ''' plot misfit
 
@@ -178,6 +233,7 @@ def plot_misfit(path, method, iter, niter_max, src_num):
     plt.legend([str(isrc+1) for isrc in range(src_num)], loc = 'center left', bbox_to_anchor=(1, 0.5))
     plt.title("Misfit history of all sources")
     plt.savefig(fig_path + 'misfit_history_all.png', dpi=300)
+    plt.close()
     # plt.show()
 
     # plot misfit in curve

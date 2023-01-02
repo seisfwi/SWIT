@@ -49,8 +49,10 @@ class SWIT(Configuration):
     def check_config(self):
         ''' check the config file
         '''
-        # parameter list
-        par_list  = ['path', 'job_workflow', 'max_cpu_num', 'mpi_num', 'fig_aspect']
+
+        # the following parameters must be included in the config file
+        par_list  = ['job_workflow']
+        par_list += ['path', 'job_workflow', 'max_cpu_num', 'mpi_num', 'fig_aspect']
         par_list += ['dt', 'dx', 'nt', 'nx', 'nz', 'pml', 'vp_file', 'rho_file']
         par_list += ['rec_comp', 'rec_coord_file']
         par_list += ['amp0', 'f0', 'src_type', 'src_coord_file', 'wavelet_file']
@@ -64,7 +66,11 @@ class SWIT(Configuration):
         for par in par_list:
             if par not in self.__dict__:
                 raise ValueError('Parameter [{}] is not found in config file.'.format(par))
-        
+
+        # some parameters are optional and have default values 
+        self.simu_tag = 'obs' if 'simu_tag' not in self.__dict__ else self.simu_tag
+        self.save_snap = False if 'save_snap' not in self.__dict__ else self.save_snap
+
         # check the job type
         job_str = ''
         self.job_workflow = [job.upper() for job in self.job_workflow]
@@ -166,7 +172,7 @@ class SWIT(Configuration):
 
         # Forward Modeling
         if 'FORWARD' in self.job_workflow:
-            self.solver.run()
+            self.solver.run(simu_tag = self.simu_tag, save_snap = self.save_snap)
 
         # Full Waveform Inversion
         if 'FWI' in self.job_workflow:
@@ -185,6 +191,7 @@ class SWIT(Configuration):
     
             rtm = RTM(self.solver, self.preprocessor)
             rtm.run(vp = vp_rtm, rho = rho_rtm)
+
 
 
 if __name__ == '__main__':

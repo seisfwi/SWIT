@@ -1,7 +1,12 @@
-System:
-  job_workflow: 
-      # - FORWARD
+Workflow:
+  job_workflow:
+      - FORWARD
       - FWI
+      - RTM
+  simu_tag: obs
+  save_sanp: false
+
+System:
   path: /scr2/haipeng/SWIT-1.1/01_fwi/
   mpi_num: 21
   max_cpu_num: 40
@@ -48,8 +53,8 @@ Preprocessor:
   filter_low: 5.0
   mute_near_offset: false
   mute_near_distance: 500
-  mute_far_offset: true
+  mute_far_offset: false
   mute_far_distance: 8000
   mute_late_arrival: true
-  mute_late_size: 0.25
-  normalize_data: true
+  mute_late_size: 0.5
+  normalize_data: false

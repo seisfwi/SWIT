@@ -52,7 +52,7 @@ class SWIT(Configuration):
 
         # the following parameters must be included in the config file
         par_list  = ['job_workflow']
-        par_list += ['path', 'job_workflow', 'max_cpu_num', 'mpi_num', 'fig_aspect']
+        par_list += ['path', 'job_workflow', 'max_cpu_num', 'mpi_cpu_num', 'fig_aspect']
         par_list += ['dt', 'dx', 'nt', 'nx', 'nz', 'pml', 'vp_file', 'rho_file']
         par_list += ['rec_comp', 'rec_coord_file']
         par_list += ['amp0', 'f0', 'src_type', 'src_coord_file', 'wavelet_file']
@@ -114,7 +114,7 @@ class SWIT(Configuration):
             rec_coord.append(rec_file[key])
 
         # configuration, model, source, receiver are required for all jobs
-        system = System(self.path, self.mpi_num, max_cpu_num = self.max_cpu_num, fig_aspect = self.fig_aspect)
+        system = System(self.path, self.mpi_cpu_num, max_cpu_num = self.max_cpu_num, fig_aspect = self.fig_aspect)
         model = Model(self.nx, self.nz, self.dx, self.dt, self.nt, self.pml, vp, rho)
         source = Source(src_coord, wavelet, self.f0)
         receiver = Receiver(rec_coord, self.rec_comp)
@@ -133,17 +133,19 @@ class SWIT(Configuration):
      
         # load gradient mask if a path to mask is specified, otherwise set to default
         if self.grad_mask_file is None or len(self.grad_mask_file) == 0:
-            print('FWI Wokflow: No gradient mask is specified, use default mask.')
+            use_default_mask = True
             nx, nz = vp_init.shape
             grad_mask = generate_mask(nx, nz, threshold = 0.05, mask_size = 10)
         else:
+            use_default_mask = False
             grad_mask = load_model(self.grad_mask_file, self.nx, self.nz)
 
         # initialize optimizer
         self.optimizer = Optimizer(vp_init = vp_init, rho_init = rho_init, 
                 misfit_type = self.misfit_type, method = self.method, niter_max = self.niter_max,
                 bound = self.bound, vp_max = self.vp_max, vp_min = self.vp_min, update_vpmax = self.update_vpmax,
-                grad_smooth_size = self.grad_smooth_size, grad_mask = grad_mask, debug = self.debug)
+                grad_smooth_size = self.grad_smooth_size, grad_mask = grad_mask, debug = self.debug, 
+                use_default_mask = use_default_mask)
 
 
     def init_preprocessor(self):

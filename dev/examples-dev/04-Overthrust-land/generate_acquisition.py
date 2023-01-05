@@ -1,3 +1,19 @@
+###############################################################################
+# SWIT v1.1: Seismic Waveform Inversion Toolbox
+#
+# Description: This script generates the acquisition files for the Marmousi2-marine example.
+#              The acquisition files include:
+#              1) true model (vp_true.npy, rho_true.npy) 
+#              2) initial model (vp_init.npy, rho_init.npy)
+#              3) source coordinates (src_coord.npy)
+#              4) source wavelet (wavelets.npy)
+#              5) receiver coordinates (rec_coord)
+#    Note: The gradient mask is not needed for land acquisition.
+#           The gradient damping is implemented in the code by default.
+###############################################################################
+
+
+## add toolbox path
 import sys
 sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/dev/toolbox-dev/')
 
@@ -13,9 +29,9 @@ if not os.path.exists('acquisition'):
 ## set model size
 nx = 501
 nz = 151
-dx = 25
-nt = 4001
-dt = 0.002
+dx = 20
+nt = 3001
+dt = 0.0015
 x_beg = 0.
 x_end = (nx-1) * dx
 
@@ -85,4 +101,3 @@ for file in files:
 print('Successfully save acquisition files!\n')
 print('You can now run the SWIT workflow:\n')
 print('    $ python ../../toolbox-dev/SWIT.py config.yaml\n')
-print('Tips: add ../../toolbox-dev/SWIT.py to environment PATH for convenience.\n')

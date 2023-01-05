@@ -1,3 +1,19 @@
+###############################################################################
+# SWIT v1.1: Seismic Waveform Inversion Toolbox
+#
+# Description: This script generates the acquisition files for the Marmousi2-marine example.
+#              The acquisition files include:
+#              1) true model (vp_true.npy, rho_true.npy) 
+#              2) initial model (vp_init.npy, rho_init.npy)
+#              3) gradient mask (grad_mask.npy)
+#              4) source coordinates (src_coord.npy)
+#              5) source wavelet (wavelets.npy)
+#              6) receiver coordinates (rec_coord)
+#
+###############################################################################
+
+
+## add toolbox path
 import sys
 sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/dev/toolbox-dev/')
 
@@ -10,10 +26,10 @@ from tools import smooth2d
 if not os.path.exists('acquisition'):
     os.makedirs('acquisition', exist_ok=True)
 
-## set model size
+## set the model size
 nx = 501
 nz = 171
-dx = 25
+dx = 20
 nt = 4001
 dt = 0.002
 x_beg = 0.
@@ -44,9 +60,8 @@ f0   = 5.
 wavelet = np.zeros((src_num, nt))
 for i in range(src_num):
     wavelet[i,:] = source_wavelet(amp0, nt, dt, f0, 'ricker')
-    # one can load their own wavelet here, 
-    # e.g., wavelet[i,:] = np.loadtxt('wavelet_src1.dat')
-    # the time axis should be the same as in the forward modeling
+    # one can load their own wavelet here, e.g., wavelet[i,:] = np.loadtxt('wavelet_src1.dat')
+    # the time axis should be the same as the forward modeling
 
 ## set receiver coordinates. rec_coord is a list of receiver coordinates for each source 
 rec_coord = []
@@ -55,6 +70,7 @@ for i in range(src_num):
     rec_xz[:,0] = np.linspace(x_beg, x_end, nx)  # linearly distributed receivers
     rec_xz[:,1] = np.linspace(   dx,    dx, nx)  # receivers are buried at first grid depth
     rec_coord.append(rec_xz)                     # receivers can be different for different sources
+
 
 ## save acquisition files
 np.save('./acquisition/vp_true.npy',       vp_true)
@@ -82,4 +98,3 @@ for file in files:
 print('Successfully save acquisition files!\n')
 print('You can now run the SWIT workflow:\n')
 print('    $ python ../../toolbox-dev/SWIT.py config.yaml\n')
-print('Tips: add ../../toolbox-dev/SWIT.py to environment PATH for convenience.\n')

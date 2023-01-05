@@ -6,15 +6,14 @@
 - Add options of receiver components (Solved)
     - vx, vz, p
     - test the adjoint modeling with different receiver components
+- Add RTM workflow (Solved)
+    - test the RTM workflow
+- Add source inversion workflow (Solved)
+    - test the source inversion workflow
 - Add Multiscale workflow
     - test the multiscale workflow
-- Add source inversion workflow
-    - test the source inversion workflow
 - Add geometry retrieval code from su or segy files
 - Add MPI support for the preprocessing and misfit calculation
-- Add RTM workflow
-    - test the RTM workflow
-- 
 
 
 ## Other tasks

@@ -140,7 +140,7 @@ class Preprocessor(object):
             print('    Normalize trace   : {}'.format(self.normalize_data))
 
 
-    def run(self, data_path = None, src_num = None, mpi_num = 1, nt = None, dt = None, offset = None):
+    def run(self, data_path = None, src_num = None, mpi_cpu_num = 1, nt = None, dt = None, offset = None):
         ''' run the preprocessor to process the data in the provided directory
 
         Parameters
@@ -149,7 +149,7 @@ class Preprocessor(object):
                 the path of the data directory
             src_num: int
                 the number of sources
-            mpi_num: int
+            mpi_cpu_num: int
                 the number of MPI processes
             nt: int
                 the number of time samples
@@ -162,7 +162,7 @@ class Preprocessor(object):
         # TODO: add the MPI support for the preprocessor
 
         # create a pool of processes
-        pool = Pool(mpi_num)
+        pool = Pool(mpi_cpu_num)
 
         # loop over the sources
         for isrc in range(src_num):

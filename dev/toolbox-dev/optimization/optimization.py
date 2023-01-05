@@ -30,16 +30,25 @@ class Optimization(object):
     def __init__(self, niter_max = 20, conv = 1e-8, method = 'SD', bound = False, lb = None, ub = None, lbfgs_memory = 20, debug = False):
         '''
             Initialize the optimizer class
-
-            Input:
-                niter_max: maximum number of iterations
-                conv: convergence criteria
-                method: optimization method
-                bound: bound constraints option
-                lb: lower boundary
-                ub: upper boundary
-                lbfgs_memory: LBFGS memory
-                debug: debug option FOR USER
+        
+            Parameters
+            ----------
+            niter_max : int
+                maximum number of iterations
+            conv : float
+                convergence criterion
+            method : str
+                optimization method, 'SD', 'CG', 'LBFGS', 'PLBFGS', 'TRN', 'PTRN'
+            bound : bool
+                bound constraints, True or False
+            lb : array
+                lower bound
+            ub : array
+                upper bound
+            lbfgs_memory : int
+                memory for LBFGS method
+            debug : bool
+                debug mode, True or False
         '''
 
         self.niter_max = niter_max

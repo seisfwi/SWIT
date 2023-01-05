@@ -25,7 +25,7 @@ class System(object):
         ----------
             path: str
                 path to perform the modeling or inversion
-            mpi_num: int
+            mpi_cpu_num: int
                 number of mpi processes
             max_cpu_num: int
                 maximum number of CPUs on the PC/cluster
@@ -33,13 +33,13 @@ class System(object):
                 aspect ratio of the figure (default: 1.0)
     '''
 
-    def __init__(self, path, mpi_num, max_cpu_num = cpu_count()//2, fig_aspect = 1.0):
+    def __init__(self, path, mpi_cpu_num, max_cpu_num = cpu_count()//2, fig_aspect = 1.0):
         ''' initialize system class
         '''
 
         # basic parameters
         self.path = path
-        self.mpi_num = mpi_num
+        self.mpi_cpu_num = mpi_cpu_num
         self.max_cpu_num = max_cpu_num
         self.fig_aspect = fig_aspect
         
@@ -59,11 +59,11 @@ class System(object):
             os.makedirs(self.path)
 
         # check the number of mpi processes
-        if self.mpi_num > self.max_cpu_num:
-            msg  = 'System Warning: number of mpi processes {} exceeds the number of CPUs\n'.format(self.mpi_num)
+        if self.mpi_cpu_num > self.max_cpu_num:
+            msg  = 'System Warning: number of mpi processes {} exceeds the number of CPUs\n'.format(self.mpi_cpu_num)
             msg += 'System Warning: number of mpi processes is reset to {}.'.format(self.max_cpu_num)
             print(msg)
-            self.mpi_num = self.max_cpu_num
+            self.mpi_cpu_num = self.max_cpu_num
     
 
 class Model(object):
@@ -322,9 +322,9 @@ class Survey(object):
         #             raise ValueError('Survey: receiver {} from source {} is above the topography'.format(irec, isrc))
 
         # check the mpi number and the source number
-        if self.system.mpi_num > self.source.num:
+        if self.system.mpi_cpu_num > self.source.num:
             print('Survey Warning: number of mpi processes {} exceeds the number of sources {}, reset to source number')
-            self.system.mpi_num = self.source.num
+            self.system.mpi_cpu_num = self.source.num
 
         # check the configfile directory and create it if not exist
         if not os.path.exists(self.system.path + 'system'):

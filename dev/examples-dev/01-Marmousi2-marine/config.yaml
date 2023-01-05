@@ -1,52 +1,75 @@
-Workflow:
-  job_workflow:
+###############################################################################
+# SWIT v1.1: Seismic Waveform Inversion Toolbox
+#
+# Description: This is a configuration file in YAML format for SWIT-1.1.
+#              It is used to configure the workflow of SWIT-1.1.
+#   Note: 
+#              Workflow: define the overall workflow of SWIT-1.1. 
+#              System: define working directory and system parameters
+#              Model: define the model used in wavefield simulation
+#              Receiver: define the receiver locations and components
+#              Source: define the source locations and wavelet
+#              Optimizer: define the optimizer in FWI (only effective for FWI job)
+#              Preprocessor: define the data preprocessor (effective for both FWI and RTM jobs)
+#   Any illegal parameters will cause SWIT-1.1 to exit with error explanation.
+# 
+###############################################################################
+
+# Define the overall workflow of SWIT-1.1
+Workflow:         
+  job_workflow:           # job workflow: FORWARD, FWI, RTM, or any combination of them 
       - FORWARD
       - FWI
-      - RTM
-  simu_tag: obs
-  save_sanp: false
+  simu_tag: obs           # only effective for FORWARD job, simulation tag such as obs, syn, or any other tag you want to use 
+  save_sanp: false        # only effective for FORWARD job, save snapshot or not
 
+# Define the system parameters
 System:
-  path: /scr2/haipeng/SWIT-1.1/01_fwi/
-  mpi_num: 21
+  path: /scr2/haipeng/SWIT-1.1/01-Marmousi2-marine/
+  mpi_cpu_num: 21
   max_cpu_num: 40
-  fig_aspect: 1.0
-  
+  fig_aspect:  1.0
+
+# Define the model size and model files
 Model:
-  dt: 0.002
-  dx: 25
-  nt: 4001
   nx: 481
   nz: 141
+  dx: 25
+  nt: 4001
+  dt: 0.002
   pml: 40
-  vp_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/vp_true.npy
+  vp_file:  /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/vp_true.npy
   rho_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rho_true.npy
-  
+
+# Define the receiver coordinates and components
 Receiver:
-  rec_comp: p
+  rec_comp: p    # for the marine acquisition, oftentime data in the p (pressure) component is available
   rec_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rec_coord.npz
 
+# Define the source coordinates and wavelet
 Source:
   amp0: 1.0
   f0: 5.0
   src_type: file
   src_coord_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/src_coord.npy
-  wavelet_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/wavelets.npy
+  wavelet_file:   /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/wavelets.npy
 
+# Define the optimizer in FWI
 Optimizer:
-  vp_init_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/vp_init.npy
-  rho_init_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rho_init.npy
+  vp_init_file:   /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/vp_init.npy
+  rho_init_file:  /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/rho_init.npy
   grad_mask_file: /homes/sep/haipeng/develop/SWIT-1.0/dev/examples-dev/01-Marmousi2-marine/acquisition/grad_mask.npy
   misfit_type: waveform
-  method: CG
+  method: LBFGS
   niter_max: 20
   bound: true
   vp_min: 1000
   vp_max: 5000
-  grad_smooth_size: 5
+  grad_smooth_size: 0
   update_vpmax: 50
   debug: false
 
+# Define the data preprocessor for FWI and RTM
 Preprocessor:
   filer: none
   filter_high: 10.0
@@ -55,6 +78,6 @@ Preprocessor:
   mute_near_distance: 500
   mute_far_offset: false
   mute_far_distance: 8000
-  mute_late_arrival: true
+  mute_late_arrival: false
   mute_late_size: 0.5
   normalize_data: false

@@ -1,3 +1,19 @@
+###############################################################################
+# SWIT v1.1: Seismic Waveform Inversion Toolbox
+#
+# Description: This script generates the acquisition files for the Marmousi2-marine example.
+#              The acquisition files include:
+#              1) true model (vp_true.npy, rho_true.npy) 
+#              2) initial model (vp_init.npy, rho_init.npy)
+#              3) source coordinates (src_coord.npy)
+#              4) source wavelet (wavelets.npy)
+#              5) receiver coordinates (rec_coord)
+#    Note: The gradient mask is not needed for land acquisition.
+#           The gradient damping is implemented in the code by default.
+###############################################################################
+
+
+## add toolbox path
 import sys
 sys.path.append('/homes/sep/haipeng/develop/SWIT-1.0/dev/toolbox-dev/')
 
@@ -23,9 +39,8 @@ x_end = (nx-1) * dx
 vp_true = np.loadtxt('./acquisition/Marmousi_481_121_25m.dat')
 rho_true = np.power(vp_true, 0.25) * 310               # density models, (Gardner, 1974)
 
-## set initial model for FWI
-vp_init = np.copy(vp_true)                             # copy true model first
-vp_init = smooth2d(vp_init , span = 10)                # smooth the true model
+## set 1D initial model for FWI
+vp_init = np.loadtxt('./acquisition/Marmousi_481_121_25m_1d.dat')   # 1D initial model
 rho_init = np.power(vp_init, 0.25) * 310               # density models, (Gardner, 1974)
 
 ## set gradient mask for FWI (1: keep gradient; 0: mute gradient)
@@ -54,7 +69,12 @@ for i in range(src_num):
 ## set receiver coordinates. rec_coord is a list of receiver coordinates for each source 
 rec_coord = []
 for i in range(src_num):
+    # set rolling receivers for each source
+    # rec_beg = np.max([x_beg, src_coord[i,0] - 5000.0])
+    # rec_end = np.min([x_end, src_coord[i,0] + 5000.0])
+    # rec_num = int((rec_end - rec_beg) / dx) + 1
     rec_xz = np.zeros((nx, 2))
+
     rec_xz[:,0] = np.linspace(x_beg, x_end, nx)  # linearly distributed receivers
     rec_xz[:,1] = np.linspace(   dx,    dx, nx)  # receivers are buried at first grid depth
     rec_coord.append(rec_xz)                     # receivers can be different for different sources
@@ -85,4 +105,3 @@ for file in files:
 print('Successfully save acquisition files!\n')
 print('You can now run the SWIT workflow:\n')
 print('    $ python ../../toolbox-dev/SWIT.py config.yaml\n')
-print('Tips: add ../../toolbox-dev/SWIT.py to environment PATH for convenience.\n')

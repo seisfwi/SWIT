@@ -2,7 +2,7 @@ Config:
   path: /scr2/haipeng/SWIT-1.1/01_fwi/
   job_workflow: fwi
   max_cpu_num: 48
-  mpi_num: 40
+  mpi_cpu_num: 40
   fig_aspect: 1.0
 
 Model:

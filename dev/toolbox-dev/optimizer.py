@@ -50,7 +50,7 @@ class Optimizer(Optimization):
     def __init__(self, vp_init = None, rho_init = None, 
                 misfit_type = 'waveform', method = 'SD', niter_max = 20,
                 bound = False, vp_max = 5000, vp_min = 1000, update_vpmax = 400, 
-                grad_smooth_size = 0, grad_mask = None, debug = False):
+                grad_smooth_size = 0, grad_mask = None, debug = False, use_default_mask = False):
         ''' initialize the optimizer class
         '''
 
@@ -72,6 +72,7 @@ class Optimizer(Optimization):
         self.update_vpmax = update_vpmax
         self.grad_smooth_size = grad_smooth_size
         self.grad_mask = grad_mask
+        self.use_default_mask = use_default_mask
 
         # check the optimizer parameters
         self.__check__()
@@ -150,8 +151,8 @@ class Optimizer(Optimization):
             print('    Bound constraint  : {}'.format(self.bound))
         print('    Initial vp model  : {:.2f} ~ {:.2f} m/s'.format(self.vp_init.min(), self.vp_init.max()))
         print('    Gradient smooth   : {} grids Gaussian smooth'.format(self.grad_smooth_size))
-        if self.grad_mask is not None:
-            print('    Gradient mask     : provided by user')
-        else:
+        if self.use_default_mask:
             print('    Gradient mask     : default damping mask on top of the model (10 grids)')
+        else:
+            print('    Gradient mask     : provided by user')
         print('    Debug option      : {}'.format(self.debug))

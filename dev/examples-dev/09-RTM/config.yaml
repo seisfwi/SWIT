@@ -4,7 +4,7 @@ System:
       - FORWARD
       - RTM
   max_cpu_num: 40
-  mpi_num: 21
+  mpi_cpu_num: 21
   fig_aspect: 1.0
 
 Model:

@@ -101,7 +101,7 @@ class Solver(Survey):
         self.write_config(simu_type, simu_tag, data_format, save_snap, save_boundary)
 
         # run the solver with mpi
-        cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.system.mpi_num, self.system.path + 'config/solver.config')
+        cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.system.mpi_cpu_num, self.system.path + 'config/solver.config')
         status = subprocess.getstatusoutput(cmd)
 
         # check the final status of the solver
@@ -220,4 +220,4 @@ class Solver(Survey):
         print('    Data  dimension   : nt = {}, dt = {:.2f} ms, t = 0 ~ {:.2f} s'.format(self.model.nt, self.model.dt*1000, self.model.t[-1]))
         print('    Data acquisition  : {} sources, {}-component receivers'.format(self.source.num, self.receiver.comp))
         print('    P-wave velocity   : {:.2f} ~ {:.2f} m/s'.format(self.model.vp.min(), self.model.vp.max()))
-        print('    MPI information   : {} tasks run in parallel'.format(self.system.mpi_num))
+        print('    MPI information   : {} tasks run in parallel'.format(self.system.mpi_cpu_num))

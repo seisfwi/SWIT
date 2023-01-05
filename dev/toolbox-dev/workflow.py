@@ -63,7 +63,7 @@ class FWI(object):
         # preprocess the obs data
         self.preprocessor.run(data_path = self.solver.system.path + 'data/obs/', 
                             src_num = self.solver.source.num, 
-                            mpi_num = self.solver.system.mpi_num, 
+                            mpi_cpu_num = self.solver.system.mpi_cpu_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
                             offset = self.solver.model.offset)
@@ -73,7 +73,7 @@ class FWI(object):
         rho = self.optimizer.rho_init # rho is not updated in FWI Workflow
         fcost, fcost_all, grad_preco = self.objective_function(vp = vp, rho = rho)
 
-        #  perform the source inversion using the initial model
+        # perform the source inversion using the initial model
         self.source_inversion(tag = 'init')
 
 
@@ -129,7 +129,7 @@ class FWI(object):
         # preprocess the syn data
         self.preprocessor.run(data_path = self.solver.system.path + 'data/syn/', 
                             src_num = self.solver.source.num, 
-                            mpi_num = self.solver.system.mpi_num, 
+                            mpi_cpu_num = self.solver.system.mpi_cpu_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
                             offset = self.solver.model.offset)
@@ -159,7 +159,7 @@ class FWI(object):
         '''
 
         # initialize the Pool object
-        pool = Pool(self.solver.system.mpi_num)
+        pool = Pool(self.solver.system.mpi_cpu_num)
 
         # TODO: add the MPI support for the calculation of misfit
         # apply to all sources
@@ -213,7 +213,7 @@ class FWI(object):
             grad = smooth2d(grad, span = self.optimizer.grad_smooth_size)
 
         # scale the gradient with the maximum allowed update value
-        grad = grad / abs(grad).max() * self.optimizer.update_vpmax
+        grad = grad / np.max(abs(grad)) * self.optimizer.update_vpmax
 
         return grad
 
@@ -500,7 +500,7 @@ class RTM(object):
         # preprocess the obs data
         self.preprocessor.run(data_path = self.solver.system.path + 'data/obs/', 
                             src_num = self.solver.source.num, 
-                            mpi_num = self.solver.system.mpi_num, 
+                            mpi_cpu_num = self.solver.system.mpi_cpu_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
                             offset = self.solver.model.offset)
@@ -514,7 +514,7 @@ class RTM(object):
         # preprocess the syn data
         self.preprocessor.run(data_path = self.solver.system.path + 'data/syn/', 
                             src_num = self.solver.source.num, 
-                            mpi_num = self.solver.system.mpi_num, 
+                            mpi_cpu_num = self.solver.system.mpi_cpu_num, 
                             nt = self.solver.model.nt, 
                             dt = self.solver.model.dt,  
                             offset = self.solver.model.offset)

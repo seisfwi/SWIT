@@ -25,7 +25,7 @@ system = {}
 system['Config'] = {}
 system['Config']['job_workflow'] = 'forward'                               # 'forward', 'FWI', 'RTM'
 system['Config']['path'] = '/scr2/haipeng/SWIT-1.1/01_fwi/'            # Working path
-system['Config']['mpi_num'] = 40                                       # Number of MPI processes
+system['Config']['mpi_cpu_num'] = 40                                       # Number of MPI processes
 system['Config']['max_cpu_num'] = 48                                   # Maximum number of CPUs to use
 system['Config']['fig_aspect'] = 1.0                                   # Aspect ratio of the figure
 
@@ -101,7 +101,7 @@ write_yaml(system, 'system.yaml')
 # import yaml
 
 # work_path = '/scr2/haipeng/SWIT-1.1/00_forward/'   # Working path
-# mpi_num   = 49                                     # MPI process for fd2dmpi
+# mpi_cpu_num   = 49                                     # MPI process for fd2dmpi
 
 # ### model setup
 # nx,  nz, pml = [481,  141, 40]                     # Grid number along x and z directions, Grid number for PML layers (use a large one)

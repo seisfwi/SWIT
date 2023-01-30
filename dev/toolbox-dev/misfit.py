@@ -69,9 +69,10 @@ def calculate_adjoint_misfit_is(isrc, data_path, dt, nt, misfit_type):
 
     elif misfit_type.lower() in ['globalcorrelation']:
         adj, rsd = misfit_globalcorrelation(obs, syn, dt)
-    
+    elif misfit_type.lower() in ['hybrid']:
+        adj, rsd = misfit_hybrid(obs, syn, dt)
     else:
-        msg = 'Only support the following misfit types: waveform, envelope, traveltime, globalcorrelation'
+        msg = 'Only support the following misfit types: waveform, envelope, traveltime, globalcorrelation, hybrid'
         err = 'The misfit type {} is not supported.'.format(misfit_type)
         raise ValueError(msg + '\n' + err)
     
@@ -248,3 +249,49 @@ def cross_correlate_max(obs, syn, nt):
     cc[np.where(cc<nt//2)] = cc[np.where(cc<nt//2)] + nt
 
     return cc
+
+
+
+def misfit_hybrid(obs, syn, dt):
+    ''' Hybrid misfit function (Haipeng Li, 2023)
+    '''
+    # parameters
+    rec_num, nt = obs.shape
+
+    # initialize the adjoint source and misfit
+    adj = np.zeros((rec_num, nt))
+    rsd = np.zeros(rec_num)
+
+    scale = 4.0
+
+    # loop over all traces
+    for irec in range(rec_num):
+        obs_trace = obs[irec, :]
+        syn_trace = syn[irec, :]
+        obs_norm = np.linalg.norm(obs_trace, ord=2)
+        syn_norm = np.linalg.norm(syn_trace, ord=2)
+
+        adj_trace = np.zeros(nt)
+        if obs_norm > 0. and syn_norm > 0.:
+
+            obs_trace_norm = obs_trace / obs_norm
+            syn_trace_norm = syn_trace / syn_norm
+
+            misfit1 = np.sum((syn_trace_norm - obs_trace_norm) ** 2)
+            misfit2 = - np.corrcoef(syn_trace_norm, obs_trace_norm)[0,1] * dt
+
+            # calculate adjoint source
+            adj_trace = 1.0/syn_norm * (syn_trace_norm * np.corrcoef(syn_trace_norm, obs_trace_norm)[0,1] - obs_trace_norm) * (1. - 1. / (1. + np.exp(-misfit1 * scale))) \
+                        - scale * np.exp(-misfit1 * scale) / (1.0 + np.exp(-misfit1 * scale)) ** 2 * (syn_trace_norm - obs_trace_norm) * (misfit2)
+            
+            # calculate misfit
+            rsd[irec] = misfit2 * (1 - 1 / (1 + np.exp(-misfit1 * scale)))
+
+        else:
+            adj_trace *= 0.
+
+        # fill the adjoint source
+        adj[irec, :] = adj_trace
+
+    # return adjoint source and misfit
+    return adj, rsd

@@ -98,7 +98,7 @@ class Optimizer(Optimization):
             raise ValueError(msg + err)
 
         # check the type of misfit function
-        misfits = ['waveform', 'envelope', 'crosscorrelation', 'globalcorrelation']
+        misfits = ['waveform', 'envelope', 'crosscorrelation', 'globalcorrelation', 'hybrid']
         if self.misfit_type.lower() not in misfits:
             msg = 'Optimizer: misfit_type must be one of {}'.format(misfits)
             err = 'Optimizer: unknown simulation type: {}'.format(self.misfit_type)

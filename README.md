@@ -5,7 +5,7 @@
 
 Developed by Haipeng Li at USTC, China & Stanford University, USA. 
 
-If you have any questions, please contact Haipeng Li by email: haipeng@standford.edu or haipengl@mail.ustc.edu.cn
+If you have any questions, please contact Haipeng Li by email: haipeng@stanford.edu or haipengl@mail.ustc.edu.cn
 
 
 
@@ -135,7 +135,7 @@ We have also performed the FWI on the field data. Contact the author for more de
 
 ## Citations
 
-If you use SWIT-1.0 in your research, please cite the following papers:
+If you find SWIT-1.0 is useful, please consider citing the following papers:
 1. Li, H., Li, J., Luo, S., Bem, T. S., Yao, H., & Huang, X. Continent‐continent Collision between the South and North China Plates Revealed by Seismic Refraction and Reflection at the Southern Segment of the Tanlu Fault Zone. Journal of Geophysical Research: Solid Earth, e2022JB025748. https://doi.org/10.1029/2022JB025748
 2. Li, H., Li, J., Liu, B., & Huang, X. (2021). Application of full-waveform tomography on deep seismic profiling data set for tectonic fault characterization. In First International Meeting for Applied Geoscience & Energy Expanded Abstracts (pp. 657–661). https://doi.org/10.1190/segam2021-3583190.1
 3. Schuster, G. T. (2017). Seismic inversion. Society of Exploration Geophysicists. https://library.seg.org/doi/book/10.1190/1.9781560803423

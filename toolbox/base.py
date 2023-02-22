@@ -158,10 +158,26 @@ class model(object):
         self.pml = pml
         self.nx_pml = self.nx + self.pml * 2
         self.nz_pml = self.nz + self.pml * (2 - self.fs)
-       
+        
+        # coordinate points (x, z), and the time array
+        self.xx = np.arange(0, self.nx * self.dx, self.dx)
+        self.zz = np.arange(0, self.nz * self.dx, self.dx)
+        self.t  = np.linspace(0, self.dt*self.nt, num=self.nt, endpoint=False)
+        # velocity, density, etc.
+        self.rho = rho                                         # density in kg/m^3
+        self.vp = vp                                           # p-wave velocity in m/s
+        self.vpmax = vp.max()                                  # maximum vp
+        self.vpmin = vp.min()                                  # mininum vp
+        # output
+        self.savesnap = 0
+        self.savestep = 1
+
+
         # Notice:
         # the forward modeling code always uses free surface, no matter self.fs = True or False
-        #    
+
+
+
 
 class source(object):
     ''' source parameters for forward wavefield simulation (2D or 3D)

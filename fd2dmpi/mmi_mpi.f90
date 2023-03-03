@@ -13,9 +13,9 @@
 
 module mmi_mpi
 
-!use mpi
+use mpi
 implicit none
-include 'mpif.h'
+! include 'mpif.h'
 integer  :: root, rank, nsize, tag, status(MPI_STATUS_SIZE), ierr, sendtag, recvtag, currentShot, &
             source_tag, data_tag, terminate_tag, result_tag, slave, count
 

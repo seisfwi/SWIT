@@ -101,7 +101,7 @@ class Solver(Survey):
         self.write_config(simu_type, simu_tag, data_format, save_snap, save_boundary)
 
         # run the solver with mpi
-        cmd = 'mpirun -np {}  fd2dmpi config={}'.format(self.system.mpi_cpu_num, self.system.path + 'config/solver.config')
+        cmd = 'mpirun -np {} --allow-run-as-root fd2dmpi config={}'.format(self.system.mpi_cpu_num, self.system.path + 'config/solver.config')
         status = subprocess.getstatusoutput(cmd)
 
         # check the final status of the solver

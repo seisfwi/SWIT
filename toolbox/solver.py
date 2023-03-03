@@ -51,7 +51,7 @@ def forward(simu, simu_type='obs', savesnap=0):
 
     # submit job
     os.chdir(homepath)
-    solver_cmd = 'mpirun -np %d  fd2dmpi par=%s' % (mpiproc, parfile)
+    solver_cmd = 'mpirun -np %d --allow-run-as-root fd2dmpi par=%s' % (mpiproc, parfile)
     status = subprocess.getstatusoutput(solver_cmd)
     if status[0]:
         print(status[1])
@@ -76,7 +76,7 @@ def adjoint(simu, optim):
 
     # summit job
     os.chdir(homepath)
-    solver_cmd = 'mpirun -np %d fd2dmpi par=%s' % (mpiproc, parfile)
+    solver_cmd = 'mpirun -np %d --allow-run-as-root fd2dmpi par=%s' % (mpiproc, parfile)
     status = subprocess.getstatusoutput(solver_cmd)
     if status[0]:
         raise ValueError('Adjoint solver crash')
